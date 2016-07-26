@@ -1,0 +1,62 @@
+import deformablemesh.SegmentationController;
+import deformablemesh.SegmentationModel;
+import deformablemesh.gui.ControlFrame;
+import deformablemesh.gui.RingController;
+import deformablemesh.meshview.MeshFrame3D;
+import ij.ImageJ;
+import ij.ImagePlus;
+import jogamp.nativewindow.jawt.JAWTUtil;
+
+import java.awt.EventQueue;
+import java.io.File;
+
+/**
+ *
+ * For development of a 3d version of the deforming mesh.
+ *
+ * User: msmith
+ * Date: 7/2/13
+ * Time: 8:01 AM
+ * To change this template use File | Settings | File Templates.
+ */
+public class DeformingMesh3DApp{
+    static File input;
+    public static SegmentationController createDeformingMeshApplication(){
+        JAWTUtil.getJAWT(true);
+        MeshFrame3D mf3d = new MeshFrame3D();
+        mf3d.showFrame(false);
+        mf3d.addLights();
+        SegmentationModel model = new SegmentationModel();
+        SegmentationController control = new SegmentationController(model);
+        ControlFrame controller = new ControlFrame(control);
+        controller.showFrame();
+        RingController ring_control = new RingController(control);
+        ring_control.startUI();
+        controller.addTabbedPanel(ring_control.getContentPane(controller.getFrame()), "furrow");
+        control.setMeshFrame3D(mf3d);
+        model.setRingController(ring_control);
+
+
+        return control;
+    }
+    private static void start3DApplication(){
+        ImageJ.main(new String[]{});
+
+        SegmentationController controls = createDeformingMeshApplication();
+
+        if(input!=null) {
+            String o = input.getAbsolutePath();
+            controls.setOriginalPlus(new ImagePlus(o));
+        }
+    }
+    public static void main(String[] args){
+        if(args.length>0){
+            input = new File(args[0]);
+        }
+        EventQueue.invokeLater(()->start3DApplication());
+
+
+    }
+
+
+}

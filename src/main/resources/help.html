@@ -1,0 +1,49 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+      <title>Introduction and Help</title>
+  </head>
+  <body>
+    <div id="introduction">
+      <h2>Introduction</h2>
+      <ul>
+        <li><a href="#quick-start">Quick Start</a></li>
+        <li><a href="#buttons">Button Descriptions</a></li>
+        <li><a href="#paramters">Parameter Descriptions</a></li>
+        <li><a href="#menus">Menu Item Descriptions</a></li>
+        <li><a href="#advanced-terminal">Menu Item Descriptions</a></li>
+      </ul>
+    </div>
+    <div id="quick-start">
+      <h2>Quick Start</h2>
+      <p>Start with a 3D image stack, it can have multiple time frames, but should be single channel. The image
+        properties need to contain correct pixel dimensions. Then the plugin can be ran.</p>
+      <p>Once the plugin start there will be two windows: a 3D screen, which should be empty, and a control panel
+        with buttons (described below). Click on the button show volume, and a representation of the image stack should
+        appear in the 3D window. Use the -/+ values to adjust the maximum and minimum cutoffs to improve the display.
+      </p>
+      <p>The next step would be to create a mesh, this can be accomplished by clicking 'initialize mesh...' A dialog
+      will appear with three orthogonal views of the image. Clicking on one of the views will start creating a sphere,
+      clicking again will finish the sphere. The goal is to contain the desired shape in spheres. The spheres position
+      and radius can be adjusted with the blue handles.</p>
+      <p>Once the shape is close enough, clicking finish will create a mesh. To have the mesh deform to the image,
+        the parameter "image energy" needs to be adjusted, usually start with a small value around 0.001 and click
+        "deform mesh". The mesh will be attracted to local bright features. If the mesh deforms too much, then click stop,
+        got to the edit menu and select undo.
+        Increase the gamma factor (multiply by 10) and try again. The mesh should deform slower, and hopefully improve.</p>
+    </div>
+    <div id="buttons">
+      <h2>Button Descriptions</h2>
+      
+    </div>
+    <div id="parameters">
+      <h2>Parameters Descriptions</h2>
+    </div>
+    <div id="menus">
+      <h2>Menu Item Descriptions</h2>
+    </div>
+    <div id="terminal">
+      <h2>Using the javascript terminal</h2>
+    </div>
+  </body>
+</html>
