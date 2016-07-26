@@ -7,7 +7,7 @@
     
     <groupId>paluchlab</groupId>
 	<artifactId>DeformableMesh</artifactId>
-	<version>0.3.0-SNAPSHOT</version>
+	<version>0.3.0</version>
     <name>Deforming Mesh</name>
 	<description>Triangulated surface for deforming in 3D.</description>
     
@@ -17,7 +17,12 @@
 		<tag>HEAD</tag>
 		<url>https://github.com/PaluchLabUCL/DeformingMesh3D</url>
 	</scm>
-
+	<parent>
+		<groupId>sc.fiji</groupId>
+		<artifactId>pom-fiji</artifactId>
+		<relativePath />
+		<version>21.4.0</version>
+	</parent>
     <repositories>
         <!-- NB: for project parent -->
         <repository>
@@ -32,12 +37,6 @@
 			<artifactId>junit</artifactId>
 			<version>4.12</version>
 			<scope>test</scope>
-		</dependency>
-        <dependency>
-            <groupId>gov.nih.imagej</groupId>
-            <artifactId>imagej</artifactId>
-            <version>1.47</version>
-			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>gov.nist.math</groupId>
