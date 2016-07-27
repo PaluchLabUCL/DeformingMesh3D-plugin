@@ -141,7 +141,6 @@ public class ContractileRing {
 
             int q1 = getQuadrant(c1, s1);
             int q2 = getQuadrant(c2, s2);
-            System.out.println(q1 + ", " + (theta1*2/Math.PI) + "\t" + q2 + ", " + (theta2*2/Math.PI));
             if(q1==q2){
                 switch(q1){
                     case 0:

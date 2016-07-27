@@ -83,10 +83,6 @@ public class RingController implements FrameListener, ListDataListener {
         main_box.setLayout(new BoxLayout(main_box, BoxLayout.PAGE_AXIS));
 
         JPanel prow = new JPanel();
-        prow.setMaximumSize(new Dimension(200,20));
-        prow.setPreferredSize(new Dimension(200, 20));
-        prow.setMinimumSize(new Dimension(200, 20));
-        //prow.setLayout(new BoxLayout(prow, BoxLayout.LINE_AXIS));
         prow.setLayout(new GridLayout(1, 4));
 
         JLabel p = new JLabel("position: ");
@@ -97,9 +93,6 @@ public class RingController implements FrameListener, ListDataListener {
         addAll(prow, p, px, py, pz);
 
         JPanel drow = new JPanel();
-        drow.setMaximumSize(new Dimension(200,20));
-        drow.setMaximumSize(new Dimension(200, 20));
-        drow.setMinimumSize(new Dimension(200, 20));
         drow.setLayout(new GridLayout(1, 4));
         JLabel d = new JLabel("direction: ");
         dx = createNumericInputField("1");
@@ -109,11 +102,6 @@ public class RingController implements FrameListener, ListDataListener {
         addAll(drow, d, dx, dy, dz);
 
         JPanel trow = new JPanel();
-        trow.setMaximumSize(new Dimension(200,20));
-        trow.setMaximumSize(new Dimension(200, 20));
-        trow.setMinimumSize(new Dimension(200, 20));
-
-        //trow.setLayout(new BoxLayout(trow, BoxLayout.LINE_AXIS));
         trow.setLayout(new GridLayout(1, 2));
         JLabel t = new JLabel("threshold: ");
         thresh = new JTextField("1500");
@@ -139,8 +127,6 @@ public class RingController implements FrameListener, ListDataListener {
         JButton rotate = new JButton("rotate");
         rotate.addActionListener((evt)->rotateFurrow());
         buttons.add(rotate);
-
-
 
         JButton snake = new JButton("curve editor");
         snake.addActionListener((evt)->showSnakeEditor());

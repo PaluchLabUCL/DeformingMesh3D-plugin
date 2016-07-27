@@ -180,7 +180,7 @@ public class ControlFrame implements ReadyObserver {
     }
 
     public void createButtonInitializeMesh2(JPanel panel){
-        final JButton prompt_mesh = new JButton("Initialize Mesh...");
+        final JButton prompt_mesh = new JButton("initialize mesh...");
         buttons.add(prompt_mesh);
         panel.add(prompt_mesh);
         prompt_mesh.addActionListener((evt)->{
@@ -204,7 +204,7 @@ public class ControlFrame implements ReadyObserver {
     }
 
     public void createButtonRemesh(JPanel buttonPanel){
-        JButton button = new JButton("Remesh");
+        JButton button = new JButton("remesh");
         buttons.add(button);
         buttonPanel.add(button);
         button.addActionListener((evt)->{
@@ -288,6 +288,7 @@ public class ControlFrame implements ReadyObserver {
         show_volume.addActionListener(e -> {
             setReady(false);
             segmentationController.showVolume();
+
             finished();
         });
     }

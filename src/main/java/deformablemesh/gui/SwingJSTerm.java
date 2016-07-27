@@ -42,21 +42,23 @@ public class SwingJSTerm {
 
         engine.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
         engine.put("controls", controls);
-        addClasses();
+        try {
+            addClasses();
+        } catch (Exception e) {
+            //do without.
+            e.printStackTrace();
+        }
     }
 
-    public void addClasses(){
+    public void addClasses() throws ScriptException {
 
         BufferedReader reader = new BufferedReader(
                 new InputStreamReader(
                         getClass().getResourceAsStream("/load-bindings.js"), StandardCharsets.UTF_8
                 )
         );
-        try {
-            engine.eval(reader);
-        } catch (Exception e){
-            e.printStackTrace();
-        }
+        engine.eval(reader);
+
     }
 
     JPanel buildUI(){
@@ -66,7 +68,6 @@ public class SwingJSTerm {
 
         display = new JTextArea();
         display.setEditable(false);
-        //display.setPreferredSize(new Dimension(600, 100));
         JScrollPane display_pane = new JScrollPane(display);
         display_pane.setPreferredSize(new Dimension(600, 100));
         root.add(display_pane);
@@ -108,7 +109,6 @@ public class SwingJSTerm {
             //requesting index.
             commandIndex--;
             int eIndex = commandHistory.size() - commandIndex;
-            System.out.println("getting comand: " + eIndex);
             if(eIndex>=0 && eIndex<commandHistory.size()){
                 //valid history.
                 input.setText(commandHistory.get(eIndex));

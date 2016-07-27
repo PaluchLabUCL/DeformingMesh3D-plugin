@@ -168,7 +168,6 @@ public class DeformableMeshDataObject implements DataObject {
             double py = (float)positions[3*i + 1];
             double pz = (float)positions[3*i + 2];
 
-            //System.out.println("(" + px + ", " + py + ", " + pz + ")\t(" + nx + ", " + ny + ", " + nz + ")");
         }
 
         return normals;

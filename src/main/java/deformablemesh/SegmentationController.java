@@ -309,6 +309,7 @@ public class SegmentationController {
     public void showVolume() {
         submit(()->{
             meshFrame3D.showVolume(model.stack);
+            meshFrame3D.setVisible(true);
         });
     }
 

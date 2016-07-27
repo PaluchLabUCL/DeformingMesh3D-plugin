@@ -235,10 +235,20 @@ public class MeshImageStack {
         for(int i = 0; i<3; i++){
             ndex[i] = SCALE*(xyz[i] + offsets[i])*scale_values[i];
             base[i] = (int)ndex[i];
+
+            //outside of image is the same as the edge value.
+            if(base[i]<0){
+                base[i] = 0;
+            } else if(base[i]>max_dex[i]){
+                base[i] = max_dex[i];
+            }
+            /*
+            outside of image is zero.
             if(base[i]<0||base[i]>max_dex[i]){
                 //out of range
                 return 0;
             }
+            */
 
 
             f[i] = base[i]==max_dex[i]?0:ndex[i] - base[i];
