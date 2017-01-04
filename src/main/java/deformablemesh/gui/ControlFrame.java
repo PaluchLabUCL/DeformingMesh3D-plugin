@@ -18,6 +18,7 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
+import javax.swing.JTextField;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.EventQueue;
@@ -26,6 +27,10 @@ import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +47,7 @@ public class ControlFrame implements ReadyObserver {
     boolean ready = true;
     ArrayList<JComponent> buttons = new ArrayList<>();
 
-    JLabel frame_indicator;
+    FrameIndicator frameIndicator = new FrameIndicator();
     private JFrame frame;
     JTabbedPane tabbedPane;
 
@@ -83,15 +88,16 @@ public class ControlFrame implements ReadyObserver {
         content.setLayout(layout);
 
         content.add(buttonPanel);
+        createButtonDeform(buttonPanel);
+        createButtonClearMesh(buttonPanel);
+        createButtonInitializeMesh2(buttonPanel);
+        createButtonRemesh(buttonPanel);
+
+        createFrameIndicator(buttonPanel);
         createButtonPrevious(buttonPanel);
         createButtonNext(buttonPanel);
-        createFrameIndicator(buttonPanel);
         buttonPanel.add(Box.createGlue());
 
-        createButtonInitializeMesh2(buttonPanel);
-        createButtonDeform(buttonPanel);
-        createButtonRemesh(buttonPanel);
-        createButtonClearMesh(buttonPanel);
         createButtonShowVolume(buttonPanel);
         createEnergySelector(buttonPanel);
 
@@ -305,16 +311,21 @@ public class ControlFrame implements ReadyObserver {
     }
     public void createFrameIndicator(JPanel panel){
         JLabel l = new JLabel("frame: ");
-        frame_indicator = new JLabel("0");
+
+
+
+
         JPanel sub = new JPanel();
         sub.add(Box.createHorizontalStrut(15));
         sub.setLayout(new BoxLayout(sub, BoxLayout.LINE_AXIS));
         sub.add(l);
         sub.add(Box.createHorizontalGlue());
-        sub.add(frame_indicator);
+        sub.add(frameIndicator.getTextField());
+        sub.add(frameIndicator.getMaxLabel());
         sub.add(Box.createHorizontalStrut(15));
         panel.add(sub);
     }
+
     public void createEnergySelector(JPanel buttonPanel){
 
         JPanel panel = new JPanel();
@@ -640,7 +651,7 @@ public class ControlFrame implements ReadyObserver {
      */
     public void finished(){
         segmentationController.submit(() -> {
-            frame_indicator.setText("" + segmentationController.getCurrentFrame());
+            frameIndicator.setFrame(segmentationController.getCurrentFrame(), segmentationController.getNFrames());
             setReady(true);
             EventQueue.invokeLater(this::displayErrors);
         });
@@ -686,7 +697,93 @@ public class ControlFrame implements ReadyObserver {
         tabbedPane.invalidate();
         frame.validate();
     }
+    class FrameIndicator{
+        JTextField field = new JTextField("-");
+        JLabel max = new JLabel("/-");
+        FrameIndicator() {
+            Dimension size = new Dimension(60, 30);
+            field.setMinimumSize(size);
+            field.setMaximumSize(size);
+            field.setPreferredSize(size);
+            field.setEnabled(false);
+            field.addMouseListener(new MouseListener() {
+
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    field.setEnabled(true);
+                }
+
+                @Override
+                public void mousePressed(MouseEvent e) {
+                }
+
+                @Override
+                public void mouseReleased(MouseEvent e) {
+                }
+
+                @Override
+                public void mouseEntered(MouseEvent e) {
+                }
+
+                @Override
+                public void mouseExited(MouseEvent e) {
+                }
+            });
+
+            field.addActionListener(new ActionListener() {
+
+                @Override
+                public void actionPerformed(ActionEvent actionEvent) {
+                    try {
+                        int frame = Integer.parseInt(field.getText());
+                        segmentationController.toFrame(frame-1);
+                        field.setEnabled(false);
+                    } catch (NumberFormatException exc) {
+                        //oh well
+                    }
+                }
+            });
+
+            field.addFocusListener(new FocusListener() {
+
+                @Override
+                public void focusGained(FocusEvent focusEvent) {
+
+                }
+
+                @Override
+                public void focusLost(FocusEvent focusEvent) {
+                    if (!field.isEnabled()) {
+                        return;             //how?
+                    }
+                    try {
+
+                        int frame = Integer.parseInt(field.getText());
+                        segmentationController.toFrame(frame-1);
+                        field.setEnabled(false);
+
+                        } catch (NumberFormatException exc) {
+                        //oh well
+                        }
+                }
+            });
+        }
+        public JTextField getTextField() {
+            return field;
+        }
+        public JLabel getMaxLabel(){
+            return max;
+        }
+        public void setFrame(int frame, int total) {
+            field.setEnabled(false);
+            field.setText(String.format("%d", (frame+1)));
+            max.setText("/ " + total);
+        }
+
+    }
 
 }
+
+
 
 

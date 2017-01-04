@@ -79,6 +79,7 @@ public class CircularMeshInitializationDialog extends JDialog {
         });
 
         showMeshes = new JCheckBox("show meshes");
+        showMeshes.setSelected(true);
         showMeshes.addActionListener((evt)->{
             showMeshes();
         });
@@ -127,7 +128,9 @@ public class CircularMeshInitializationDialog extends JDialog {
         sanitizeContent(content);
         attachActions(content);
 
+        showMeshes();
         setVisible(true);
+
 
     }
     private void attachActions(JComponent jcomp){
@@ -456,6 +459,7 @@ public class CircularMeshInitializationDialog extends JDialog {
     }
 
     void showMeshes(){
+
         if(showMeshes.isSelected()) {
             model.submit(()->{
                 final List<DeformableMesh3D> meshes = model.getAllTracks().stream(

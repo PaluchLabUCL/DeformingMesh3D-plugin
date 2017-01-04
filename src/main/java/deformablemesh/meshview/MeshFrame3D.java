@@ -82,6 +82,7 @@ public class MeshFrame3D {
         GraphicsConfiguration gc = DataCanvas.getBestConfigurationOnSameDevice(frame);
         Color3f background = new Color3f(1.0f,0.0f,1.0f);
         canvas = new DataCanvas(gc, background);
+        canvas.rotateView(0, 314);
         frame.add(canvas);
         frame.setVisible(true);
         showAxis();

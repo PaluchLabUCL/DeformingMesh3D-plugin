@@ -16,6 +16,7 @@ import deformablemesh.util.actions.UndoableActions;
 import ij.ImagePlus;
 import snakeprogram3d.display3d.DataObject;
 
+import javax.swing.JLabel;
 import java.awt.Color;
 import java.awt.Image;
 import java.io.File;
@@ -174,6 +175,8 @@ public class SegmentationController {
     public void nextFrame() {
         submit(model::nextFrame);
     }
+
+    public void toFrame(int f){ submit(()->model.setFrame(f));}
 
     public void takeSnapShot() {
         submit(meshFrame3D::recordShot);
@@ -588,6 +591,10 @@ public class SegmentationController {
 
     public boolean hasOriginalPlus() {
         return model.original_plus!=null;
+    }
+
+    public int getNFrames() {
+        return model.original_plus.getNFrames();
     }
 
 

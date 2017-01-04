@@ -6,8 +6,8 @@
 	<modelVersion>4.0.0</modelVersion>
     
     <groupId>paluchlab</groupId>
-	<artifactId>DeformableMesh</artifactId>
-	<version>0.3.0</version>
+	<artifactId>Deformable_Mesh</artifactId>
+	<version>0.3.3</version>
     <name>Deforming Mesh</name>
 	<description>Triangulated surface for deforming in 3D.</description>
     
