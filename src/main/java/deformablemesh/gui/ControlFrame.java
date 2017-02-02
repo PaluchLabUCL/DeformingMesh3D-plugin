@@ -19,6 +19,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.EventQueue;
@@ -606,6 +607,13 @@ public class ControlFrame implements ReadyObserver {
             segmentationController.loadCurvesFromSnakes(f);
             finished();
         });
+        mesh.addSeparator();
+        JMenuItem track = new JMenuItem("track selected");
+        mesh.add(track);
+        track.addActionListener(evt->segmentationController.trackMesh());
+
+
+
         JMenu tools = new JMenu("tools");
         menu.add(tools);
         JMenuItem bin = new JMenuItem("Create Binary Image");

@@ -24,6 +24,7 @@ import ij.process.ImageProcessor;
 
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -1381,6 +1382,13 @@ public class DeformableMesh3DTools {
             }
 
         }
+    }
+
+    public static DeformableMesh3D copyOf(DeformableMesh3D mesh) {
+        double[] pos = Arrays.copyOf(mesh.positions, mesh.positions.length);
+        int[] con = Arrays.copyOf(mesh.connection_index, mesh.connection_index.length);
+        int[] tri = Arrays.copyOf(mesh.triangle_index, mesh.triangle_index.length);
+        return new DeformableMesh3D(pos, con, tri);
     }
 }
 

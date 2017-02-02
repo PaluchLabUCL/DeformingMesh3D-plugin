@@ -247,6 +247,9 @@ public class MeshFrame3D {
                     case KeyEvent.VK_N:
                         segmentationController.selectNextMeshTrack();
                         break;
+                    case KeyEvent.VK_T:
+                        segmentationController.trackMesh();
+                        break;
                     default:
                         break;
                 }

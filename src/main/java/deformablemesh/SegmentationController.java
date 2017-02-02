@@ -418,6 +418,51 @@ public class SegmentationController {
         });
     }
 
+    DeformableMesh3D copyMesh(DeformableMesh3D mesh){
+        return DeformableMesh3DTools.copyOf(mesh);
+    }
+    public void trackMesh(){
+
+        if(model.hasSelectedMesh() && model.hasNextFrame()){
+            actionStack.postAction(new UndoableActions() {
+                final int frame = model.getCurrentFrame();
+                final int next = frame + 1;
+                final DeformableMesh3D old = model.getSelectedMesh(next);
+                final DeformableMesh3D newer = copyMesh(model.getSelectedMesh(frame));
+                Track track = model.getSelectedTrack();
+
+                @Override
+                public void perform() {
+                    submit(() -> {
+
+                            model.addMeshToTrack(next, newer, track);
+
+                    });
+                }
+
+                @Override
+                public void undo() {
+                    submit(()->{
+                        if(old==null){
+                            model.removeMeshFromTrack(next, newer, track);
+                        } else{
+                            model.addMeshToTrack(next, old, track);
+                        }
+                    });
+
+                }
+
+                @Override
+                public void redo() {
+                    submit(() -> {
+                        model.addMeshToTrack(next, newer, track);
+                    });
+                }
+            });
+        }
+        nextFrame();
+    }
+
     public void stopRunning() {
         model.stopRunning();
     }
@@ -535,6 +580,7 @@ public class SegmentationController {
         }
     }
 
+
     public List<Track> getAllTracks() {
         return model.getAllTracks();
     }
@@ -594,6 +640,9 @@ public class SegmentationController {
     }
 
     public int getNFrames() {
+        if(model.original_plus==null){
+            return -1;
+        }
         return model.original_plus.getNFrames();
     }
 
@@ -655,7 +704,7 @@ class ExceptionThrowingService{
             e.execute();
         } catch (Exception exc) {
             System.err.println("Exception enqueued");
-            exceptions.add(exc);
+            throw new RuntimeException(exc);
         }
     }
 
@@ -672,7 +721,6 @@ class ExceptionThrowingService{
             try {
                 f.get();
             } catch (InterruptedException | ExecutionException e) {
-                e.printStackTrace();
                 exceptions.add(e);
             }
         });

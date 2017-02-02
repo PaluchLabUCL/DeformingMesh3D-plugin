@@ -670,6 +670,12 @@ public class SegmentationModel {
     public void measureAllVolumes() {
         MeshAnalysis.calculateAllVolumes(tracker.getAllMeshTracks(), stack);
     }
+
+    public boolean hasNextFrame() {
+
+        return original_plus.getNFrames()>getCurrentFrame();
+
+    }
 }
 
 
