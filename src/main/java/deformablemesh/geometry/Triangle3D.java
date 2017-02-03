@@ -96,6 +96,10 @@ public class Triangle3D {
         return false;
     }
 
+    public boolean hasConnection(Connection3D con){
+        return hasNode(con.A)&&hasNode(con.B);
+    }
+
     public void getIndices(int[] indexes) {
         indexes[0] = A.index;
         indexes[1] = B.index;

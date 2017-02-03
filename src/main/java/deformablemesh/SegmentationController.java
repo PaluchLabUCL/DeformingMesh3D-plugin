@@ -646,6 +646,13 @@ public class SegmentationController {
         return model.original_plus.getNFrames();
     }
 
+    public void toggleSurface() {
+        if(model.hasSelectedMesh()){
+            Track track = model.getSelectedTrack();
+            track.setShowSurface(!track.getShowSurface());
+        }
+    }
+
 
     public interface Executable{
         void execute() throws Exception;

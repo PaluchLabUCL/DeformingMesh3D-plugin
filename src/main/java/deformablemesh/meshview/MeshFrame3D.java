@@ -250,6 +250,9 @@ public class MeshFrame3D {
                     case KeyEvent.VK_T:
                         segmentationController.trackMesh();
                         break;
+                    case KeyEvent.VK_O:
+                        segmentationController.toggleSurface();
+                        break;
                     default:
                         break;
                 }
@@ -288,7 +291,6 @@ public class MeshFrame3D {
         for(Track track: tracks){
             if(!track.containsKey(currentFrame)) continue;
             DeformableMesh3D mesh = track.getMesh(currentFrame);
-
             if(!showing.contains(mesh)){
                 if(mesh.data_object==null){
                     mesh.create3DObject();

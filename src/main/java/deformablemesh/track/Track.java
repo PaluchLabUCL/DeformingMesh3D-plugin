@@ -13,7 +13,7 @@ import java.util.TreeMap;
 public class Track {
     String name;
     Color color;
-
+    boolean showSurface = false;
     private Map<Integer, DeformableMesh3D> track = new TreeMap<>();
     private boolean selected;
 
@@ -116,7 +116,18 @@ public class Track {
         this.selected = selected;
     }
 
+    public void setShowSurface(boolean show){
+        showSurface = show;
+        for(DeformableMesh3D mesh: track.values()){
+            mesh.setShowSurface(show);
+        }
+    }
+
     public boolean isSelected() {
         return selected;
+    }
+
+    public boolean getShowSurface() {
+        return showSurface;
     }
 }
