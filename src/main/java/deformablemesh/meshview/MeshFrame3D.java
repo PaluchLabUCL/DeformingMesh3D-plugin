@@ -93,10 +93,12 @@ public class MeshFrame3D {
     public void addLights(){
         BoundingSphere bounds =	new BoundingSphere (new Point3d(0, 0.0, 0.0), 5.0);
 
-        PointLight light = new PointLight(new Color3f(1f, 1f, 1f), new Point3f(0, 0, 1.25f), new Point3f(1.0f, 1.0f, 0f));
+        PointLight light = new PointLight(new Color3f(1f, 1f, 1f), new Point3f(0, 0, 1), new Point3f(1.0f, 1.0f, 0f));
         light.setInfluencingBounds(bounds);
 
-        AmbientLight amber = new AmbientLight(new Color3f(Color.WHITE));
+        AmbientLight amber = new AmbientLight(new Color3f(new float[]{
+                0.5f, 0.5f, 0.5f
+        }));
         amber.setInfluencingBounds(bounds);
 
         addDataObject(() -> {

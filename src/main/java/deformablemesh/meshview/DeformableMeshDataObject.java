@@ -42,7 +42,7 @@ public class DeformableMeshDataObject implements DataObject {
         lines.setCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
 
         mesh_object = new Shape3D(lines);
-        mesh_object.setAppearance(createAppearance());
+        mesh_object.setAppearance(createLineAppearance());
 
         surfaces = new IndexedTriangleArray(nodes.size(), GeometryArray.COORDINATES|GeometryArray.NORMALS, 3*triangles.size());
         surfaces.setCoordinates(0,positions);
@@ -84,15 +84,15 @@ public class DeformableMeshDataObject implements DataObject {
         float[] rgb = color.getRGBComponents(new float[4]);
         Color3f ambient = new Color3f(rgb[0], rgb[1], rgb[2]);
         Color3f emmisive = new Color3f(Color.BLACK);
-        Color3f difuse = new Color3f(clamp(rgb[0] + 0.25f), clamp(rgb[1] + 0.25f), clamp(rgb[2] + 0.25f));
+        Color3f difuse = new Color3f(rgb[0], rgb[1], rgb[2]);
 
-        Color3f specular = new Color3f(clamp(rgb[0] + 0.5f), clamp(rgb[1] + 0.5f), clamp(rgb[2] + 0.5f));
+        Color3f specular = new Color3f(1f, 1f, 1f);
         Material mat = new Material(
                 ambient, //ambient.
                 emmisive, //emmisive.
                 difuse,
                 specular,
-                10f);
+                0.1f);
         a.setMaterial(mat);
         return a;
     }
@@ -179,7 +179,7 @@ public class DeformableMeshDataObject implements DataObject {
         surfaces.setCoordinates(0, positions);
     }
 
-    public Appearance createAppearance(){
+    public Appearance createLineAppearance(){
         Appearance a = new Appearance();
         float[] r = new float[3];
         r = wires.getColorComponents(r);
