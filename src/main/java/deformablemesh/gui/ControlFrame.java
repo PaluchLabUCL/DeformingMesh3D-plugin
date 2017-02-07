@@ -634,6 +634,12 @@ public class ControlFrame implements ReadyObserver {
             segmentationController.measureAllVolumes();
         });
 
+        JMenuItem measureSelected = new JMenuItem("Measure Selected");
+        tools.add(measureSelected);
+        measureSelected.addActionListener(evt->{
+            segmentationController.measureSelected();
+        });
+
         JMenuItem scripts = new JMenuItem("javascript console");
         tools.add(scripts);
         scripts.addActionListener(evt->{

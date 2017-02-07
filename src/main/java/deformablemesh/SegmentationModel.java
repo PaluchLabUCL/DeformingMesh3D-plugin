@@ -671,6 +671,31 @@ public class SegmentationModel {
         MeshAnalysis.calculateAllVolumes(tracker.getAllMeshTracks(), stack);
     }
 
+    public void measureSelectedMesh(){
+        DeformableMesh3D mesh = getSelectedMesh(getCurrentFrame());
+        double volume = DeformableMesh3DTools.calculateVolume(new double[]{0, 0, 1}, mesh.positions, mesh.triangles);
+        volume = volume*stack.SCALE * stack.SCALE*stack.SCALE;
+        double are = DeformableMesh3DTools.calculateSurfaceArea(mesh);
+        are = are * stack.SCALE*stack.SCALE;
+
+        double[] centroid = DeformableMesh3DTools.centerAndRadius(mesh.nodes);
+        double[] minMax = DeformableMesh3DTools.findMinMax(mesh.nodes, centroid);
+        for(int i = 0; i<centroid.length; i++){
+            centroid[i] = centroid[i]*stack.SCALE;
+        }
+        minMax[0] = minMax[0]*stack.SCALE;
+        minMax[1] = minMax[1]*stack.SCALE;
+        
+        StringBuilder builder = new StringBuilder("Deformable Mesh Output.\n");
+        builder.append(String.format("Volume: %f\n", volume));
+        builder.append(String.format("Area: %f\n", are));
+        builder.append(String.format("Centroid: %f, %f, %f\n", centroid[0], centroid[1], centroid[2]));
+        builder.append("Distance from nodes to centroid.\n");
+        builder.append(String.format("mean: %f max: %f min: %f\n", centroid[3], minMax[1], minMax[0]));
+        GuiTools.createTextOuputPane(builder.toString());
+
+    }
+
     public boolean hasNextFrame() {
 
         return original_plus.getNFrames()>getCurrentFrame();

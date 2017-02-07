@@ -1055,6 +1055,14 @@ public class DeformableMesh3DTools {
         return sum/triangles.size();
     }
 
+    /**
+     * Calculates the center based on the position of the nodes. Finds the mean distance from the center.
+     *
+     * Since the nodes are not evenly distributed this method
+     * can be biased.
+     * @param nodes Nodes of the current mesh.
+     * @return {x, y, z, r}
+     */
     public static double[] centerAndRadius(List<Node3D> nodes){
         double[] sum = new double[4];
 
@@ -1088,6 +1096,17 @@ public class DeformableMesh3DTools {
         return sum;
 
 
+
+    }
+
+    public static double calculateSurfaceArea(DeformableMesh3D mesh){
+        double area = 0;
+        for(Triangle3D triangle: mesh.triangles){
+            triangle.update();
+            area += triangle.area;
+        }
+
+        return area;
 
     }
 
@@ -1389,6 +1408,31 @@ public class DeformableMesh3DTools {
         int[] con = Arrays.copyOf(mesh.connection_index, mesh.connection_index.length);
         int[] tri = Arrays.copyOf(mesh.triangle_index, mesh.triangle_index.length);
         return new DeformableMesh3D(pos, con, tri);
+    }
+
+    /**
+     * Finds the closest and furthest away nodes from the centroid.
+     *
+     * @param nodes
+     * @param centroid
+     * @return {min, max}
+     */
+    public static double[] findMinMax(List<Node3D> nodes, double[] centroid) {
+        double min = Double.MAX_VALUE;
+        double max = -Double.MAX_VALUE;
+        for(Node3D node: nodes){
+
+            double[] r = node.getCoordinates();
+            double distance = Math.sqrt(
+                    Math.pow(r[0] - centroid[0], 2) +
+                            Math.pow(r[1] - centroid[1], 2) +
+                            Math.pow(r[2] - centroid[2], 2)
+            );
+            min = distance<min?distance:min;
+            max = distance>max?distance:max;
+        }
+        return new double[]{min, max};
+
     }
 }
 

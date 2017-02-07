@@ -653,6 +653,12 @@ public class SegmentationController {
         }
     }
 
+    public void measureSelected() {
+        if(model.hasSelectedMesh()){
+            submit(model::measureSelectedMesh);
+        }
+    }
+
 
     public interface Executable{
         void execute() throws Exception;
