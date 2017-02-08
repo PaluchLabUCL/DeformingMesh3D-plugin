@@ -117,14 +117,19 @@ public class ControllerTest {
             int[] x = new int[0];
             int y = x[0];
         });
-        Assert.assertEquals(waitFor(controller).size(), 1);
+        controller.submit(()->{
+            Assert.assertEquals(controller.getExecutionErrors().size(), 1);
+        });
+
         controller.submit(()->{
             controller.submit(()->{
                 int[] x = new int[0];
                 int y = x[0];
             });
         });
-        Assert.assertEquals(waitFor(controller).size(), 1);
+
+        Assert.assertEquals(waitFor(controller), 1);
+
 
     }
     private List<Exception> waitFor(SegmentationController controller){

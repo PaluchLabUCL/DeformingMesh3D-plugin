@@ -685,7 +685,7 @@ public class SegmentationModel {
         }
         minMax[0] = minMax[0]*stack.SCALE;
         minMax[1] = minMax[1]*stack.SCALE;
-        
+
         StringBuilder builder = new StringBuilder("Deformable Mesh Output.\n");
         builder.append(String.format("Volume: %f\n", volume));
         builder.append(String.format("Area: %f\n", are));
