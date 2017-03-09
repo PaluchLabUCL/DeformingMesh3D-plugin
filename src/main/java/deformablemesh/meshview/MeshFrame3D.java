@@ -239,20 +239,21 @@ public class MeshFrame3D {
 
             @Override
             public void keyTyped(KeyEvent e) {
-                switch(e.getExtendedKeyCode()){
-                    case KeyEvent.VK_SPACE:
+                char c = e.getKeyChar();
+                switch(c){
+                    case ' ':
                         toggleAxis();
                         break;
-                    case KeyEvent.VK_S:
+                    case 's':
                         snapShot();
                         break;
-                    case KeyEvent.VK_N:
+                    case 'n':
                         segmentationController.selectNextMeshTrack();
                         break;
-                    case KeyEvent.VK_T:
+                    case 't':
                         segmentationController.trackMesh();
                         break;
-                    case KeyEvent.VK_O:
+                    case 'o':
                         segmentationController.toggleSurface();
                         break;
                     default:
