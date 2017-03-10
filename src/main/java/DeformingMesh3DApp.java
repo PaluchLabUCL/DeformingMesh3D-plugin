@@ -1,6 +1,7 @@
 import deformablemesh.SegmentationController;
 import deformablemesh.SegmentationModel;
 import deformablemesh.gui.ControlFrame;
+import deformablemesh.gui.PropertySaver;
 import deformablemesh.gui.RingController;
 import deformablemesh.meshview.MeshFrame3D;
 import ij.ImageJ;
@@ -14,6 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
 
 /**
@@ -34,7 +36,7 @@ public class DeformingMesh3DApp{
         SegmentationModel model = new SegmentationModel();
         SegmentationController control = new SegmentationController(model);
         try{
-            loadProperties(control);
+            PropertySaver.loadProperties(control);
         } catch(Exception e){
             System.err.println("cannot load properties: " + e.getMessage());
         }
@@ -60,28 +62,6 @@ public class DeformingMesh3DApp{
 
     }
 
-    static public void loadProperties(SegmentationController control) throws IOException {
-        String home = System.getProperty("user.home");
-        File props = new File(home, ".dmesh3d");
-        if(props.exists()){
-            //try to read them properties.
-            List<String> lines = Files.readAllLines(props.toPath(), StandardCharsets.UTF_8);
-            for(String line: lines){
-                System.out.println(lines);
-            }
-        }
-    }
-
-    static public void saveProperties(SegmentationController control){
-        String home = System.getProperty("user.home");
-        File props = new File(home, ".dmesh3d");
-        if(props.exists()){
-            //try to read them properties.
-            props.delete();
-        }
-        BufferedWriter writer = Files.newBufferedWriter()
-
-    }
 
     private static void start3DApplication(){
         ImageJ.main(new String[]{});

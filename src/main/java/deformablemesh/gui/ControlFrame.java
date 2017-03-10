@@ -33,6 +33,7 @@ import java.awt.event.FocusListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -115,31 +116,42 @@ public class ControlFrame implements ReadyObserver {
         inputs.setLayout(new GridLayout(4,2,0,0));
         content.add(inputs);
         SetValue set_gamma = d -> segmentationController.setGamma(d);
-        inputs.add(GuiTools.createInputField("gamma", set_gamma, segmentationController.getGamma(), this));
+        inputs.add(GuiTools.createInputField("gamma", createSavingValue(set_gamma), segmentationController.getGamma(), this));
 
         SetValue set_alpha = d -> segmentationController.setAlpha(d);
-        inputs.add(GuiTools.createInputField("alpha", set_alpha, segmentationController.getAlpha(), this));
+        inputs.add(GuiTools.createInputField("alpha", createSavingValue(set_alpha), segmentationController.getAlpha(), this));
 
         SetValue set_pressure = d -> segmentationController.setPressure(d);
-        inputs.add(GuiTools.createInputField("pressure", set_pressure, segmentationController.getPressure(), this));
+        inputs.add(GuiTools.createInputField("pressure", createSavingValue(set_pressure), segmentationController.getPressure(), this));
 
         SetValue normalizer = d -> segmentationController.setNormalizerWeight(d);
-        inputs.add(GuiTools.createInputField("normalize", normalizer, segmentationController.getNormalizeWeight(), this));
+        inputs.add(GuiTools.createInputField("normalize", createSavingValue(normalizer), segmentationController.getNormalizeWeight(), this));
 
         SetValue set_image_weight = d -> segmentationController.setWeight(d);
-        inputs.add(GuiTools.createInputField("image weight", set_image_weight, segmentationController.getImageWeight(), this));
+        inputs.add(GuiTools.createInputField("image weight", createSavingValue(set_image_weight), segmentationController.getImageWeight(), this));
 
         SetValue set_divisions = d -> segmentationController.setDivisions((int)d);
-        inputs.add(GuiTools.createInputField("divisions", set_divisions, segmentationController.getDivisions(), this));
+        inputs.add(GuiTools.createInputField("divisions", createSavingValue(set_divisions), segmentationController.getDivisions(), this));
 
         SetValue set_curve_weight = d -> segmentationController.setCurveWeight(d);
-        inputs.add(GuiTools.createInputField("curve weight", set_curve_weight, segmentationController.getCurveWeight(), this));
+        inputs.add(GuiTools.createInputField("curve weight", createSavingValue(set_curve_weight), segmentationController.getCurveWeight(), this));
 
         SetValue setBeta = d -> segmentationController.setBeta(d);
-        inputs.add(GuiTools.createInputField("beta", setBeta, segmentationController.getBeta(), this));
+        inputs.add(GuiTools.createInputField("beta", createSavingValue(setBeta), segmentationController.getBeta(), this));
         return content;
     }
+    SetValue createSavingValue(SetValue value){
+        SetValue saving = d->{
+            value.setValue(d);
+            try{
+                PropertySaver.saveProperties(segmentationController);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
+        };
+        return saving;
+    }
     private void createButtonMeasureVolume(JPanel buttonPanel) {
         final JButton measureVolume = new JButton("measure volume");
         measureVolume.setToolTipText("Measures volume vs time");
