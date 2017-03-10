@@ -700,12 +700,10 @@ public class SegmentationController {
 
 class ExceptionThrowingService{
     ExecutorService main;
-    ExecutorService monitor;
     Thread main_thread;
     final List<Exception> exceptions = Collections.synchronizedList(new ArrayList<>());
     ExceptionThrowingService(){
         main = Executors.newSingleThreadExecutor();
-        monitor = Executors.newSingleThreadExecutor();
         main.submit(() -> {
             main_thread = Thread.currentThread();
             main_thread.setName("My Main Thread");
@@ -730,11 +728,13 @@ class ExceptionThrowingService{
 
         final Future f = main.submit(()->execute(r));
 
-        monitor.submit(() -> {
+        main.submit(() -> {
             try {
                 f.get();
             } catch (InterruptedException | ExecutionException e) {
-                exceptions.add(e);
+                synchronized (exceptions){
+                    exceptions.add(e);
+                }
             }
         });
     }

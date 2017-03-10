@@ -47,20 +47,11 @@ public class DeformingMesh3DApp{
         controller.addTabbedPanel(ring_control.getContentPane(controller.getFrame()), "furrow");
         control.setMeshFrame3D(mf3d);
         model.setRingController(ring_control);
-        positionFrames(controller, mf3d);
+        PropertySaver.positionFrames(controller, mf3d);
         return control;
     }
 
-    static public void positionFrames(ControlFrame control, MeshFrame3D mf3d){
-        JFrame c = control.getFrame();
-        JFrame m = mf3d.getJFrame();
-        int x = m.getX();
-        int y = m.getY();
-        int w = m.getWidth();
-        int h = m.getHeight();
-        c.setLocation(x+w, y);
 
-    }
 
 
     private static void start3DApplication(){

@@ -118,7 +118,7 @@ public class ControllerTest {
             int y = x[0];
         });
         controller.submit(()->{
-            Assert.assertEquals(controller.getExecutionErrors().size(), 1);
+            Assert.assertEquals(waitFor(controller).size(), 1);
         });
 
         controller.submit(()->{
@@ -128,7 +128,7 @@ public class ControllerTest {
             });
         });
 
-        Assert.assertEquals(waitFor(controller), 1);
+        Assert.assertEquals(waitFor(controller).size(), 1);
 
 
     }
