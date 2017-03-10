@@ -61,7 +61,6 @@ public class PropertySaver {
     }
     static public void saveProperties(SegmentationController control) throws IOException {
         if(!canSave) return;
-        long begin = System.currentTimeMillis();
         String home = System.getProperty("user.home");
         File props = new File(home, ".dmesh3d");
         try(BufferedWriter writer = Files.newBufferedWriter(props.toPath(), StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)){
@@ -77,7 +76,5 @@ public class PropertySaver {
             canSave = false;
             throw new IOException(exc);
         }
-        long finish = System.currentTimeMillis() - begin;
-        System.out.println(finish);
     }
 }
