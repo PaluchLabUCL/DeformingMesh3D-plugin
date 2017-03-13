@@ -10,7 +10,13 @@
 	<version>0.3.4-SNAPSHOT</version>
     <name>Deforming Mesh</name>
 	<description>Triangulated surface for deforming in 3D.</description>
-    
+	<licenses>
+		<license>
+			<name>MIT License</name>
+			<url>https://opensource.org/licenses/MIT</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
     <scm>
 		<connection>scm:git:git://github.com/PaluchLabUCL/DeformingMesh3D</connection>
 		<developerConnection>scm:git:git@github.com:PaluchLabUCL/DeformingMesh3D</developerConnection>
