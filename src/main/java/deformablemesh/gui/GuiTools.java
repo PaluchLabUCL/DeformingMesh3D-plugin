@@ -101,7 +101,7 @@ public class GuiTools {
         row.add(Box.createHorizontalGlue());
 
         final JTextField field = new JTextField();
-        field.setText(String.format("%2.2f",initial));
+        field.setText(""+ initial);
         field.setMinimumSize(new Dimension(100, 20));
         field.setPreferredSize(new Dimension(100, 20));
         field.setMaximumSize(new Dimension(200, 20));
