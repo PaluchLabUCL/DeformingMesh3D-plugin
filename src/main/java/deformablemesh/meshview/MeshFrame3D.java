@@ -250,9 +250,6 @@ public class MeshFrame3D {
                     case 'n':
                         segmentationController.selectNextMeshTrack();
                         break;
-                    case 't':
-                        segmentationController.trackMesh();
-                        break;
                     case 'o':
                         segmentationController.toggleSurface();
                         break;

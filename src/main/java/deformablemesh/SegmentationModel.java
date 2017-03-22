@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -718,6 +719,27 @@ public class SegmentationModel {
     public boolean hasNextFrame() {
 
         return original_plus.getNFrames()>getCurrentFrame();
+
+    }
+
+    /**
+     * Creates a text window with the current furrow values scaled to the image units.
+     *
+     */
+    public void showFurrowValues() {
+       Furrow3D f = ringController.getFurrow();
+       if(f==null){return;}
+
+       double scale = stack.SCALE;
+       StringBuilder builds = new StringBuilder("#position and normal using the image units.\n");
+       builds.append("#x(unit)\ty(unit)\tz(unit)nx\tny\tnz\n");
+       builds.append(String.format(
+               "%f\t%f\t%f\t%f\t%f\t%f",
+               f.cm[0]*scale, f.cm[1]*scale, f.cm[2]*scale,
+               f.normal[0], f.normal[1], f.normal[2]
+       ));
+
+       GuiTools.createTextOuputPane(builds.toString());
 
     }
 }

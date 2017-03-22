@@ -622,7 +622,11 @@ public class ControlFrame implements ReadyObserver {
         mesh.addSeparator();
         JMenuItem track = new JMenuItem("track selected");
         mesh.add(track);
-        track.addActionListener(evt->segmentationController.trackMesh());
+        track.setAccelerator(KeyStroke.getKeyStroke('t'));
+        track.addActionListener(evt->{
+            segmentationController.trackMesh();
+            finished();
+        });
 
 
 
@@ -652,6 +656,11 @@ public class ControlFrame implements ReadyObserver {
             segmentationController.measureSelected();
         });
 
+        JMenuItem showFurrowValues = new JMenuItem("Furrow Values");
+        tools.add(showFurrowValues);
+        showFurrowValues.addActionListener(evt->{
+            segmentationController.showFurrowValues();
+        });
         JMenuItem scripts = new JMenuItem("javascript console");
         tools.add(scripts);
         scripts.addActionListener(evt->{

@@ -659,6 +659,10 @@ public class SegmentationController {
         }
     }
 
+    public void showFurrowValues() {
+        model.showFurrowValues();
+    }
+
 
     public interface Executable{
         void execute() throws Exception;
