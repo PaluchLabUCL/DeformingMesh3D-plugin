@@ -3,12 +3,15 @@ package deformablemesh.util;
 import java.awt.Color;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Created by msmith on 6/21/16.
  */
 public class ColorSuggestions {
     static int next = 0;
+    static Random ng = new Random();
+
     static List<Color> colors = Arrays.asList(
             new Color(0xff0000),
             new Color(0x0000ff),
@@ -26,7 +29,24 @@ public class ColorSuggestions {
             new Color(0xFF8C00),
             new Color(0x9400D3),
             new Color(0x614051),
-            new Color(0xCC6666));
+            new Color(0xCC6666),
+            new Color(0xFFEBCD),
+            new Color(0x7fff00),
+            new Color(0xd2691e),
+            new Color(0x00ffff),
+            new Color(0xbdb76b),
+            new Color(0x9932cc),
+            new Color(0x8fbc8f),
+            new Color(0x9400d3),
+            new Color(0x696969),
+            new Color(0xff00ff),
+            new Color(0xffd700),
+            new Color(0x228b22),
+            new Color(0xdaa520),
+            new Color(0x4b0082),
+            new Color(0x008080),
+            new Color(0xd2b48c),
+            new Color(0x191970));
 
     final static List<String> names = Arrays.asList(
                                 "red",
@@ -45,7 +65,25 @@ public class ColorSuggestions {
                                 "dark orange",
                                 "dark violet",
                                 "eggplant",
-                                "fuzzy wuzzy"
+                                "fuzzy wuzzy",
+                                "antique white",
+                                "blanched almond",
+                                "chartruese",
+                                "chocolate",
+                                "cyan",
+                                "dark khaki",
+                                "dark orchid",
+                                "dark sea green",
+                                "dark violet",
+                                "dim grey",
+                                "fuchsia",
+                                "gold",
+                                "forest green",
+                                "golden rod",
+                                "indigo",
+                                "teal",
+                                "tan",
+                                "midnight blue"
     );
 
 
@@ -54,6 +92,32 @@ public class ColorSuggestions {
         next = next%colors.size();
         return c;
     }
+
+    /**
+     * Tries to get a color that doesn't exist in the current list.
+     *
+     * @param existing
+     * @return
+     */
+    public static Color getSuggestion(List<Color> existing){
+        if(existing.size()<colors.size()) {
+            Color c;
+            do {
+                c = colors.get(next++);
+                next = next % colors.size();
+            } while (existing.contains(c));
+            return c;
+        } else {
+            Color c;
+            do {
+                c = new Color(ng.nextInt()&(0xffffff));
+                next = next % colors.size();
+            } while (existing.contains(c));
+            return c;
+        }
+
+    }
+
 
     public static String getColorName(Color c){
         int dex = colors.indexOf(c);
@@ -65,8 +129,15 @@ public class ColorSuggestions {
     }
 
     public static Color fromNameOrSuggestion(String name){
+
+        //name is just the html code.
+        if('#'==name.charAt(0)){
+            return new Color(Integer.parseInt(name.substring(1), 16));
+        }
+
         int dex = names.indexOf(name);
         if(dex<0){
+
             return getSuggestion();
         } else{
             return colors.get(dex);

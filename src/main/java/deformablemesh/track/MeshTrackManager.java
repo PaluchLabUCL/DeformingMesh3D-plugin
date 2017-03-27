@@ -7,13 +7,16 @@ import deformablemesh.geometry.Furrow3D;
 import deformablemesh.geometry.ProjectableMesh;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.ringdetection.FurrowTransformer;
+import deformablemesh.util.ColorSuggestions;
 
 import javax.swing.DefaultListSelectionModel;
 import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -29,7 +32,10 @@ import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
+import java.awt.Shape;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Path2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -39,6 +45,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * A gui/class for organizing a sorting the linking of meshes.
@@ -132,6 +139,8 @@ public class MeshTrackManager {
         frame = new JFrame();
         JPanel content = new JPanel();
         trackTable = new JTable();
+        trackTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+
         trackTable.setCellSelectionEnabled(true);
         trackTable.setSelectionModel(selectionModel);
         trackTable.setRowHeight(64);
@@ -146,9 +155,17 @@ public class MeshTrackManager {
         trackTable.setDefaultRenderer(DeformableMesh3D.class, new MeshCellRenderer());
 
         content.setLayout(new BorderLayout());
-        content.add(new JScrollPane(trackTable,JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED), BorderLayout.CENTER);
+        content.add(
+                new JScrollPane(
+                        trackTable,
+                        JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                        JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED
+                ),
+                BorderLayout.CENTER
+        );
+
         frame.setContentPane(content);
-        frame.setSize(new Dimension(680, 400));
+        frame.setSize(new Dimension(100, 400));
         frame.setVisible(true);
         JMenuBar bar = new JMenuBar();
         JMenu menu = new JMenu("file");
@@ -158,7 +175,36 @@ public class MeshTrackManager {
 
         JPanel buttons = new JPanel();
         buttons.setLayout(new GridLayout(1, 3));
-        
+        JButton shiftTrack = new JButton("shift track");
+
+        shiftTrack.addActionListener(evt->{
+            String[] destinations = getPossibleDestinations();
+            if(destinations.length==0){
+                return;
+            }
+            String example = (String)JOptionPane.showInputDialog(
+                    frame,
+                    "Select Destination Track.",
+                    "Tracks",
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    destinations,
+                    destinations[0]);
+            if(example==null) {
+                //cancelled?
+                return;
+            }
+            moveToTrack(example);
+        });
+
+        buttons.add(shiftTrack);
+
+        JButton toNewTrack = new JButton("to new track");
+        toNewTrack.addActionListener(evt->toNewTrack());
+        buttons.add(toNewTrack);
+
+        JButton shiftFrame = new JButton("shift frame");
+        buttons.add(shiftFrame);
 
         content.add(buttons, BorderLayout.SOUTH);
 
@@ -182,7 +228,179 @@ public class MeshTrackManager {
         }
     }
 
+    private void toNewTrack(){
+        int c = trackTable.getSelectedColumn();
+
+        if(c>0){
+            int[] rows = trackTable.getSelectedRows();
+            if(rows.length==0){
+                return;
+            }
+
+            Track t = tracks.get(c-1);
+            int count = rows.length;
+            for(int i = 0; i<rows.length; i++){
+                if(!t.containsKey(rows[i])){
+                    rows[i] = -1;
+                    count--;
+                }
+            }
+            //no good meshes.
+            if(count==0){
+                return;
+            }
+
+            if(count<rows.length) {
+                //remove some.
+                int[] rows2 = new int[count];
+                int j = 0;
+                for (int i = 0; i < rows.length; i++) {
+                    if(rows[i]>=0){
+                        rows2[j] = rows[i];
+                        j++;
+                    }
+                }
+                rows = rows2;
+            }
+
+            List<Color> colors = tracks.stream().map(tr->tr.color).collect(Collectors.toList());
+            Color color = ColorSuggestions.getSuggestion(colors);
+            Track n = new Track(ColorSuggestions.getColorName(color), color);
+
+            for(int i: rows){
+                DeformableMesh3D mesh = t.getMesh(i);
+                t.remove(mesh);
+                n.addMesh(i, mesh);
+            }
+
+            tracks.add(n);
+            shapeTable();
+        }
+    }
+
+    private void moveToTrack(String example) {
+        Track destination = null;
+        for(Track t: tracks){
+            if(t.name.equals(example)){
+                destination=t;
+                break;
+            }
+        }
+
+        if(destination==null){
+            throw new RuntimeException("Destination not found!");
+        }
+        int c = trackTable.getSelectedColumn();
+
+        if(c>0) {
+            int[] rows = trackTable.getSelectedRows();
+            if(rows.length==0){
+                throw new RuntimeException("No meshes selected!");
+            }
+            Track t = tracks.get(c-1);
+            int count = rows.length;
+            for(int i = 0; i<rows.length; i++){
+                if(!t.containsKey(rows[i])){
+                    rows[i] = -1;
+                    count--;
+                }
+            }
+            //no good meshes.
+            if(count==0){
+                throw new RuntimeException("None of the selected rows have meshes!");
+            }
+
+            if(count<rows.length) {
+                //remove some.
+                int[] rows2 = new int[count];
+                int j = 0;
+                for (int i = 0; i < rows.length; i++) {
+                    if(rows[i]>=0){
+                        rows2[j] = rows[i];
+                        j++;
+                    }
+                }
+                rows = rows2;
+            }
+            Track one = tracks.get(c-1);
+            for(Integer index: rows){
+                DeformableMesh3D mesh = one.getMesh(index);
+                one.remove(mesh);
+                destination.addMesh(index, mesh);
+            }
+
+
+        } else{
+            throw new RuntimeException("Valid column not selected!");
+        }
+
+        //why on earth?
+
+    }
+
+    private String[] getPossibleDestinations() {
+        int c = trackTable.getSelectedColumn();
+
+        if(c>0){
+            int[] rows = trackTable.getSelectedRows();
+            if(rows.length==0){
+                return new String[0];
+            }
+            Track t = tracks.get(c-1);
+            int count = rows.length;
+            for(int i = 0; i<rows.length; i++){
+                if(!t.containsKey(rows[i])){
+                    rows[i] = -1;
+                    count--;
+                }
+            }
+            //no good meshes.
+            if(count==0){
+                return new String[0];
+            }
+
+            if(count<rows.length) {
+                //remove some.
+                int[] rows2 = new int[count];
+                int j = 0;
+                for (int i = 0; i < rows.length; i++) {
+                    if(rows[i]>=0){
+                        rows2[j] = rows[i];
+                        j++;
+                    }
+                }
+                rows = rows2;
+            }
+
+            List<String> acceptable = new ArrayList<>(tracks.size());
+
+            for(Track otra: tracks){
+                if(otra==t) continue;
+                boolean available = true;
+                for(int i = 0; i<rows.length; i++){
+                    if(otra.containsKey(rows[i])){
+                        available = false;
+                        break;
+                    }
+                }
+                if(!available){
+                    continue;
+                }
+                acceptable.add(otra.getName());
+            }
+
+            return acceptable.toArray(new String[acceptable.size()]);
+
+        }
+
+
+        return new String[0];
+    }
+
     public void manageMeshTrackes(List<Track> tracks){
+        this.tracks.clear();
+        labels.clear();
+
         int rows = 0;
         for(Track track: tracks){
 
@@ -196,8 +414,16 @@ public class MeshTrackManager {
             }
         }
         model.rows = rows;
+
         this.tracks.addAll(tracks);
 
+        shapeTable();
+
+    }
+
+    public void shapeTable(){
+
+        model.fireTableStructureChanged();
         if(trackTable!=null) {
             TableColumnModel tcm = trackTable.getColumnModel();
             if (tcm != null) {
@@ -217,7 +443,6 @@ public class MeshTrackManager {
                 }
             }
         }
-        model.fireTableStructureChanged();
 
     }
 
@@ -227,19 +452,10 @@ public class MeshTrackManager {
         Furrow3D furrow = new Furrow3D(center, new double[]{0, 0, 1});
         FurrowTransformer transformer = new FurrowTransformer(furrow, new MeshImageStack());
         ProjectableMesh pmesh = new ProjectableMesh(mesh);
-        List<double[]> lines = pmesh.getSlicedTriangles(transformer);
-        Path2D path = new Path2D.Double();
-
-        for(int i = 0; i<lines.size()/2; i++){
-            double[] a = lines.get(i*2);
-            double[] b = lines.get(i*2 + 1);
-            double x1 = (a[0] + 0.5)*64;
-            double y1 = (a[1] + 0.5)*64;
-            double x2 = (b[0] + 0.5)*64;
-            double y2 = (b[1] + 0.5)*64;
-            path.moveTo(x1, y1);
-            path.lineTo(x2, y2);
-        }
+        Shape path = pmesh.continuousPaths(transformer);
+        AffineTransform transform = AffineTransform.getScaleInstance(64, 64);
+        transform.translate(0.5, 0.5);
+        path = transform.createTransformedShape(path);
 
         Graphics2D g2d = (Graphics2D)img.getGraphics();
         g2d.setColor(Color.BLUE);
@@ -249,6 +465,7 @@ public class MeshTrackManager {
         g2d.fillRect(0, 0, 64, 64);
         g2d.setColor(Color.RED);
         g2d.draw(path);
+        g2d.fill(path);
         g2d.dispose();
         return new JLabel(new ImageIcon(img));
     }

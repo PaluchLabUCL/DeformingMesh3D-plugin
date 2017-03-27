@@ -6,8 +6,10 @@ import deformablemesh.util.Vector3DOps;
 import java.awt.Shape;
 import java.awt.geom.Path2D;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -83,6 +85,84 @@ public class ProjectableMesh implements Projectable{
 
         return ret;
     }
+
+    public Shape continuousPaths(FurrowTransformer transformer){
+        Path2D ret = new Path2D.Double();
+        Furrow3D furrow = transformer.getFurrow();
+        //gets all of the connections that are sliced by the furrow.
+        List<Connection3D> connections = furrow.getIntersectionConnections(mesh.getConnections());
+        if(connections.size()<2){
+            return ret;
+        }
+        List<Connection3D> contained = new ArrayList<>(2);
+        Map<Triangle3D, List<Connection3D>> sliced = new HashMap<>();
+        for(Triangle3D triangle: mesh.triangles){
+            contained.clear();
+            for(Connection3D connection: connections){
+                if(triangle.hasConnection(connection)){
+                    contained.add(connection);
+                }
+                if(contained.size()==2){
+                    sliced.put(triangle, contained);
+                    contained = new ArrayList<>(2);
+                    break;
+                }
+            }
+
+        }
+        if(sliced.size()==0) return ret;
+
+        List<Triangle3D> triangles = new ArrayList<>(sliced.keySet());
+
+        Triangle3D triangle;
+        Connection3D first = null;
+        Connection3D b = null;
+        boolean found = false;
+        do{
+            if(found==false){
+                triangle = triangles.get(0);
+                List<Connection3D> cons = sliced.get(triangle);
+
+                first = cons.get(0);
+                b = cons.get(1);
+
+                double[] ptA = getIntersectionPlaneCoordinates(furrow, first);
+                double[] ptB = getIntersectionPlaneCoordinates(furrow, b);
+
+                ret.moveTo(ptA[0], ptA[1]);
+                ret.lineTo(ptB[0], ptB[1]);
+
+                triangles.remove(triangle);
+            } else{
+                //found a connection
+            }
+            for(int i = 0; i<triangles.size(); i++){
+                Triangle3D test = triangles.get(i);
+                List<Connection3D> otras = sliced.get(test);
+                int dex = otras.indexOf(b);
+                if(dex>=0){
+                    //next triangle.
+                    found = true;
+                    int other = dex==0?1:0;
+                    b = otras.get(other);
+                    double[] ptB = getIntersectionPlaneCoordinates(furrow, b);
+                    ret.lineTo(ptB[0], ptB[1]);
+                    triangles.remove(test);
+                    if(first==b){
+                        //finished the loop.
+                        found = false;
+                    }
+                }
+
+            }
+
+        } while(triangles.size()>0);
+
+
+        return ret;
+    }
+
+
 
 
     public double[] getIntersectionPlaneCoordinates(Furrow3D furrow, Connection3D con){
