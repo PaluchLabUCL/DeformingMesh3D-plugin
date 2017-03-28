@@ -502,6 +502,31 @@ public class SegmentationController {
 
     }
 
+    public void setMeshTracks(List<Track> replacements){
+        submit(()->{
+            actionStack.postAction(new UndoableActions(){
+                final List<Track> old = model.getAllMeshes();
+                @Override
+                public void perform() {
+                    submit(()->{
+                        model.setMeshes(replacements);
+                    });
+
+                }
+
+                @Override
+                public void undo() {
+                    submit(()->model.setMeshes(old));
+                }
+
+                @Override
+                public void redo() {
+                    submit(()->model.setMeshes(replacements));
+                }
+            });
+        });
+    }
+
     public void exportAsStl(File f) {
         submit(()->model.exportAsStl(f));
     }

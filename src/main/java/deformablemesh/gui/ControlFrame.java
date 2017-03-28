@@ -3,23 +3,13 @@ package deformablemesh.gui;
 import deformablemesh.SegmentationController;
 import deformablemesh.externalenergies.ImageEnergyType;
 import deformablemesh.gui.meshinitialization.CircularMeshInitializationDialog;
+import deformablemesh.track.MeshTrackManager;
+import deformablemesh.track.Track;
 import ij.IJ;
 import ij.ImagePlus;
 
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JPanel;
-import javax.swing.JTabbedPane;
-import javax.swing.JTextField;
-import javax.swing.KeyStroke;
+import javax.swing.*;
+import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.EventQueue;
@@ -32,6 +22,8 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -661,6 +653,13 @@ public class ControlFrame implements ReadyObserver {
         showFurrowValues.addActionListener(evt->{
             segmentationController.showFurrowValues();
         });
+
+        JMenuItem trackManager = new JMenuItem("Manage Tracks");
+        tools.add(trackManager);
+        trackManager.addActionListener(evt->{
+            buildTrackManager();
+        });
+
         JMenuItem scripts = new JMenuItem("javascript console");
         tools.add(scripts);
         scripts.addActionListener(evt->{
@@ -678,6 +677,42 @@ public class ControlFrame implements ReadyObserver {
 
 
         return menu;
+    }
+
+    private void buildTrackManager() {
+
+        JDialog dialog = new JDialog(frame, true);
+        JPanel main = new JPanel();
+        JPanel content = new JPanel();
+        main.setLayout(new BorderLayout());
+        JButton accept = new JButton("accept");
+        JButton cancel = new JButton("cancel");
+        JPanel row = new JPanel();
+        row.setLayout(new GridLayout(1, 3));
+        row.add(Box.createRigidArea(new Dimension(100,30)));
+        row.add(accept);
+
+        row.add(cancel);
+
+        main.add(row, BorderLayout.SOUTH);
+        MeshTrackManager manager = new MeshTrackManager();
+        manager.manageMeshTrackes(segmentationController.getAllTracks());
+        manager.buildGui(dialog, content);
+        cancel.addActionListener(evt->{
+            dialog.dispose();
+
+        });
+        accept.addActionListener(evt->{
+            List<Track> tracks = manager.getTracks();
+            segmentationController.setMeshTracks(tracks);
+            dialog.dispose();
+        });
+
+        main.add(content, BorderLayout.CENTER);
+        dialog.setContentPane(main);
+        dialog.pack();
+        dialog.setVisible(true);
+        dialog.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
     }
 
     /**

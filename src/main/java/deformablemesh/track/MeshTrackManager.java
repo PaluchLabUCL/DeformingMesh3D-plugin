@@ -53,7 +53,6 @@ import java.util.stream.Collectors;
  * Created on 22/03/2017.
  */
 public class MeshTrackManager {
-    JFrame frame;
     JTable trackTable;
     List<Track> tracks = new ArrayList<>();
     MeshListModel model;
@@ -129,15 +128,22 @@ public class MeshTrackManager {
     }
 
 
-    MeshTrackManager(){
+    public MeshTrackManager(){
         model = new MeshListModel();
 
     }
-
-
-    public void buildGui(){
+    public void buildJFrameGui(){
+        JFrame frame;
         frame = new JFrame();
         JPanel content = new JPanel();
+        buildGui(frame, content);
+        frame.setContentPane(content);
+        frame.setSize(new Dimension(600, 480));
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setVisible(true);
+    }
+
+    public void buildGui(Component parent, JPanel content){
         trackTable = new JTable();
         trackTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
@@ -164,18 +170,10 @@ public class MeshTrackManager {
                 BorderLayout.CENTER
         );
 
-        frame.setContentPane(content);
-        frame.setSize(new Dimension(100, 400));
-        frame.setVisible(true);
-        JMenuBar bar = new JMenuBar();
-        JMenu menu = new JMenu("file");
-        bar.add(menu);
-
-        frame.setJMenuBar(bar);
 
         JPanel buttons = new JPanel();
         buttons.setLayout(new GridLayout(1, 3));
-        JButton shiftTrack = new JButton("shift track");
+        JButton shiftTrack = new JButton("to existing track");
 
         shiftTrack.addActionListener(evt->{
             String[] destinations = getPossibleDestinations();
@@ -183,7 +181,7 @@ public class MeshTrackManager {
                 return;
             }
             String example = (String)JOptionPane.showInputDialog(
-                    frame,
+                    parent,
                     "Select Destination Track.",
                     "Tracks",
                     JOptionPane.QUESTION_MESSAGE,
@@ -204,6 +202,7 @@ public class MeshTrackManager {
         buttons.add(toNewTrack);
 
         JButton shiftFrame = new JButton("shift frame");
+        shiftFrame.addActionListener(evt->shiftFrame());
         buttons.add(shiftFrame);
 
         content.add(buttons, BorderLayout.SOUTH);
@@ -225,6 +224,86 @@ public class MeshTrackManager {
                     column.setMaxWidth(64);
                 }
             }
+        }
+    }
+
+    private void shiftFrame() {
+        int c = trackTable.getSelectedColumn();
+
+        if(c>0){
+            int[] rows = trackTable.getSelectedRows();
+            if(rows.length==0){
+                return;
+            }
+
+            Track t = tracks.get(c-1);
+            int count = rows.length;
+            for(int i = 0; i<rows.length; i++){
+                if(!t.containsKey(rows[i])){
+                    rows[i] = -1;
+                    count--;
+                }
+            }
+            //no good meshes.
+            if(count==0){
+                return;
+            }
+
+            if(count<rows.length) {
+                //remove some.
+                int[] rows2 = new int[count];
+                int j = 0;
+                for (int i = 0; i < rows.length; i++) {
+                    if(rows[i]>=0){
+                        rows2[j] = rows[i];
+                        j++;
+                    }
+                }
+                rows = rows2;
+            }
+            String shift = (String)JOptionPane.showInputDialog("Enter Number of Frames to Shift: ", "0");
+            if(shift==null) return;
+            int offset = 0;
+            try{
+                offset = Integer.parseInt(shift);
+
+            } catch(Exception e){
+                return;
+            }
+
+
+            for(int i=0; i<rows.length; i++){
+                int going = rows[i] + offset;
+                boolean safe = false;
+                for(int j = 0; j<rows.length; j++){
+                    if(going==rows[j]){
+                        //good stop checking.
+                        safe = true;
+                        break;
+                    }
+                }
+                if(!safe){
+                    if(t.containsKey(going)){
+                        //occupied destination.
+                        return;
+                    }
+                }
+            }
+
+            List<DeformableMesh3D> moving = new ArrayList<>(rows.length);
+            for(int i=0; i<rows.length; i++){
+                moving.add(t.getMesh(rows[i]));
+                //remove the mesh from the old location.
+                t.remove(moving.get(i));
+                //store the destination position.
+                rows[i] = rows[i] + offset;
+            }
+
+            for(int i=0; i<rows.length; i++){
+                t.addMesh(rows[i], moving.get(i));
+            }
+
+            shapeTable();
         }
     }
 
@@ -397,25 +476,37 @@ public class MeshTrackManager {
         return new String[0];
     }
 
+    public List<Track> getTracks(){
+        List<Track> verified = new ArrayList<>(tracks.size());
+        for(Track track: tracks){
+            if(track.isEmpty()){
+                continue;
+            }
+            verified.add(track);
+        }
+        return verified;
+    }
+
     public void manageMeshTrackes(List<Track> tracks){
         this.tracks.clear();
         labels.clear();
 
         int rows = 0;
         for(Track track: tracks){
-
+            Track replacement = new Track(track.name, track.color);
             Set<Integer> ints = track.getTrack().keySet();
             for(Integer i: ints){
+
                 DeformableMesh3D mesh = track.getMesh(i);
                 labels.put(mesh, createLabel(mesh));
                 if(i>rows){
                     rows = i;
                 }
+                replacement.addMesh(i, mesh);
             }
+            this.tracks.add(replacement);
         }
         model.rows = rows;
-
-        this.tracks.addAll(tracks);
 
         shapeTable();
 
@@ -463,8 +554,9 @@ public class MeshTrackManager {
         g2d.drawLine(30, 32, 64, 32);
         g2d.setColor(new Color(200, 200, 200, 40));
         g2d.fillRect(0, 0, 64, 64);
-        g2d.setColor(Color.RED);
+        g2d.setColor(Color.BLACK);
         g2d.draw(path);
+        g2d.setColor(mesh.getColor());
         g2d.fill(path);
         g2d.dispose();
         return new JLabel(new ImageIcon(img));
@@ -477,8 +569,7 @@ public class MeshTrackManager {
         List<Track> tracks = MeshWriter.loadMeshes(new File("sample.bmf"));
         manager.manageMeshTrackes(tracks);
         EventQueue.invokeAndWait(()->{
-            manager.buildGui();
-            manager.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            manager.buildJFrameGui();
         });
 
 

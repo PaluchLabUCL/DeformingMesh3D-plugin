@@ -40,8 +40,8 @@ public class FurrowTransformer{
 
 
 
-            px[0] = (int)(2*stack.offsets[1]*scale);
-            px[1] = (int)(2*stack.offsets[0]*scale);
+            px[0] = (int)(2*stack.offsets[0]*scale);
+            px[1] = (int)(2*stack.offsets[1]*scale);
 
 
             invScale=1/scale;
