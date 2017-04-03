@@ -48,7 +48,7 @@ public class FurrowWriter {
                     continue;
                 }
                 String[] values = s.split("\t");
-                int frame = Integer.parseInt(values[0]) - 1;
+                int frame = Integer.parseInt(values[0]);
                 double x1 = Double.parseDouble(values[1]);
                 double y1 = Double.parseDouble(values[2]);
                 double z1 = Double.parseDouble(values[3]);

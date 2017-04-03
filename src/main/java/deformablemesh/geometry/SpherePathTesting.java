@@ -69,6 +69,7 @@ public class SpherePathTesting {
         frame.getJFrame().setJMenuBar(bar);
         frame.setBackgroundColor(new Color(40, 40, 80));
         DeformableMesh3D mesh = RayCastMesh.sphereRayCastMesh(3);
+        mesh.setShowSurface(true);
         setMesh(mesh);
         new Thread(this::mainLoop).start();
         frame.addPickListener(new PointPicking());
