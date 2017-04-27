@@ -742,6 +742,10 @@ public class SegmentationModel {
        GuiTools.createTextOuputPane(builds.toString());
 
     }
+
+    public void exportAsPly(File f) throws IOException {
+        MeshWriter.exportToPly(f, tracker.getAllMeshTracks(), getCurrentFrame(), stack.offsets, stack.SCALE);
+    }
 }
 
 

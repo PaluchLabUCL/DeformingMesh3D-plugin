@@ -5,6 +5,7 @@ import deformablemesh.geometry.Triangle3D;
 import deformablemesh.track.MeshTracker;
 import deformablemesh.track.Track;
 
+import java.awt.Color;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
@@ -17,7 +18,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -254,6 +258,85 @@ public class MeshWriter {
         Track t = new Track(name);
         t.setData(map);
         return t;
+
+    }
+
+    /**
+     * Save all of the tracks contained in the current frame.
+     *
+     * @param output
+     * @param tracks
+     * @param frame
+     */
+    public static void exportToPly(File output, List<Track> tracks, int frame, double[] offsets, double scale) throws IOException {
+        List<DeformableMesh3D> meshes = new ArrayList<>();
+        List<Color> colors = new ArrayList<>();
+
+        int vertices = 0;
+        int faces = 0;
+
+        for(Track t: tracks){
+            if(t.containsKey(frame)){
+                Color c = t.getColor();
+                DeformableMesh3D mesh = t.getMesh(frame);
+                int verts = mesh.positions.length/3;
+                int triangles = mesh.triangles.size();
+                vertices += verts;
+                faces += triangles;
+
+                meshes.add(mesh);
+                colors.add(c);
+            }
+        }
+
+        if(meshes.size()==0){
+            return;
+        }
+
+        try(BufferedWriter writer = Files.newBufferedWriter(output.toPath(), StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)){
+            writer.write("ply\n");
+            writer.write("format ascii 1.0\n");
+            writer.write("comment meshes created by deformable mesh plugin.\n");
+            writer.write(String.format("element vertex %d\n", vertices));
+            writer.write("property float x\n");
+            writer.write("property float y\n");
+            writer.write("property float z\n");
+            writer.write("property uchar red\n");
+            writer.write("property uchar green\n");
+            writer.write("property uchar blue\n");
+            writer.write(String.format("element face %d\n", faces));
+            writer.write("property list uchar int vertex_index\n");
+            writer.write("end_header\n");
+            //write out the vertexes.
+            for(int i = 0; i<meshes.size(); i++){
+                DeformableMesh3D mesh = meshes.get(i);
+                Color c = colors.get(i);
+                int r = c.getRed();
+                int g = c.getGreen();
+                int b = c.getBlue();
+                for(int j = 0; j<mesh.positions.length/3; j++){
+                    int dex = j*3;
+                    writer.write(String.format("%f %f %f %d %d %d\n",
+                            (mesh.positions[dex] + offsets[0])*scale,
+                            (mesh.positions[dex+1] + offsets[1])*scale,
+                            (mesh.positions[dex+2] + offsets[2])*scale,
+                            r,g,b
+                        )
+                    );
+                }
+            }
+
+            int offset = 0;
+            for(DeformableMesh3D mesh: meshes){
+                for(Triangle3D triangle: mesh.triangles){
+                    int[] indices = triangle.getIndices();
+                    writer.write(String.format("%d %d %d %d\n",3, indices[0]+offset, indices[1]+offset, indices[2]+offset ));
+                }
+                offset += mesh.nodes.size();
+            }
+        } catch (IOException e) {
+            throw new IOException(e);
+        }
 
     }
 

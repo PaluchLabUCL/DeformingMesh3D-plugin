@@ -688,6 +688,11 @@ public class SegmentationController {
         model.showFurrowValues();
     }
 
+    public void exportAsPly(File f) {
+        submit(()->model.exportAsPly(f));
+
+    }
+
 
     public interface Executable{
         void execute() throws Exception;

@@ -550,6 +550,22 @@ public class ControlFrame implements ReadyObserver {
             finished();
         });
 
+        JMenuItem plySave = new JMenuItem("Export as PLY");
+        mesh.add(plySave);
+        plySave.addActionListener((evt)->{
+            setReady(false);
+            FileDialog fd = new FileDialog(frame,"File for Export");
+            fd.setMode(FileDialog.SAVE);
+            fd.setFile(segmentationController.getShortImageName() + ".ply");
+            fd.setVisible(true);
+            if(fd.getFile()==null || fd.getDirectory()==null){
+                return;
+            }
+            File f = new File(fd.getDirectory(),fd.getFile());
+            segmentationController.exportAsPly(f);
+            finished();
+        });
+
         JMenuItem load_3d_furrows = new JMenuItem("load furrows");
         mesh.add(load_3d_furrows);
         load_3d_furrows.addActionListener(event -> {
