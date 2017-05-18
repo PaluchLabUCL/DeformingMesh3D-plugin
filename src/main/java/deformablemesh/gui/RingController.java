@@ -42,7 +42,7 @@ import java.util.Map;
 public class RingController implements FrameListener, ListDataListener {
     final ContractileRingDetector detector;
     public SegmentationController model;
-    JTextField px, py, pz, dx, dy, dz, thresh;
+    GuiTools.LocaleNumericTextField px, py, pz, dx, dy, dz, thresh;
     JLabel frame;
     int currentFrame;
     Slice3DView sliceView;
@@ -61,17 +61,13 @@ public class RingController implements FrameListener, ListDataListener {
     }
 
 
-    public JTextField createNumericInputField(String initial){
-        JTextField ret = new JTextField(initial);
+    public GuiTools.LocaleNumericTextField createNumericInputField(double initial){
+        JTextField ret = new JTextField();
         Dimension d = new Dimension(30, 20);
         ret.setMinimumSize(d);
         ret.setMaximumSize(d);
         ret.setPreferredSize(d);
-        return ret;
-    }
-
-    public String textFieldValue(double d){
-        return String.format("%.3f", d);
+        return new GuiTools.LocaleNumericTextField(ret, initial);
     }
 
     public void startUI(){
@@ -86,27 +82,27 @@ public class RingController implements FrameListener, ListDataListener {
         prow.setLayout(new GridLayout(1, 4));
 
         JLabel p = new JLabel("position: ");
-        px = createNumericInputField("0");
-        py = createNumericInputField("0");
-        pz = createNumericInputField("0");
+        px = createNumericInputField(0);
+        py = createNumericInputField(0);
+        pz = createNumericInputField(0);
 
-        addAll(prow, p, px, py, pz);
+        addAll(prow, p, px.getTextField(), py.getTextField(), pz.getTextField());
 
         JPanel drow = new JPanel();
         drow.setLayout(new GridLayout(1, 4));
         JLabel d = new JLabel("direction: ");
-        dx = createNumericInputField("1");
-        dy = createNumericInputField("0");
-        dz = createNumericInputField("0");
+        dx = createNumericInputField(1);
+        dy = createNumericInputField(0);
+        dz = createNumericInputField(0);
 
-        addAll(drow, d, dx, dy, dz);
+        addAll(drow, d, dx.getTextField(), dy.getTextField(), dz.getTextField());
 
         JPanel trow = new JPanel();
         trow.setLayout(new GridLayout(1, 2));
         JLabel t = new JLabel("threshold: ");
-        thresh = new JTextField("1500");
+        thresh = createNumericInputField(1500);
 
-        addAll(trow, t, thresh);
+        addAll(trow, t, thresh.getTextField());
 
         JPanel buttons = new JPanel();
         //buttons.setLayout(new BoxLayout(buttons, BoxLayout.LINE_AXIS));
@@ -251,9 +247,9 @@ public class RingController implements FrameListener, ListDataListener {
 
     public double[] getInputNormal(){
         double[] dir = new double[]{
-                Double.parseDouble(dx.getText()),
-                Double.parseDouble(dy.getText()),
-                Double.parseDouble(dz.getText())
+                dx.getValue(),
+                dy.getValue(),
+                dz.getValue()
         };
 
         double d = dir[0]*dir[0] + dir[1]*dir[1] + dir[2]*dir[2];
@@ -267,9 +263,9 @@ public class RingController implements FrameListener, ListDataListener {
 
     public double[] getInputPosition(){
         double[] pos = new double[]{
-                Double.parseDouble(px.getText()),
-                Double.parseDouble(py.getText()),
-                Double.parseDouble(pz.getText())
+                px.getValue(),
+                py.getValue(),
+                pz.getValue()
         };
         return pos;
     }
@@ -277,9 +273,9 @@ public class RingController implements FrameListener, ListDataListener {
     public void setFurrowValues(){
         double[] dir = getInputNormal();
 
-        dx.setText(textFieldValue(dir[0]));
-        dy.setText(textFieldValue(dir[1]));
-        dz.setText(textFieldValue(dir[2]));
+        dx.setValue(dir[0]);
+        dy.setValue(dir[1]);
+        dz.setValue(dir[2]);
 
         double[] pos = getInputPosition();
 
@@ -308,32 +304,32 @@ public class RingController implements FrameListener, ListDataListener {
         if(p!=null){
             histControls.refresh(new Histogram(p));
             sliceView.setSlice(p.getBufferedImage());
-            detector.setThresh(Double.parseDouble(thresh.getText()));
+            detector.setThresh(thresh.getValue());
             ImageProcessor b = detector.createBinarySlice();
             sliceView.setBinary(b.getBufferedImage());
             refreshFurrow();
         }
     }
     public void setThreshold(double v){
-        thresh.setText(v + "");
+        thresh.setValue(v);
         detector.setThresh(v);
         ImageProcessor b = detector.createBinarySlice();
         sliceView.setBinary(b.getBufferedImage());
     }
     public void refreshValues(){
         final double[] dir = new double[]{
-                Double.parseDouble(dx.getText()),
-                Double.parseDouble(dy.getText()),
-                Double.parseDouble(dz.getText())
+                dx.getValue(),
+                dy.getValue(),
+                dz.getValue()
         };
 
         final double[] pos = new double[]{
-                Double.parseDouble(px.getText()),
-                Double.parseDouble(py.getText()),
-                Double.parseDouble(pz.getText())
+                px.getValue(),
+                py.getValue(),
+                pz.getValue()
         };
 
-        final double threshold = Double.parseDouble(thresh.getText());
+        final double threshold = thresh.getValue();
         submit(() ->  detector.setThresh(threshold));
     }
 
@@ -352,13 +348,13 @@ public class RingController implements FrameListener, ListDataListener {
     public void setFurrow(int frame, Furrow3D furrow) {
         double[] center = furrow.cm;
         double[] normal = furrow.normal;
-        dx.setText(textFieldValue(normal[0]));
-        dy.setText(textFieldValue(normal[1]));
-        dz.setText(textFieldValue(normal[2]));
+        dx.setValue(normal[0]);
+        dy.setValue(normal[1]);
+        dz.setValue(normal[2]);
 
-        px.setText(textFieldValue(center[0]));
-        py.setText(textFieldValue(center[1]));
-        pz.setText(textFieldValue(center[2]));
+        px.setValue(center[0]);
+        py.setValue(center[1]);
+        pz.setValue(center[2]);
 
         detector.putFurrow(frame, furrow);
         frameChanged(model.getCurrentFrame());
@@ -381,12 +377,12 @@ public class RingController implements FrameListener, ListDataListener {
         if(f==null){
             return;
         }
-        px.setText(textFieldValue(f.cm[0]));
-        py.setText(textFieldValue(f.cm[1]));
-        pz.setText(textFieldValue(f.cm[2]));
-        dx.setText(textFieldValue(f.normal[0]));
-        dy.setText(textFieldValue(f.normal[1]));
-        dz.setText(textFieldValue(f.normal[2]));
+        px.setValue(f.cm[0]);
+        py.setValue(f.cm[1]);
+        pz.setValue(f.cm[2]);
+        dx.setValue(f.normal[0]);
+        dy.setValue(f.normal[1]);
+        dz.setValue(f.normal[2]);
         furrowInput.setFurrow(f);
     }
 
