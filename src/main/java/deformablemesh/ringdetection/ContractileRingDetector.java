@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
@@ -478,7 +479,7 @@ public class ContractileRingDetector implements Iterable<Integer>{
             for(int j = 0;j<3;j++){
                 ds[j] = -ds[j];
             }
-            builder.append(String.format("%f %f %f %f %f %f\n",-0.3 + i*dx[0], furrow.cm[0],furrow.cm[1],furrow.cm[2],r,nr));
+            builder.append(String.format(Locale.US, "%f %f %f %f %f %f\n",-0.3 + i*dx[0], furrow.cm[0],furrow.cm[1],furrow.cm[2],r,nr));
             furrow.move(ds);
             furrow.move(dx);
         }
@@ -552,7 +553,7 @@ public class ContractileRingDetector implements Iterable<Integer>{
 
         for(int i = 0; i<300; i++){
             double r = furrow.calculateRadius(mesh.getConnections());
-            builder.append(String.format("%f %f\n", i*dtheta, r));
+            builder.append(String.format(Locale.US, "%f %f\n", i*dtheta, r));
             furrow.rotateNormalZ(dtheta);
         }
 

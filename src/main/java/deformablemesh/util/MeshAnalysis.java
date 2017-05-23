@@ -11,6 +11,7 @@ import deformablemesh.track.Track;
 import java.awt.EventQueue;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -58,7 +59,7 @@ public class MeshAnalysis {
         ArrayList<double[]> values =  mesh.calculateIntensity(stack, cortex_thickness);
         final StringBuilder builder = new StringBuilder("");
         for(double[] d: values){
-            builder.append(String.format("%f\t%f\t%f\t%f\n",d[0], d[1], d[2], d[3]));
+            builder.append(String.format(Locale.US, "%f\t%f\t%f\t%f\n",d[0], d[1], d[2], d[3]));
         }
         EventQueue.invokeLater(
                 new Runnable(){
@@ -75,7 +76,7 @@ public class MeshAnalysis {
         StringBuilder builder = new StringBuilder("");
         for(double[] d: values){
             for(int i =0 ; i<d.length; i++){
-                builder.append(String.format("%d\t%f\n",i,d[i]));
+                builder.append(String.format(Locale.US, "%d\t%f\n",i,d[i]));
             }
         }
         GuiTools.createTextOuputPane(builder.toString());
@@ -122,7 +123,7 @@ public class MeshAnalysis {
             }
             fv = fv>0?fv*factor:fv;
             bv = bv>0?bv*factor:bv;
-            builder.append(String.format("%d\t%f\t%f\t%f\t%f\n",i ,bv ,fv ,v*factor, fr*stack.SCALE ));
+            builder.append(String.format(Locale.US, "%d\t%f\t%f\t%f\t%f\n",i ,bv ,fv ,v*factor, fr*stack.SCALE ));
         }
         final String op = builder.toString();
         EventQueue.invokeLater(() -> GuiTools.createTextOuputPane(op));
@@ -149,7 +150,7 @@ public class MeshAnalysis {
                 } else{
                     v = -1;
                 }
-                builder.append(String.format("\t%f", v));
+                builder.append(String.format(Locale.US, "\t%f", v));
             }
             builder.append("\n");
         }

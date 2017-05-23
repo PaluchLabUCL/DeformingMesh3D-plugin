@@ -17,7 +17,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.text.JTextComponent;
-import javax.swing.text.NumberFormatter;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FileDialog;
@@ -36,9 +35,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
-import java.text.NumberFormat;
 import java.text.ParseException;
-import java.util.Locale;
 
 import static deformablemesh.gui.ControlFrame.instance;
 
@@ -50,7 +47,6 @@ import static deformablemesh.gui.ControlFrame.instance;
  */
 public class GuiTools {
     final static String versionHTML = getVersionHTML();
-    final static NumberFormat format = NumberFormat.getInstance(Locale.getDefault());
 
     public static void createTextOuputPane(String s){
         final JFrame frame = new JFrame();
@@ -105,7 +101,7 @@ public class GuiTools {
         row.add(Box.createHorizontalGlue());
 
         final JTextField field = new JTextField();
-        field.setText(format.format(initial));
+        field.setText(displayFormat(initial));
         field.setMinimumSize(new Dimension(100, 20));
         field.setPreferredSize(new Dimension(100, 20));
         field.setMaximumSize(new Dimension(200, 20));
@@ -129,7 +125,7 @@ public class GuiTools {
             public void actionPerformed(ActionEvent actionEvent) {
                 try{
                     try {
-                        action.setValue(format.parse(field.getText()).doubleValue());
+                        action.setValue(parseDouble(field.getText()));
                         observer.setReady(true);
                         field.setEnabled(false);
 
@@ -158,7 +154,7 @@ public class GuiTools {
                 }
                 try{
 
-                    action.setValue(format.parse(field.getText()).doubleValue());
+                    action.setValue(parseDouble(field.getText()));
                     observer.setReady(true);
                     field.setEnabled(false);
                 } catch (ParseException e) {
@@ -204,11 +200,17 @@ public class GuiTools {
 
         return b.toString();
     }
+
+    public static String displayFormat(double value){
+        return Double.toString(value);
+    }
+
+    public static double parseDouble(String value) throws ParseException{
+        return Double.parseDouble(value);
+    }
+
     public static class LocaleNumericTextField{
         final JTextField field;
-        public LocaleNumericTextField(){
-            field = new JTextField();
-        }
 
         public LocaleNumericTextField(JTextField ret, double initial) {
             this.field = ret;
@@ -216,17 +218,19 @@ public class GuiTools {
         }
 
         public void setValue(double value){
-            field.setText(format.format(value));
+            field.setText(displayFormat(value));
         }
         public JTextField getTextField(){
             return field;
         }
         public double getValue(){
             try{
-                return format.parse(field.getText()).doubleValue();
+                return parseDouble(field.getText());
             } catch (ParseException e) {
                 return 0;
             }
         }
+
+
     }
 }

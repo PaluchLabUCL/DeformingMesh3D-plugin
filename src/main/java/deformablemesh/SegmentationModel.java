@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TreeMap;
@@ -706,11 +707,11 @@ public class SegmentationModel {
             minMax[0] = minMax[0]*stack.SCALE;
             minMax[1] = minMax[1]*stack.SCALE;
 
-            builder.append(String.format("%d\t", j+1));
-            builder.append(String.format("%f\t", volume));
-            builder.append(String.format("%f\t", are));
-            builder.append(String.format("%f\t%f\t%f\t", centroid[0], centroid[1], centroid[2]));
-            builder.append(String.format("%f\t%f\t%f\n", centroid[3], minMax[1], minMax[0]));
+            builder.append(String.format(Locale.US, "%d\t", j+1));
+            builder.append(String.format(Locale.US, "%f\t", volume));
+            builder.append(String.format(Locale.US, "%f\t", are));
+            builder.append(String.format(Locale.US, "%f\t%f\t%f\t", centroid[0], centroid[1], centroid[2]));
+            builder.append(String.format(Locale.US, "%f\t%f\t%f\n", centroid[3], minMax[1], minMax[0]));
         }
         GuiTools.createTextOuputPane(builder.toString());
 
@@ -733,7 +734,7 @@ public class SegmentationModel {
        double scale = stack.SCALE;
        StringBuilder builds = new StringBuilder("#position and normal using the image units.\n");
        builds.append("#x(unit)\ty(unit)\tz(unit)nx\tny\tnz\n");
-       builds.append(String.format(
+       builds.append(String.format(Locale.US,
                "%f\t%f\t%f\t%f\t%f\t%f",
                f.cm[0]*scale, f.cm[1]*scale, f.cm[2]*scale,
                f.normal[0], f.normal[1], f.normal[2]

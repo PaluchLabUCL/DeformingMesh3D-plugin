@@ -26,6 +26,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -93,13 +94,13 @@ public class MeshWriter {
         for(Triangle3D triangle: triangles){
             triangle.update();
             double[] n = triangle.getNormal();
-            writes.write(String.format("facet normal %e %e %e\n", n[0], n[1], n[2]));
+            writes.write(String.format(Locale.US, "facet normal %e %e %e\n", n[0], n[1], n[2]));
             writes.write("  outer loop\n");
             int[] indexes = triangle.getIndices();
             for(int dex: indexes){
                 double[] p = mesh.getCoordinates(dex);
                 writes.write(
-                        String.format(
+                        String.format(Locale.US,
                                 "    vertex %e %e %e\n",
                                 (p[0] + offset[0])*SCALE,
                                 (p[1] + offset[1])*SCALE,
@@ -316,10 +317,10 @@ public class MeshWriter {
                 int b = c.getBlue();
                 for(int j = 0; j<mesh.positions.length/3; j++){
                     int dex = j*3;
-                    writer.write(String.format("%f %f %f %d %d %d\n",
-                            (mesh.positions[dex] + offsets[0])*scale,
-                            (mesh.positions[dex+1] + offsets[1])*scale,
-                            (mesh.positions[dex+2] + offsets[2])*scale,
+                    writer.write(String.format(Locale.US, "%f %f %f %d %d %d\n",
+                            (mesh.positions[dex])*scale,
+                            (mesh.positions[dex+1])*scale,
+                            (mesh.positions[dex+2])*scale,
                             r,g,b
                         )
                     );
@@ -330,7 +331,7 @@ public class MeshWriter {
             for(DeformableMesh3D mesh: meshes){
                 for(Triangle3D triangle: mesh.triangles){
                     int[] indices = triangle.getIndices();
-                    writer.write(String.format("%d %d %d %d\n",3, indices[0]+offset, indices[1]+offset, indices[2]+offset ));
+                    writer.write(String.format(Locale.US, "%d %d %d %d\n",3, indices[0]+offset, indices[1]+offset, indices[2]+offset ));
                 }
                 offset += mesh.nodes.size();
             }

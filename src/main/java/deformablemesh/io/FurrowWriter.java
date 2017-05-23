@@ -27,14 +27,19 @@ public class FurrowWriter {
                 Furrow3D furrow = detector.getFurrow(i);
                 double[] cm = stack.getImageCoordinates(furrow.cm);
                 double[] dir= furrow.normal;
-                String s = String.format("%d\t%f\t%f\t%f\t%f\t%f\t%f\n",
-                        i, cm[0], cm[1], cm[2], dir[0], dir[1], dir[2] );
+                String s = String.format("%d\t%s\t%s\t%s\t%s\t%s\t%s\n",
+                        i, hex(cm[0]), hex(cm[1]), hex(cm[2]), hex(dir[0]), hex(dir[1]), hex(dir[2]) );
                 br.write(s);
             }
         } catch (IOException e1) {
             e1.printStackTrace();
         }
     }
+
+    public static String hex(double f){
+        return Double.toHexString(f);
+    }
+
 
 
     public static Map<Integer, Furrow3D> loadFurrows(File f, MeshImageStack stack) {
