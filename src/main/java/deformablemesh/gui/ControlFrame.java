@@ -676,6 +676,49 @@ public class ControlFrame implements ReadyObserver {
             buildTrackManager();
         });
 
+        JMenuItem recordSnapShots = new JMenuItem("Record Snapshots");
+        tools.add(recordSnapShots);
+
+        recordSnapShots.addActionListener(evt->{
+            int i = segmentationController.getNFrames();
+            if(i<=0) return;
+
+            Object[] values = new Object[i];
+            for(int j = 0; j<i; j++){
+                values[j] = j+1;
+            }
+
+            Integer start = (Integer)JOptionPane.showInputDialog(
+                    frame,
+                    null,
+                    "Select Start Frame",
+                    JOptionPane.INFORMATION_MESSAGE, null,
+                    values, values[0]);
+            if(start!=null){
+                int first = start - 1;
+                int left = i - first;
+                if(left<=0) return;
+
+                values = new Object[left];
+
+                for(int j = 0; j<left; j++){
+                    values[j] = j + start;
+                }
+
+                Integer end = (Integer)JOptionPane.showInputDialog(
+                        frame,
+                        null,
+                        "Select Last Frame",
+                        JOptionPane.INFORMATION_MESSAGE, null,
+                        values, values[values.length-1]);
+
+
+                if(end != null){
+                    segmentationController.recordSnapshots(first, end-1);
+                }
+            }
+        });
+
         JMenuItem scripts = new JMenuItem("javascript console");
         tools.add(scripts);
         scripts.addActionListener(evt->{

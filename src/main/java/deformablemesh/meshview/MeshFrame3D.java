@@ -249,7 +249,7 @@ public class MeshFrame3D {
                         toggleAxis();
                         break;
                     case 's':
-                        snapShot();
+                        segmentationController.takeSnapShot();
                         break;
                     case 'n':
                         segmentationController.selectNextMeshTrack();

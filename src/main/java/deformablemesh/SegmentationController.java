@@ -14,11 +14,15 @@ import deformablemesh.track.Track;
 import deformablemesh.util.actions.ActionStack;
 import deformablemesh.util.actions.UndoableActions;
 import ij.ImagePlus;
+import ij.ImageStack;
+import ij.process.ColorProcessor;
+import ij.process.ImageProcessor;
 import snakeprogram3d.display3d.DataObject;
 
 import javax.swing.JLabel;
 import java.awt.Color;
 import java.awt.Image;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -179,7 +183,32 @@ public class SegmentationController {
     public void toFrame(int f){ submit(()->model.setFrame(f));}
 
     public void takeSnapShot() {
-        submit(meshFrame3D::recordShot);
+        submit(()-> {
+                    BufferedImage img = meshFrame3D.snapShot();
+                    ImagePlus plus = new ImagePlus(
+                            "snapshot" + System.currentTimeMillis(),
+                            new ColorProcessor(img));
+                    plus.show();
+                }
+            );
+    }
+
+    public void recordSnapshots(int start, int end){
+        submit(()->{
+            ImageStack stack = null;
+            for(int i = start; i<=end; i++){
+                model.setFrame(i);
+                BufferedImage img = meshFrame3D.snapShot();
+                ImageProcessor proc = new ColorProcessor(img);
+                if(stack==null){
+                    stack = new ImageStack(proc.getWidth(), proc.getHeight());
+                }
+                stack.addSlice("snapshot " + i, proc);
+            }
+            if(stack!=null){
+                new ImagePlus("snapshots", stack).show();
+            }
+        });
     }
 
     public void reMesh() {

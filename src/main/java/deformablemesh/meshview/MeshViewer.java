@@ -32,6 +32,7 @@ public class MeshViewer {
         viewer.showFrame(true);
 
         DeformableMesh3D mesh = RayCastMesh.sphereRayCastMesh(0);
+
         mesh.create3DObject();
 
 
