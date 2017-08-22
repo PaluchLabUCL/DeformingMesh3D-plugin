@@ -188,6 +188,7 @@ public class ControlFrame implements ReadyObserver {
             finished();
         });
 
+
     }
 
     public void createButtonInitializeMesh2(JPanel panel){
@@ -453,10 +454,7 @@ public class ControlFrame implements ReadyObserver {
                 segmentationController.stopRunning();
                 segmentationController.submit(() -> deform.setText("deform"));
                 finished();
-
             }
-
-
         });
 
     }

@@ -28,6 +28,7 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -134,8 +135,19 @@ public class RingController implements FrameListener, ListDataListener {
 
         frame = new JLabel("1");
 
-        addAll(buttons, set, initialize, frame);
+        JButton prev = new JButton("prev");
+        prev.setMnemonic(KeyEvent.VK_COMMA);
+        prev.addActionListener(evt->model.previousFrame());
+        buttons.add(prev);
+
+        JButton next = new JButton("next");
+        next.setMnemonic(KeyEvent.VK_PERIOD);
+        next.addActionListener(evt->model.nextFrame());
+        buttons.add(next);
+
+        addAll(buttons, set, initialize, frame, prev, next);
         addAll(main_box, prow, drow, trow, buttons);
+
         main_box.add(boxController.getControls());
 
         content.add(main_box, BorderLayout.EAST);
@@ -224,7 +236,7 @@ public class RingController implements FrameListener, ListDataListener {
 
     private void showSnakeEditor() {
         if(snakeModel2D==null){
-            snakeModel2D = SnakeApplication.createSnakeModel();
+            snakeModel2D = new SnakeModel() ;
             snakeModel2D.getFrame().setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         }
         snakeModel2D.loadImage(new ImagePlus("mesh program", detector.getFurrowSlice()));
@@ -298,8 +310,9 @@ public class RingController implements FrameListener, ListDataListener {
     public void setFrame(int frame){
         currentFrame = frame;
         detector.setFrame(frame);
-        this.frame.setText("" + frame);
+        this.frame.setText("" + (frame+1));
         boxController.setFrame(frame);
+        refreshFurrow();
         ImageProcessor p = detector.getFurrowSlice();
         if(p!=null){
             histControls.refresh(new Histogram(p));

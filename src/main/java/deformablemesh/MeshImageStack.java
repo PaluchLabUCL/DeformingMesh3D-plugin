@@ -38,6 +38,8 @@ public class MeshImageStack {
         offsets=new double[]{0,0,0};
         pixel_dimensions=new double[]{1,1,1};
         PX=1;
+        data = new double[1][1][1];
+        max_dex = new int[3];
     }
 
     public MeshImageStack(ImagePlus original){
@@ -361,5 +363,9 @@ public class MeshImageStack {
 
     public Box3D getLimits() {
         return new Box3D(ORIGIN, offsets[0]*2, offsets[1]*2, offsets[2]*2);
+    }
+
+    public static MeshImageStack getEmptyStack() {
+        return  new MeshImageStack();
     }
 }

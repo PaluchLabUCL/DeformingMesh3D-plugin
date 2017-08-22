@@ -54,7 +54,10 @@ public class ContractileRingDetector implements Iterable<Integer>{
     Furrow3D furrow;
 
     public ContractileRingDetector(){
+
         furrows = new TreeMap<>();
+        stack = MeshImageStack.getEmptyStack();
+
     }
     public void setImageStack(MeshImageStack stack){
         this.stack = stack;
@@ -70,8 +73,6 @@ public class ContractileRingDetector implements Iterable<Integer>{
         threshold=t;
     }
 
-    ImageStack test_stack;
-
     public void createFurrowSlice(int frame){
         if(!furrows.containsKey(frame)) return;
         Furrow3D f = furrows.get(frame);
@@ -79,6 +80,8 @@ public class ContractileRingDetector implements Iterable<Integer>{
 
         int xcounts = transformer.getXCounts();
         int ycounts = transformer.getYCounts();
+        if(xcounts<1){xcounts =1;}
+        if(ycounts<1){ycounts =1;}
         ImageProcessor proc = new FloatProcessor(xcounts, ycounts);
         double[] pt = new double[2];
 

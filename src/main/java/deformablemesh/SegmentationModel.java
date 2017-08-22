@@ -728,17 +728,23 @@ public class SegmentationModel {
      *
      */
     public void showFurrowValues() {
-       Furrow3D f = ringController.getFurrow();
-       if(f==null){return;}
 
        double scale = stack.SCALE;
        StringBuilder builds = new StringBuilder("#position and normal using the image units.\n");
-       builds.append("#x(unit)\ty(unit)\tz(unit)nx\tny\tnz\n");
-       builds.append(String.format(Locale.US,
-               "%f\t%f\t%f\t%f\t%f\t%f",
-               f.cm[0]*scale, f.cm[1]*scale, f.cm[2]*scale,
-               f.normal[0], f.normal[1], f.normal[2]
-       ));
+       builds.append("#frame\tx(unit)\ty(unit)\tz(unit)nx\tny\tnz\n");
+
+       for(int i = 0; i<original_plus.getNFrames(); i++){
+           Furrow3D f = ringController.getFurrow(i);
+
+           if(f==null){continue;}
+
+           builds.append(String.format(Locale.US,
+                   "%d%f\t%f\t%f\t%f\t%f\t%f\n", (i+1),
+                   f.cm[0]*scale, f.cm[1]*scale, f.cm[2]*scale,
+                   f.normal[0], f.normal[1], f.normal[2]
+           ));
+
+       }
 
        GuiTools.createTextOuputPane(builds.toString());
 
