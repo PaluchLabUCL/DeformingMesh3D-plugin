@@ -630,8 +630,10 @@ public class ControlFrame implements ReadyObserver {
         mesh.add(track);
         track.setAccelerator(KeyStroke.getKeyStroke('t'));
         track.addActionListener(evt->{
-            segmentationController.trackMesh();
-            finished();
+            if(ready) {
+                segmentationController.trackMesh();
+                finished();
+            }
         });
 
 
