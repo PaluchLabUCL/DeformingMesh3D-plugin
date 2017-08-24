@@ -739,7 +739,7 @@ public class SegmentationModel {
            if(f==null){continue;}
 
            builds.append(String.format(Locale.US,
-                   "%d%f\t%f\t%f\t%f\t%f\t%f\n", (i+1),
+                   "%d\t%f\t%f\t%f\t%f\t%f\t%f\n", (i+1),
                    f.cm[0]*scale, f.cm[1]*scale, f.cm[2]*scale,
                    f.normal[0], f.normal[1], f.normal[2]
            ));

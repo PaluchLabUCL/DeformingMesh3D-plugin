@@ -18,6 +18,7 @@ import deformablemesh.util.astar.History;
 import deformablemesh.util.astar.PossiblePath;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.measure.Calibration;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
@@ -1363,6 +1364,10 @@ public class DeformableMesh3DTools {
         ImagePlus ret = new ImagePlus();
         ret.setStack(stacked);
         ret.setDimensions(1, stack.getNSlices(), 1);
+        Calibration cal = ret.getCalibration();
+        cal.pixelWidth = stack.pixel_dimensions[0];
+        cal.pixelHeight = stack.pixel_dimensions[1];
+        cal.pixelDepth = stack.pixel_dimensions[2];
 
         return ret;
     }
