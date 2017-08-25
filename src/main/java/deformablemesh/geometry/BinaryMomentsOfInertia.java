@@ -1,7 +1,10 @@
 package deformablemesh.geometry;
 
+import Jama.EigenvalueDecomposition;
+import Jama.Matrix;
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
+import deformablemesh.util.Vector3DOps;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -12,7 +15,9 @@ import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 
 import java.awt.Polygon;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * This class is designed to use the binary representation to calculate the center of mass and moments of inertia
@@ -111,12 +116,12 @@ public class BinaryMomentsOfInertia {
                     double x = (k%w + 0.5)*pxSizes[0] - cm[0];
                     double y = (k/w + 0.5)*pxSizes[1] - cm[1];
                     tally += 1;
-                    Ixx += x*x + IxxCm;
+                    Ixx += (y*y + z*z) + IxxCm;
                     Ixy += x*y;
                     Ixz += x*z;
-                    Iyy += y*y + IyyCm;
+                    Iyy += (x*x + z*z) + IyyCm;
                     Iyz += y*z;
-                    Izz += z*z + IzzCm;
+                    Izz += (x*x + y*y) + IzzCm;
                 }
             }
         }
@@ -126,7 +131,33 @@ public class BinaryMomentsOfInertia {
                 Ixz, Iyz, Izz
         };
     }
-    
+
+    /**
+     * Returns the list of eigen vectors, and the eigen values.
+     *
+     * @return [ {v1}, {v2}, {v3}, {lambda1, lambda2, lambda3} ]
+     */
+    public List<double[]> getEigenVectors(){
+        if(cm==null){
+            calculateCenterOfMass();
+            calculateInertialMatrix();
+        }
+        Matrix mat = new Matrix(I, 3);
+        EigenvalueDecomposition ed = mat.eig();
+        List<double[]> values = new ArrayList<>(4);
+        double[] ev = ed.getRealEigenvalues();
+        double[] vecs = ed.getV().getColumnPackedCopy();
+        for(int i = 0; i<3; i++){
+            double[] vec = new double[3];
+            for(int j = 0; j<3; j++){
+                vec[j] = vecs[3*i + j];
+            }
+            Vector3DOps.normalize(vec);
+            values.add(vec);
+        }
+        values.add(ev);
+        return values;
+    }
     /**
      * Create an image and a mesh
      * @param args
@@ -135,13 +166,9 @@ public class BinaryMomentsOfInertia {
         ImageJ.main(args);
 
         ImageStack stack = new ImageStack(400, 400);
-        for(int i = 0; i<20; i++){
+        for(int i = 0; i<40; i++){
             ImageProcessor proc = new ShortProcessor(400, 400);
-            if(i>=5&&i<15){
-                proc.setColor(Short.MAX_VALUE);
-                Polygon p = new Polygon(new int[]{175, 175, 375, 375}, new int[]{150, 200, 200, 150}, 4);
-                proc.fillPolygon(p);
-            }
+
             stack.addSlice(proc);
         }
         ImagePlus plus = new ImagePlus("test", stack);
@@ -150,21 +177,34 @@ public class BinaryMomentsOfInertia {
         cal.pixelWidth = 0.5;
         cal.pixelHeight = 0.5;
         plus.setDimensions(1, 20, 1);
-        plus.show();
+        //plus.show();
 
         MeshImageStack mis = new MeshImageStack(plus);
 
         DeformableMesh3D mesh = DeformableMesh3DTools.createRectangleMesh(60/mis.SCALE, 30/mis.SCALE, 30/mis.SCALE, 10/mis.SCALE);
-        mesh.rotate(new double[]{0, 0, 1}, new double[]{0, 0, 0}, Math.PI*0.1);
+        double[] axis = new double[] {0, 0, 1};
+        mesh.rotate(axis, new double[]{0, 0, 0}, Math.PI*0.15);
         mesh.translate(new double[]{37.5/mis.SCALE, 0, 0});
         BinaryMomentsOfInertia inertia = new BinaryMomentsOfInertia(mesh, mis);
+        List<double[]> values = inertia.getEigenVectors();
         inertia.binary.show();
-        inertia.calculateCenterOfMass();
-        inertia.calculateInertialMatrix();
+        System.out.println("area: " + DeformableMesh3DTools.calculateSurfaceArea(mesh)*Math.pow(mis.SCALE, 2));
+        System.out.println("volume: " + DeformableMesh3DTools.calculateVolume(new double[]{1, 0, 0}, mesh.positions, mesh.triangles)*Math.pow(mis.SCALE, 2));
 
         System.out.println(Arrays.toString(inertia.getCenterOfMass()));
         System.out.println(Arrays.toString(inertia.getInertialMatrix()));
         System.out.println(inertia.size);
+        double[] eig = values.get(3);
+        for(int i = 0; i<3; i++){
+            double[] vec = values.get(i);
+            System.out.print(eig[i] + " :: ");
+            for(int j = 0; j<3; j++){
+
+                System.out.print(vec[j] + "\t");
+
+            }
+            System.out.print("\n");
+        }
     }
 
 }

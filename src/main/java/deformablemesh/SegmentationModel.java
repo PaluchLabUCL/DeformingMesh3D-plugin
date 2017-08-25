@@ -8,6 +8,7 @@ import deformablemesh.externalenergies.PerpendicularGradientEnergy;
 import deformablemesh.externalenergies.PerpendicularIntensityEnergy;
 import deformablemesh.externalenergies.PressureForce;
 import deformablemesh.externalenergies.TriangleAreaDistributor;
+import deformablemesh.geometry.BinaryMomentsOfInertia;
 import deformablemesh.geometry.Box3D;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Furrow3D;
@@ -686,8 +687,14 @@ public class SegmentationModel {
         builder.append("#\tdmean: mean distance of nodes to centroid.\n");
         builder.append("#\tdmax: max distance of nodes to centroid.\n");
         builder.append("#\tdmin: min distance of nodes to centroid.\n");
+        builder.append("#\t Eigen values and vectors\n");
+        builder.append("#\tlambda1, lambda2, lambda3: eigen values.\n");
+        builder.append("#\tv1_x, v1_y, v1_z: first eigen vector.\n");
+        builder.append("#\tv2_x, v2_y, v2_z: second eigen vector.\n");
+        builder.append("#\tv3_x, v3_y, v3_z: third eigen vector.\n");
         builder.append("#\n");
-        builder.append("#Frame\tVolume\tArea\tc_x\tc_y\tc_z\tdmean\tdmax\tdmin\n");
+        builder.append("#Frame\tVolume\tArea\tc_x\tc_y\tc_z\tdmean\tdmax\tdmin\t");
+        builder.append("lambda1\tlambda2\tlambda3\tv1_x\tv1_y\tv1_z\tv2_x\tv2_y\tv2_z\tv3_x\tv3_y\tv3_z\n");
         for(int j = 0; j<original_plus.getNFrames(); j++){
             if(!track.containsKey(j)){
                 continue;
@@ -704,6 +711,10 @@ public class SegmentationModel {
             for(int i = 0; i<centroid.length; i++){
                 centroid[i] = centroid[i]*stack.SCALE;
             }
+            BinaryMomentsOfInertia bmi = new BinaryMomentsOfInertia(mesh, stack);
+            List<double[]> ev = bmi.getEigenVectors();
+            double[] eigenValues = ev.get(3);
+
             minMax[0] = minMax[0]*stack.SCALE;
             minMax[1] = minMax[1]*stack.SCALE;
 
@@ -711,7 +722,13 @@ public class SegmentationModel {
             builder.append(String.format(Locale.US, "%f\t", volume));
             builder.append(String.format(Locale.US, "%f\t", are));
             builder.append(String.format(Locale.US, "%f\t%f\t%f\t", centroid[0], centroid[1], centroid[2]));
-            builder.append(String.format(Locale.US, "%f\t%f\t%f\n", centroid[3], minMax[1], minMax[0]));
+            builder.append(String.format(Locale.US, "%f\t%f\t%f\t", centroid[3], minMax[1], minMax[0]));
+            builder.append(String.format(Locale.US, "%f\t%f\t%f\t", eigenValues[0], eigenValues[1], eigenValues[2]));
+            for(int i = 0; i<3; i++){
+                double[] v = ev.get(i);
+                builder.append(String.format(Locale.US, "%f\t%f\t%f\t", v[0], v[1], v[2]));
+            }
+            builder.append("\n");
         }
         GuiTools.createTextOuputPane(builder.toString());
 
