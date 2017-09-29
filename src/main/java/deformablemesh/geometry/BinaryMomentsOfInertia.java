@@ -4,6 +4,7 @@ import Jama.EigenvalueDecomposition;
 import Jama.Matrix;
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
+import deformablemesh.gui.meshinitialization.CircularMeshInitializationDialog;
 import deformablemesh.util.Vector3DOps;
 import ij.ImageJ;
 import ij.ImagePlus;
@@ -17,6 +18,7 @@ import ij.process.ShortProcessor;
 import java.awt.Polygon;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -30,10 +32,12 @@ public class BinaryMomentsOfInertia {
     double size;
     ImagePlus binary;
     double[] pxSizes;
+    MeshImageStack mis;
     public BinaryMomentsOfInertia(DeformableMesh3D mesh, MeshImageStack stack){
         pxSizes = stack.pixel_dimensions;
+        pxSizes = new double[]{pxSizes[0]/stack.SCALE, pxSizes[1]/stack.SCALE, pxSizes[2]/stack.SCALE};
         binary = DeformableMesh3DTools.createBinaryRepresentation(stack, mesh);
-
+        mis = stack;
     }
     /**
      * center of mass:
@@ -52,14 +56,23 @@ public class BinaryMomentsOfInertia {
         int w = binary.getWidth();
         int h = binary.getHeight();
         double tally = 0;
+        double[] pc = new double[3];
         for(int i = 0; i<binary.getNSlices(); i++){
             double z = (i+0.5)*pxSizes[2];
-
+            pc[2] = i;
+            double[] nc = mis.getNormalizedCoordinate(pc);
+            System.out.println(z + "," + pc[2]);
             final byte[] bytes = (byte[]) binaryStack.getPixels(i+1);
             for(int k = 0; k<bytes.length; k++){
                 if((0xff&(int)bytes[k])>0){
+                    pc[0] = k%w;
+                    pc[1] = k/w;
+                    pc[2] = i;
+                    nc = mis.getNormalizedCoordinate(pc);
                     double x = (k%w + 0.5)*pxSizes[0];
                     double y = (k/w + 0.5)*pxSizes[1];
+                    System.out.println("in:\t" + nc[0] + ", " + nc[1] + ", " + nc[2]);
+                    System.out.println("out:\t" + x + ", " + y + ", " + z);
                     tally += 1;
                     cm[0] += x;
                     cm[1] += y;
@@ -109,7 +122,6 @@ public class BinaryMomentsOfInertia {
 
         for(int i = 0; i<binary.getNSlices(); i++){
             double z = (i+0.5)*pxSizes[2] - cm[2];
-
             final byte[] bytes = (byte[]) binaryStack.getPixels(i+1);
             for(int k = 0; k<bytes.length; k++){
                 if((0xff&(int)bytes[k])>0){
@@ -117,10 +129,10 @@ public class BinaryMomentsOfInertia {
                     double y = (k/w + 0.5)*pxSizes[1] - cm[1];
                     tally += 1;
                     Ixx += (y*y + z*z) + IxxCm;
-                    Ixy += x*y;
-                    Ixz += x*z;
+                    Ixy += -x*y;
+                    Ixz += -x*z;
                     Iyy += (x*x + z*z) + IyyCm;
-                    Iyz += y*z;
+                    Iyz += -y*z;
                     Izz += (x*x + y*y) + IzzCm;
                 }
             }
@@ -163,6 +175,10 @@ public class BinaryMomentsOfInertia {
      * @param args
      */
     public static void main(String[] args){
+        twoSphereCheck();
+    }
+
+    public static void reactangleCheck(String[] args){
         ImageJ.main(args);
 
         ImageStack stack = new ImageStack(400, 400);
@@ -185,6 +201,52 @@ public class BinaryMomentsOfInertia {
         double[] axis = new double[] {0, 0, 1};
         mesh.rotate(axis, new double[]{0, 0, 0}, Math.PI*0.15);
         mesh.translate(new double[]{37.5/mis.SCALE, 0, 0});
+        BinaryMomentsOfInertia inertia = new BinaryMomentsOfInertia(mesh, mis);
+        List<double[]> values = inertia.getEigenVectors();
+        inertia.binary.show();
+        System.out.println("area: " + DeformableMesh3DTools.calculateSurfaceArea(mesh)*Math.pow(mis.SCALE, 2));
+        System.out.println("volume: " + DeformableMesh3DTools.calculateVolume(new double[]{1, 0, 0}, mesh.positions, mesh.triangles)*Math.pow(mis.SCALE, 2));
+
+        System.out.println(Arrays.toString(inertia.getCenterOfMass()));
+        System.out.println(Arrays.toString(inertia.getInertialMatrix()));
+        System.out.println(inertia.size);
+        double[] eig = values.get(3);
+        for(int i = 0; i<3; i++){
+            double[] vec = values.get(i);
+            System.out.print(eig[i] + " :: ");
+            for(int j = 0; j<3; j++){
+
+                System.out.print(vec[j] + "\t");
+
+            }
+            System.out.print("\n");
+        }
+    }
+
+    public static void twoSphereCheck(){
+
+        ImageStack stack = new ImageStack(400, 400);
+        for(int i = 0; i<40; i++){
+            ImageProcessor proc = new ShortProcessor(400, 400);
+
+            stack.addSlice(proc);
+        }
+        ImagePlus plus = new ImagePlus("test", stack);
+        Calibration cal = plus.getCalibration();
+        cal.pixelDepth = 2.0;
+        cal.pixelWidth = 0.5;
+        cal.pixelHeight = 0.5;
+        plus.setDimensions(1, 20, 1);
+        //plus.show();
+
+        MeshImageStack mis = new MeshImageStack(plus);
+
+        Sphere a = new Sphere(new double[] {-0.05, -0.05, 0}, 0.1);
+        Sphere b = new Sphere(new double[] {0.05, 0.05, 0}, 0.1);
+        List<Sphere> spheres = Arrays.asList(a, b);
+
+        DeformableMesh3D mesh = CircularMeshInitializationDialog.createMeshFromSpheres(spheres, 2);
+
         BinaryMomentsOfInertia inertia = new BinaryMomentsOfInertia(mesh, mis);
         List<double[]> values = inertia.getEigenVectors();
         inertia.binary.show();

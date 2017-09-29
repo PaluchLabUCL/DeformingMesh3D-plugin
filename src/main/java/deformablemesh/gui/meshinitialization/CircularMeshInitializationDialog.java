@@ -179,6 +179,35 @@ public class CircularMeshInitializationDialog extends JDialog {
         afterClosing();
     }
 
+    public static DeformableMesh3D createMeshFromSpheres(List<Sphere> spheres, int divisions){
+        if(spheres.size()==0){
+            return null;
+        }
+
+        CompositeInterceptables collectionOfSpheres = new CompositeInterceptables(spheres);
+
+        double[] com = new double[3];
+        double v1 = 0;
+        for(Sphere s: spheres){
+            double[] o = s.getCenter();
+            double r = s.getRadius();
+            r = r*r*r;
+            com[0] += o[0]*r;
+            com[1] += o[1]*r;
+            com[2] += o[2]*r;
+            v1 += r;
+        }
+        com[0] /= v1;
+        com[1] /= v1;
+        com[2] /= v1;
+
+
+
+        List<Interceptable> system = new ArrayList<>(2);
+        system.add(collectionOfSpheres);
+        return RayCastMesh.rayCastMesh(system, com, divisions);
+    }
+
     private void createMesh(){
         List<Sphere> spheres = initializer.getSpheres();
         if(spheres.size()==0){
