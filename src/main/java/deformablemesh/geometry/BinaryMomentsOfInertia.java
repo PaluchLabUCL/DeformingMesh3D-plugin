@@ -56,23 +56,15 @@ public class BinaryMomentsOfInertia {
         int w = binary.getWidth();
         int h = binary.getHeight();
         double tally = 0;
-        double[] pc = new double[3];
         for(int i = 0; i<binary.getNSlices(); i++){
             double z = (i+0.5)*pxSizes[2];
-            pc[2] = i;
-            double[] nc = mis.getNormalizedCoordinate(pc);
-            System.out.println(z + "," + pc[2]);
             final byte[] bytes = (byte[]) binaryStack.getPixels(i+1);
             for(int k = 0; k<bytes.length; k++){
                 if((0xff&(int)bytes[k])>0){
-                    pc[0] = k%w;
-                    pc[1] = k/w;
-                    pc[2] = i;
-                    nc = mis.getNormalizedCoordinate(pc);
+
                     double x = (k%w + 0.5)*pxSizes[0];
                     double y = (k/w + 0.5)*pxSizes[1];
-                    System.out.println("in:\t" + nc[0] + ", " + nc[1] + ", " + nc[2]);
-                    System.out.println("out:\t" + x + ", " + y + ", " + z);
+
                     tally += 1;
                     cm[0] += x;
                     cm[1] += y;
