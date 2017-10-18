@@ -4,7 +4,6 @@ import deformablemesh.SegmentationController;
 import deformablemesh.SegmentationModel;
 import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
 
-import javax.rmi.CORBA.Util;
 import javax.script.Bindings;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;

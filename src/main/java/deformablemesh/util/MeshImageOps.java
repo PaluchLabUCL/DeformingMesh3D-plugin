@@ -48,7 +48,7 @@ public class MeshImageOps {
      * @param x
      * @param y
      * @param z
-     * @param stack binary image where 0 is not the object and >0 is the object.
+     * @param stack binary image where 0 is not the object and &gt; 0 is the object.
      *
      * @return if there is a zero in the 6-box neighborhood.
      */

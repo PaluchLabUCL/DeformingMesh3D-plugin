@@ -93,7 +93,7 @@ public class Vector3DOps {
      * @param a center of sphere
      * @param b point to be checked
      * @param r radius
-     * @return if the distance between a & b is less than or equal to r.
+     * @return if the distance between a and b is less than or equal to r.
      */
     static public boolean proximity(double[] a, double[] b, double r){
         return square(a[0]-b[0]) + square(a[1]-b[1]) + square(a[2]-b[2]) <= r*r;
