@@ -68,7 +68,7 @@ public class SwingJSTerm {
         }
         this.controls = controls;
     }
-    
+
 
     public void addClasses() throws ScriptException {
 
@@ -109,7 +109,6 @@ public class SwingJSTerm {
                     int end = Utilities.getWordEnd(input, loc);
                     int starting = Utilities.getWordStart(input, loc);
                     int l = loc - starting;
-                    System.out.println(starting + ", " + loc + ", " + end + ", " + len);
                     if(l==0){
                         if(len - loc != 0){
 
