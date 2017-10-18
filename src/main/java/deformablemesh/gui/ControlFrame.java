@@ -34,7 +34,7 @@ import java.util.List;
  * Date: 7/16/13
  * Time: 10:35 AM
  */
-public class ControlFrame implements ReadyObserver {
+public class ControlFrame implements ReadyObserver, FrameListener {
     //SegmentationModel segmentationController;
     SegmentationController segmentationController;
 
@@ -52,6 +52,7 @@ public class ControlFrame implements ReadyObserver {
     Dimension pm = new Dimension(29, 29);
     public ControlFrame( SegmentationController model){
         this.segmentationController = model;
+
         terminal = new SwingJSTerm(model);
 
     }
@@ -68,6 +69,7 @@ public class ControlFrame implements ReadyObserver {
         frame.setSize(600, 500);
         frame.setVisible(true);
         instance=frame;
+        segmentationController.addFrameListener(this);
     }
     public JFrame getFrame(){
         return frame;
@@ -636,6 +638,15 @@ public class ControlFrame implements ReadyObserver {
             }
         });
 
+        JMenuItem trackBack = new JMenuItem("track backwards");
+        mesh.add(trackBack);
+        trackBack.setAccelerator(KeyStroke.getKeyStroke('b'));
+        trackBack.addActionListener(evt->{
+            if(ready) {
+                segmentationController.trackMeshBackwards();
+                finished();
+            }
+        });
 
 
         JMenu tools = new JMenu("tools");
@@ -724,6 +735,7 @@ public class ControlFrame implements ReadyObserver {
         scripts.addActionListener(evt->{
             terminal.showTerminal();
         });
+        terminal.addReadyObserver(this);
 
         JMenu help = new JMenu("help");
         menu.add(help);
@@ -780,7 +792,6 @@ public class ControlFrame implements ReadyObserver {
      */
     public void finished(){
         segmentationController.submit(() -> {
-            frameIndicator.setFrame(segmentationController.getCurrentFrame(), segmentationController.getNFrames());
             setReady(true);
             EventQueue.invokeLater(this::displayErrors);
         });
@@ -826,6 +837,12 @@ public class ControlFrame implements ReadyObserver {
         tabbedPane.invalidate();
         frame.validate();
     }
+
+    @Override
+    public void frameChanged(int i) {
+        frameIndicator.setFrame(segmentationController.getCurrentFrame(), segmentationController.getNFrames());
+    }
+
     class FrameIndicator{
         JTextField field = new JTextField("-");
         JLabel max = new JLabel("/-");

@@ -6,6 +6,7 @@ import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.InterceptingMesh3D;
 import deformablemesh.geometry.RayCastMesh;
 import deformablemesh.geometry.SnakeBox;
+import deformablemesh.gui.FrameListener;
 import deformablemesh.gui.RingController;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.meshview.MeshFrame3D;
@@ -463,9 +464,7 @@ public class SegmentationController {
                 @Override
                 public void perform() {
                     submit(() -> {
-
                             model.addMeshToTrack(next, newer, track);
-
                     });
                 }
 
@@ -488,8 +487,49 @@ public class SegmentationController {
                     });
                 }
             });
+            nextFrame();
         }
-        nextFrame();
+
+    }
+
+    public void trackMeshBackwards(){
+
+        if(model.hasSelectedMesh() && model.getCurrentFrame()>0){
+            actionStack.postAction(new UndoableActions() {
+                final int frame = model.getCurrentFrame();
+                final int previous = frame - 1;
+                final DeformableMesh3D old = model.getSelectedMesh(previous);
+                final DeformableMesh3D newer = copyMesh(model.getSelectedMesh(frame));
+                Track track = model.getSelectedTrack();
+
+                @Override
+                public void perform() {
+                    submit(() -> {
+                        model.addMeshToTrack(previous, newer, track);
+                    });
+                }
+
+                @Override
+                public void undo() {
+                    submit(()->{
+                        if(old==null){
+                            model.removeMeshFromTrack(previous, newer, track);
+                        } else{
+                            model.addMeshToTrack(previous, old, track);
+                        }
+                    });
+
+                }
+
+                @Override
+                public void redo() {
+                    submit(() -> {
+                        model.addMeshToTrack(previous, newer, track);
+                    });
+                }
+            });
+            previousFrame();
+        }
     }
 
     public void stopRunning() {
@@ -759,6 +799,11 @@ public class SegmentationController {
     }
 
 
+    public void addFrameListener(FrameListener listener){
+        model.addFrameListener(listener);
+    }
+
+
 }
 
 class ExceptionThrowingService{
@@ -809,6 +854,7 @@ class ExceptionThrowingService{
             return excs;
         }
     }
+
 
 
 }

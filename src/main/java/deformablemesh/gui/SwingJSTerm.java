@@ -1,26 +1,42 @@
 package deformablemesh.gui;
 
 import deformablemesh.SegmentationController;
+import deformablemesh.SegmentationModel;
 import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
 
+import javax.rmi.CORBA.Util;
 import javax.script.Bindings;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
+import javax.swing.AbstractAction;
 import javax.swing.BoxLayout;
+import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.KeyStroke;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Caret;
+import javax.swing.text.Document;
+import javax.swing.text.Utilities;
 import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Created by msmith on 4/14/14.
@@ -31,7 +47,9 @@ public class SwingJSTerm {
     JTextArea display, input;
     List<String> history = new LinkedList<String>();
     List<String> commandHistory = new ArrayList<>();
+    List<ReadyObserver> observers = new ArrayList<>();
     JFrame frame;
+    SegmentationController controls;
     int commandIndex;
     SwingJSTerm(SegmentationController controls){
 
@@ -48,7 +66,9 @@ public class SwingJSTerm {
             //do without.
             e.printStackTrace();
         }
+        this.controls = controls;
     }
+    
 
     public void addClasses() throws ScriptException {
 
@@ -73,6 +93,95 @@ public class SwingJSTerm {
         root.add(display_pane);
 
         input = new JTextArea();
+        InputMap im = input.getInputMap();
+        KeyStroke tab = KeyStroke.getKeyStroke("TAB");
+
+        input.getActionMap().put(im.get(tab), new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Caret caret = input.getCaret();
+                Document doc = input.getDocument();
+                int loc = caret.getMark();
+                int len = doc.getLength();
+
+
+                try {
+                    int end = Utilities.getWordEnd(input, loc);
+                    int starting = Utilities.getWordStart(input, loc);
+                    int l = loc - starting;
+                    System.out.println(starting + ", " + loc + ", " + end + ", " + len);
+                    if(l==0){
+                        if(len - loc != 0){
+
+                            end = Utilities.getWordEnd(input, loc - 1);
+                            starting = Utilities.getWordStart(input, loc - 1);
+                            if(end==loc){
+                                l = loc - starting;
+                            }
+                        } else{
+                            return;
+                        }
+                    }
+                    String partial = input.getText(starting, l);
+
+                    Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
+                    if(!partial.contains(".")){
+                        for(String key: bindings.keySet()){
+                            if(key.startsWith(partial)){
+                                System.out.println("... " + key);
+                            }
+                        }
+                    } else{
+                        if(partial.equals(".")){
+                            starting = Utilities.getWordStart(input, loc-2);
+                            partial = input.getText(starting, loc - starting);
+                        }
+                        String[] orders = partial.split(Pattern.quote("."));
+
+                        Object obj = bindings.get(orders[0]);
+
+                        if(obj!=null){
+                            List<String> fields = getAvailableFields(obj);
+                            List<String> methods = getAvailableMethodNames(obj);
+
+                            final String filter;
+                            if(orders.length==1){
+                                filter = "";
+                            } else {
+                                filter = orders[1];
+                            }
+                                if(filter.length()>0){
+                                    //apply a filter.
+                                    fields.stream().filter(
+                                            s->s.startsWith(filter)
+                                    ).forEach(
+                                            System.out::println
+                                    );
+                                    methods.stream().filter(
+                                            s->s.startsWith(filter)
+                                    ).forEach(
+                                            System.out::println
+                                    );
+                                } else{
+                                    //apply a filter.
+                                    fields.forEach(
+                                            System.out::println
+                                    );
+                                    methods.forEach(
+                                            System.out::println
+                                    );
+                                }
+                            }
+
+                    }
+
+
+                } catch (BadLocationException e1) {
+                    e1.printStackTrace();
+                }
+            }
+        });
+
         input.setRows(10);
         JScrollPane house = new JScrollPane(input);
 
@@ -99,6 +208,7 @@ public class SwingJSTerm {
                 if(commandIndex>=commandHistory.size()){
                     previous.setEnabled(false);
                 }
+
             }
 
 
@@ -152,6 +262,13 @@ public class SwingJSTerm {
 
         return root;
     }
+    List<String> getAvailableFields( Object obj){
+        return Arrays.stream(obj.getClass().getFields()).map(Field::getName).collect(Collectors.toList());
+    }
+    List<String> getAvailableMethodNames(Object obj){
+        return Arrays.stream(obj.getClass().getMethods()).map(Method::getName).collect(Collectors.toList());
+    }
+
     public void showTerminal(){
         if(frame==null){
             buildUI();
@@ -166,6 +283,9 @@ public class SwingJSTerm {
         EventQueue.invokeLater(() -> display.setText(""));
 
         try{
+            controls.submit(()->{
+                observers.forEach(o->o.setReady(false));
+            });
             engine.eval(s);
         } catch (ScriptException e) {
 
@@ -177,6 +297,12 @@ public class SwingJSTerm {
 
             }
 
+        } finally{
+            if(controls!=null){
+                controls.submit(()->{
+                    observers.forEach(o->o.setReady(true));
+                });
+            }
         }
         StringBuilder build = new StringBuilder();
         history.stream().forEach((w)->build.append(w));
@@ -186,9 +312,12 @@ public class SwingJSTerm {
     }
 
     public static void main(String[] args){
-        SwingJSTerm term = new SwingJSTerm(null);
+        SwingJSTerm term = new SwingJSTerm(new SegmentationController(new SegmentationModel()));
         term.showTerminal();
         term.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
 
+    public void addReadyObserver(ReadyObserver observer) {
+        observers.add(observer);
+    }
 }
