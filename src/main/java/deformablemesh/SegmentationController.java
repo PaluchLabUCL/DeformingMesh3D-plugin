@@ -448,7 +448,7 @@ public class SegmentationController {
         });
     }
 
-    DeformableMesh3D copyMesh(DeformableMesh3D mesh){
+    public DeformableMesh3D copyMesh(DeformableMesh3D mesh){
         return DeformableMesh3DTools.copyOf(mesh);
     }
     public void trackMesh(){
@@ -463,6 +463,7 @@ public class SegmentationController {
 
                 @Override
                 public void perform() {
+                    System.out.println(frame + " to: " + next);
                     submit(() -> {
                             model.addMeshToTrack(next, newer, track);
                     });

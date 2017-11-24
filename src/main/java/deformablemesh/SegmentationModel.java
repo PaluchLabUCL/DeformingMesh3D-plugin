@@ -735,8 +735,8 @@ public class SegmentationModel {
     }
 
     public boolean hasNextFrame() {
-
-        return original_plus.getNFrames()>getCurrentFrame();
+        //internally 0 indexed compared to ij and display, which is 1 based.
+        return original_plus.getNFrames()-1>getCurrentFrame();
 
     }
 
