@@ -236,8 +236,72 @@ class TextBoxSelections{
         });
         this.engine = engine;
         InputMap im = input.getInputMap();
+        ActionMap actions = input.getActionMap();
         KeyStroke tab = KeyStroke.getKeyStroke("TAB");
         Caret caret = input.getCaret();
+        KeyStroke up = KeyStroke.getKeyStroke("UP");
+        KeyStroke down = KeyStroke.getKeyStroke("DOWN");
+        KeyStroke enter = KeyStroke.getKeyStroke("ENTER");
+        KeyStroke escape = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
+        im.put(escape, "escape");
+
+        actions.put(im.get(escape), new AbstractAction(){
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(lastPopUp!=null) {
+                    hidePopUp();
+                }
+            }
+        });
+        Action oldEnter = actions.get(im.get(enter));
+
+        input.getActionMap().put(im.get(enter), new AbstractAction(){
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(lastPopUp!=null) {
+                    if(view.getSelectedValue()==null){
+                        view.setSelectedIndex(0);
+                    }
+                    insertSuggestion();                }
+                else{
+                    oldEnter.actionPerformed(e);
+                }
+            }
+        });
+
+        Action oldUp = actions.get(im.get(up));
+        Action oldDown = actions.get(im.get(down));
+
+
+        input.getActionMap().put(im.get(up), new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(lastPopUp!=null) {
+                    int i = view.getSelectedIndex();
+                    if(i>0){
+                        view.setSelectedIndex(i-1);
+                    }
+                }
+                else{
+                    oldUp.actionPerformed(e);
+                }
+            }
+        });
+        input.getActionMap().put(im.get(down), new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(lastPopUp!=null) {
+                    int i = view.getSelectedIndex();
+                    if(i<view.getModel().getSize()){
+                        view.setSelectedIndex(i+1);
+                    }
+                } else{
+                    oldDown.actionPerformed(e);
+                }
+            }
+        });
 
         input.getActionMap().put(im.get(tab), new AbstractAction() {
 
@@ -306,23 +370,9 @@ class TextBoxSelections{
 
                             }
                         });
-                        list.addKeyListener(new KeyListener(){
 
-                            @Override
-                            public void keyTyped(KeyEvent e) {
-                                System.out.println("dot");
-                            }
 
-                            @Override
-                            public void keyPressed(KeyEvent e) {
-
-                            }
-
-                            @Override
-                            public void keyReleased(KeyEvent e) {
-
-                            }
-                        });
+                        list.setFocusable(false);
 
                         Point pt = caret.getMagicCaretPosition();
 
@@ -333,6 +383,7 @@ class TextBoxSelections{
 
                         view = list;
                         lastPopUp = pop;
+
 
                     }
 
