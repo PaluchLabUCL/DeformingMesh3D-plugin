@@ -12,6 +12,7 @@ import deformablemesh.io.MeshWriter;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.ringdetection.FurrowTransformer;
 import deformablemesh.track.Track;
+import deformablemesh.util.MeshFaceObscuring;
 import deformablemesh.util.actions.ActionStack;
 import deformablemesh.util.actions.UndoableActions;
 import ij.ImagePlus;
@@ -88,6 +89,16 @@ public class SegmentationController {
 
         return model.getPressure();
     }
+
+    public void addMeshListener(FrameListener listener ){
+        model.addMeshListener(listener);
+    }
+
+    public void removeMeshListener(FrameListener listener){
+        model.removeMeshListener(listener);
+    }
+
+
 
     public double getCortexThickness() {
 
@@ -759,6 +770,24 @@ public class SegmentationController {
 
     public void exportAsPly(File f) {
         submit(()->model.exportAsPly(f));
+
+    }
+
+    public String getSelectedMeshName() {
+        Track t = model.getSelectedTrack();
+        if(t!=null)
+            return t.getName();
+        else
+            return "";
+    }
+
+    public void calculateObscuringMeshes(double v) {
+
+        int frame = getCurrentFrame();
+        List<Track> tracks = model.getAllTracks();
+        MeshImageStack stack = model.stack;
+        MeshFaceObscuring.analyzeTracks(tracks, stack, frame, v/stack.SCALE);
+
 
     }
 

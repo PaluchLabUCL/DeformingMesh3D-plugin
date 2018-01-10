@@ -653,6 +653,10 @@ public class SegmentationModel {
         meshListeners.add(listener);
     }
 
+    public void removeMeshListener(FrameListener listener){
+        meshListeners.remove(listener);
+    }
+
     public double[] getSurfaceOffsets() {
         return new double[]{0, 0, -stack.offsets[2]};
     }

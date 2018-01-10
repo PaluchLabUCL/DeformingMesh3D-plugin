@@ -9,6 +9,7 @@ import ij.IJ;
 import ij.ImagePlus;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -16,14 +17,7 @@ import java.awt.EventQueue;
 import java.awt.FileDialog;
 import java.awt.GridLayout;
 import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
+import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -50,6 +44,8 @@ public class ControlFrame implements ReadyObserver, FrameListener {
 
     SwingJSTerm terminal;
     Dimension pm = new Dimension(29, 29);
+    JLabel message = new JLabel("");
+
     public ControlFrame( SegmentationController model){
         this.segmentationController = model;
 
@@ -58,11 +54,16 @@ public class ControlFrame implements ReadyObserver, FrameListener {
     }
     public void showFrame(){
         frame = new JFrame("Deformable Mesh Control Panel");
+        JPanel contentPanel = new JPanel();
+        contentPanel.setLayout(new BorderLayout());
         tabbedPane = new JTabbedPane(JTabbedPane.TOP, JTabbedPane.WRAP_TAB_LAYOUT);
 
         addTabbedPanel(createContentPane(), "main");
 
-        frame.setContentPane(tabbedPane);
+        contentPanel.add(tabbedPane, BorderLayout.CENTER);
+        contentPanel.add(createStatusPanel(), BorderLayout.SOUTH);
+
+        frame.setContentPane(contentPanel);
         frame.setJMenuBar(createMenu(frame));
 
 
@@ -73,6 +74,22 @@ public class ControlFrame implements ReadyObserver, FrameListener {
     }
     public JFrame getFrame(){
         return frame;
+    }
+
+    private JPanel createStatusPanel(){
+        JPanel status = new JPanel();
+        status.setLayout(new BoxLayout(status, BoxLayout.PAGE_AXIS));
+
+        JPanel colorStatusRow = new JPanel();
+        colorStatusRow.add(new JLabel("selected color: " ));
+        JLabel selectedColorLabel = new JLabel("");
+        colorStatusRow.add(selectedColorLabel);
+        status.add(colorStatusRow);
+        status.add(message);
+        segmentationController.addMeshListener(i->{
+            selectedColorLabel.setText(segmentationController.getSelectedMeshName());
+        });
+        return status;
     }
     private JPanel createContentPane(){
         JPanel content = new JPanel();
@@ -481,6 +498,8 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         menu.add(edit);
 
         undo = new JMenuItem("undo");
+        undo.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, ActionEvent.CTRL_MASK));
+
         edit.add(undo);
 
         undo.addActionListener((evt)->{
@@ -492,6 +511,8 @@ public class ControlFrame implements ReadyObserver, FrameListener {
 
 
         redo = new JMenuItem("redo");
+        redo.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, ActionEvent.CTRL_MASK|ActionEvent.SHIFT_MASK));
+
         edit.add(redo);
 
         redo.addActionListener((evt)->{
@@ -675,6 +696,30 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             segmentationController.measureSelected();
         });
 
+        JMenuItem measureObscured = new JMenuItem("Measure Obscured");
+        tools.add(measureObscured);
+        measureObscured.addActionListener(evt->{
+            Double value = 0.1;
+            setReady(false);
+            Object update = JOptionPane.showInputDialog(frame, "Input maximum separation.", value);
+            if(update==null){
+                finished();
+                return;
+            }
+
+            try{
+                double v = Double.parseDouble(update.toString());
+                segmentationController.calculateObscuringMeshes(v);
+
+            } catch(Exception e){
+
+            } finally{
+                finished();
+            }
+
+
+        });
+
         JMenuItem showFurrowValues = new JMenuItem("Furrow Values");
         tools.add(showFurrowValues);
         showFurrowValues.addActionListener(evt->{
@@ -729,6 +774,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
                 }
             }
         });
+
 
         JMenuItem scripts = new JMenuItem("javascript console");
         tools.add(scripts);

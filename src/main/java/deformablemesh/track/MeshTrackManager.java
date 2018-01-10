@@ -506,7 +506,7 @@ public class MeshTrackManager {
             }
             this.tracks.add(replacement);
         }
-        model.rows = rows;
+        model.rows = rows+1;
 
         shapeTable();
 
