@@ -8,23 +8,18 @@ import javax.script.Bindings;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
-import javax.swing.AbstractAction;
-import javax.swing.BoxLayout;
-import javax.swing.InputMap;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.KeyStroke;
+import javax.swing.*;
+import javax.swing.event.ListDataListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Caret;
 import javax.swing.text.Document;
 import javax.swing.text.Utilities;
 import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
@@ -90,97 +85,10 @@ public class SwingJSTerm {
         JScrollPane display_pane = new JScrollPane(display);
         display_pane.setPreferredSize(new Dimension(600, 100));
         root.add(display_pane);
-
-        input = new JTextArea();
-        InputMap im = input.getInputMap();
-        KeyStroke tab = KeyStroke.getKeyStroke("TAB");
-
-        input.getActionMap().put(im.get(tab), new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Caret caret = input.getCaret();
-                Document doc = input.getDocument();
-                int loc = caret.getMark();
-                int len = doc.getLength();
-
-
-                try {
-                    int end = Utilities.getWordEnd(input, loc);
-                    int starting = Utilities.getWordStart(input, loc);
-                    int l = loc - starting;
-                    if(l==0){
-                        if(len - loc != 0){
-
-                            end = Utilities.getWordEnd(input, loc - 1);
-                            starting = Utilities.getWordStart(input, loc - 1);
-                            if(end==loc){
-                                l = loc - starting;
-                            }
-                        } else{
-                            return;
-                        }
-                    }
-                    String partial = input.getText(starting, l);
-
-                    Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
-                    if(!partial.contains(".")){
-                        for(String key: bindings.keySet()){
-                            if(key.startsWith(partial)){
-                                System.out.println("... " + key);
-                            }
-                        }
-                    } else{
-                        if(partial.equals(".")){
-                            starting = Utilities.getWordStart(input, loc-2);
-                            partial = input.getText(starting, loc - starting);
-                        }
-                        String[] orders = partial.split(Pattern.quote("."));
-
-                        Object obj = bindings.get(orders[0]);
-
-                        if(obj!=null){
-                            List<String> fields = getAvailableFields(obj);
-                            List<String> methods = getAvailableMethodNames(obj);
-
-                            final String filter;
-                            if(orders.length==1){
-                                filter = "";
-                            } else {
-                                filter = orders[1];
-                            }
-                                if(filter.length()>0){
-                                    //apply a filter.
-                                    fields.stream().filter(
-                                            s->s.startsWith(filter)
-                                    ).forEach(
-                                            System.out::println
-                                    );
-                                    methods.stream().filter(
-                                            s->s.startsWith(filter)
-                                    ).forEach(
-                                            System.out::println
-                                    );
-                                } else{
-                                    //apply a filter.
-                                    fields.forEach(
-                                            System.out::println
-                                    );
-                                    methods.forEach(
-                                            System.out::println
-                                    );
-                                }
-                            }
-
-                    }
-
-
-                } catch (BadLocationException e1) {
-                    e1.printStackTrace();
-                }
-            }
-        });
-
+        TextBoxSelections tbs = new TextBoxSelections(engine);
+        input = tbs.input;
         input.setRows(10);
+
         JScrollPane house = new JScrollPane(input);
 
         String[] historyTemp = new String[1];
@@ -260,12 +168,7 @@ public class SwingJSTerm {
 
         return root;
     }
-    List<String> getAvailableFields( Object obj){
-        return Arrays.stream(obj.getClass().getFields()).map(Field::getName).collect(Collectors.toList());
-    }
-    List<String> getAvailableMethodNames(Object obj){
-        return Arrays.stream(obj.getClass().getMethods()).map(Method::getName).collect(Collectors.toList());
-    }
+
 
     public void showTerminal(){
         if(frame==null){
@@ -317,5 +220,262 @@ public class SwingJSTerm {
 
     public void addReadyObserver(ReadyObserver observer) {
         observers.add(observer);
+    }
+}
+
+
+class TextBoxSelections{
+    Popup lastPopUp;
+    JList<String> view;
+    JTextArea input;
+    ScriptEngine engine;
+    TextBoxSelections(ScriptEngine engine){
+        input = new JTextArea();
+        input.addCaretListener(evt->{
+            hidePopUp();
+        });
+        this.engine = engine;
+        InputMap im = input.getInputMap();
+        ActionMap actions = input.getActionMap();
+        KeyStroke tab = KeyStroke.getKeyStroke("TAB");
+        Caret caret = input.getCaret();
+        KeyStroke up = KeyStroke.getKeyStroke("UP");
+        KeyStroke down = KeyStroke.getKeyStroke("DOWN");
+        KeyStroke enter = KeyStroke.getKeyStroke("ENTER");
+        KeyStroke escape = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
+        im.put(escape, "escape");
+
+        actions.put(im.get(escape), new AbstractAction(){
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(lastPopUp!=null) {
+                    hidePopUp();
+                }
+            }
+        });
+        Action oldEnter = actions.get(im.get(enter));
+
+        input.getActionMap().put(im.get(enter), new AbstractAction(){
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(lastPopUp!=null) {
+                    if(view.getSelectedValue()==null){
+                        view.setSelectedIndex(0);
+                    }
+                    insertSuggestion();                }
+                else{
+                    oldEnter.actionPerformed(e);
+                }
+            }
+        });
+
+        Action oldUp = actions.get(im.get(up));
+        Action oldDown = actions.get(im.get(down));
+
+
+        input.getActionMap().put(im.get(up), new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(lastPopUp!=null) {
+                    int i = view.getSelectedIndex();
+                    if(i>0){
+                        view.setSelectedIndex(i-1);
+                    }
+                }
+                else{
+                    oldUp.actionPerformed(e);
+                }
+            }
+        });
+        input.getActionMap().put(im.get(down), new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(lastPopUp!=null) {
+                    int i = view.getSelectedIndex();
+                    if(i<view.getModel().getSize()){
+                        view.setSelectedIndex(i+1);
+                    }
+                } else{
+                    oldDown.actionPerformed(e);
+                }
+            }
+        });
+
+        input.getActionMap().put(im.get(tab), new AbstractAction() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(lastPopUp!=null){
+                    //a second tab is assumed to mean take the presented option.
+                    if(view.getSelectedValue()==null){
+                        view.setSelectedIndex(0);
+                    }
+                    insertSuggestion();
+                    return;
+                }
+
+                Document doc = input.getDocument();
+                int loc = caret.getMark();
+                int len = doc.getLength();
+
+                try {
+                    int end = Utilities.getWordEnd(input, loc);
+                    int starting = Utilities.getWordStart(input, loc);
+                    int l = loc - starting;
+                    if(l==0){
+                        if(len - loc != 0){
+
+                            end = Utilities.getWordEnd(input, loc - 1);
+                            starting = Utilities.getWordStart(input, loc - 1);
+                            if(end==loc){
+                                l = loc - starting;
+                            }
+                        } else{
+                            return;
+                        }
+                    }
+                    String partial = input.getText(starting, l);
+                    List<String> suggestions;
+                    if(!partial.contains(".")){
+                        suggestions = getTopSuggestions(partial);
+                    } else{
+                        if(partial.equals(".")){
+                            starting = Utilities.getWordStart(input, loc-2);
+                            partial = input.getText(starting, loc - starting);
+                        }
+                        suggestions = getSuggestions(partial);
+                    }
+
+                    if(suggestions.size()>0){
+                        JList<String> list = new JList<>(new ListModel<String>(){
+
+                            @Override
+                            public int getSize() {
+                                return suggestions.size();
+                            }
+
+                            @Override
+                            public String getElementAt(int index) {
+                                return suggestions.get(index);
+                            }
+
+                            @Override
+                            public void addListDataListener(ListDataListener l) {
+                            }
+
+                            @Override
+                            public void removeListDataListener(ListDataListener l) {
+
+                            }
+                        });
+
+
+                        list.setFocusable(false);
+
+                        Point pt = caret.getMagicCaretPosition();
+
+                        Point pt2 = new Point(pt);
+                        SwingUtilities.convertPointToScreen(pt2, input);
+                        Popup pop = PopupFactory.getSharedInstance().getPopup(input, list, pt2.x, pt2.y);
+                        pop.show();
+
+                        view = list;
+                        lastPopUp = pop;
+
+
+                    }
+
+                } catch (BadLocationException e1) {
+                    e1.printStackTrace();
+                }
+
+
+            }
+        });
+    }
+    List<String> getTopSuggestions(String partial){
+        final int l = partial.length();
+        if(l>0){
+            return engine.getBindings(ScriptContext.ENGINE_SCOPE).keySet().stream().filter(
+                    s->s.startsWith(partial)
+            ).map(
+                    s->s.substring(l)
+            ).collect(Collectors.toList());
+
+        }
+        return engine.getBindings(ScriptContext.ENGINE_SCOPE).keySet().stream().collect(Collectors.toList());
+
+    }
+    List<String> getSuggestions(String partial){
+        Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
+        List<String> suggestions = new ArrayList<>();
+
+        String[] orders = partial.split(Pattern.quote("."));
+
+        Object obj = bindings.get(orders[0]);
+
+        if(obj!=null){
+            List<String> fields = getAvailableFields(obj);
+            List<String> methods = getAvailableMethodNames(obj);
+
+            final String filter;
+            if(orders.length==1){
+                filter = "";
+            } else {
+                filter = orders[1];
+            }
+            if(filter.length()>0){
+                //apply a filter.
+                fields.stream().filter(
+                        s->s.startsWith(filter)
+                ).forEach(
+                        s->suggestions.add(s.substring(filter.length()))
+                );
+                methods.stream().filter(
+                        s->s.startsWith(filter)
+                ).forEach(
+                        s->suggestions.add(s.substring(filter.length()))
+                );
+            } else{
+                //apply a filter.
+                fields.forEach(
+                        suggestions::add
+                );
+                methods.forEach(
+                        suggestions::add
+                );
+            }
+        }
+
+        return suggestions;
+    }
+
+    void insertSuggestion(){
+        String rep = view.getSelectedValue();
+
+        if(rep!=null) {
+            Caret caret = input.getCaret();
+            Document doc = input.getDocument();
+            int loc = caret.getMark();
+
+            input.replaceRange(rep, loc, loc);
+
+        }
+        hidePopUp();
+    }
+    List<String> getAvailableFields( Object obj){
+        return Arrays.stream(obj.getClass().getFields()).map(Field::getName).collect(Collectors.toList());
+    }
+    List<String> getAvailableMethodNames(Object obj){
+        return Arrays.stream(obj.getClass().getMethods()).map(Method::getName).collect(Collectors.toList());
+    }
+    void hidePopUp(){
+        if(lastPopUp!=null){
+            lastPopUp.hide();
+            lastPopUp=null;
+            input.requestFocus();
+        }
     }
 }
