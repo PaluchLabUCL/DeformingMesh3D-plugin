@@ -98,85 +98,7 @@ public class SwingJSTerm {
         input.getActionMap().put(im.get(tab), new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                Caret caret = input.getCaret();
-                Document doc = input.getDocument();
-                int loc = caret.getMark();
-                int len = doc.getLength();
-
-
-                try {
-                    int end = Utilities.getWordEnd(input, loc);
-                    int starting = Utilities.getWordStart(input, loc);
-                    int l = loc - starting;
-                    if(l==0){
-                        if(len - loc != 0){
-
-                            end = Utilities.getWordEnd(input, loc - 1);
-                            starting = Utilities.getWordStart(input, loc - 1);
-                            if(end==loc){
-                                l = loc - starting;
-                            }
-                        } else{
-                            return;
-                        }
-                    }
-                    String partial = input.getText(starting, l);
-
-                    Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
-                    if(!partial.contains(".")){
-                        for(String key: bindings.keySet()){
-                            if(key.startsWith(partial)){
-                                System.out.println("... " + key);
-                            }
-                        }
-                    } else{
-                        if(partial.equals(".")){
-                            starting = Utilities.getWordStart(input, loc-2);
-                            partial = input.getText(starting, loc - starting);
-                        }
-                        String[] orders = partial.split(Pattern.quote("."));
-
-                        Object obj = bindings.get(orders[0]);
-
-                        if(obj!=null){
-                            List<String> fields = getAvailableFields(obj);
-                            List<String> methods = getAvailableMethodNames(obj);
-
-                            final String filter;
-                            if(orders.length==1){
-                                filter = "";
-                            } else {
-                                filter = orders[1];
-                            }
-                                if(filter.length()>0){
-                                    //apply a filter.
-                                    fields.stream().filter(
-                                            s->s.startsWith(filter)
-                                    ).forEach(
-                                            System.out::println
-                                    );
-                                    methods.stream().filter(
-                                            s->s.startsWith(filter)
-                                    ).forEach(
-                                            System.out::println
-                                    );
-                                } else{
-                                    //apply a filter.
-                                    fields.forEach(
-                                            System.out::println
-                                    );
-                                    methods.forEach(
-                                            System.out::println
-                                    );
-                                }
-                            }
-
-                    }
-
-
-                } catch (BadLocationException e1) {
-                    e1.printStackTrace();
-                }
+                showSuggestions();
             }
         });
 
@@ -260,6 +182,89 @@ public class SwingJSTerm {
 
         return root;
     }
+
+    public void showSuggestions(){
+        Caret caret = input.getCaret();
+        Document doc = input.getDocument();
+        int loc = caret.getMark();
+        int len = doc.getLength();
+
+
+        try {
+            int end = Utilities.getWordEnd(input, loc);
+            int starting = Utilities.getWordStart(input, loc);
+            int l = loc - starting;
+            if(l==0){
+                if(len - loc != 0){
+
+                    end = Utilities.getWordEnd(input, loc - 1);
+                    starting = Utilities.getWordStart(input, loc - 1);
+                    if(end==loc){
+                        l = loc - starting;
+                    }
+                } else{
+                    return;
+                }
+            }
+            String partial = input.getText(starting, l);
+
+            Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
+            if(!partial.contains(".")){
+                for(String key: bindings.keySet()){
+                    if(key.startsWith(partial)){
+                        System.out.println("... " + key);
+                    }
+                }
+            } else{
+                if(partial.equals(".")){
+                    starting = Utilities.getWordStart(input, loc-2);
+                    partial = input.getText(starting, loc - starting);
+                }
+                String[] orders = partial.split(Pattern.quote("."));
+
+                Object obj = bindings.get(orders[0]);
+
+                if(obj!=null){
+                    List<String> fields = getAvailableFields(obj);
+                    List<String> methods = getAvailableMethodNames(obj);
+
+                    final String filter;
+                    if(orders.length==1){
+                        filter = "";
+                    } else {
+                        filter = orders[1];
+                    }
+                    if(filter.length()>0){
+                        //apply a filter.
+                        fields.stream().filter(
+                                s->s.startsWith(filter)
+                        ).forEach(
+                                System.out::println
+                        );
+                        methods.stream().filter(
+                                s->s.startsWith(filter)
+                        ).forEach(
+                                System.out::println
+                        );
+                    } else{
+                        //apply a filter.
+                        fields.forEach(
+                                System.out::println
+                        );
+                        methods.forEach(
+                                System.out::println
+                        );
+                    }
+                }
+
+            }
+
+
+        } catch (BadLocationException e1) {
+            e1.printStackTrace();
+        }
+    }
+
     List<String> getAvailableFields( Object obj){
         return Arrays.stream(obj.getClass().getFields()).map(Field::getName).collect(Collectors.toList());
     }
