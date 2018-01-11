@@ -653,6 +653,10 @@ public class SegmentationModel {
         meshListeners.add(listener);
     }
 
+    public void removeMeshListener(FrameListener listener){
+        meshListeners.remove(listener);
+    }
+
     public double[] getSurfaceOffsets() {
         return new double[]{0, 0, -stack.offsets[2]};
     }
@@ -735,8 +739,8 @@ public class SegmentationModel {
     }
 
     public boolean hasNextFrame() {
-
-        return original_plus.getNFrames()>getCurrentFrame();
+        //internally 0 indexed compared to ij and display, which is 1 based.
+        return original_plus.getNFrames()-1>getCurrentFrame();
 
     }
 
