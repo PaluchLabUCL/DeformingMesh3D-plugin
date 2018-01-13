@@ -8,15 +8,8 @@ import ij.ImageJ;
 import ij.ImagePlus;
 import jogamp.nativewindow.jawt.JAWTUtil;
 
-import javax.swing.JFrame;
 import java.awt.EventQueue;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.StandardOpenOption;
-import java.util.List;
 
 /**
  *
