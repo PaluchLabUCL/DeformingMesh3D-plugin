@@ -525,10 +525,10 @@ class SphereModifier{
     Modifier modifier;
 
     public SphereModifier(Sphere s){
-        translateHandle = new Sphere(s.getCenter(), 0.05);
+        translateHandle = new Sphere(s.getCenter(), s.getRadius()*0.2);
         double[] s1 = Arrays.copyOf(s.getCenter(), 3);
         s1[0] += s.getRadius();
-        stretchHandle = new Sphere(s1, 0.05);
+        stretchHandle = new Sphere(s1, s.getRadius()*0.25);
         sphere = s;
     }
 

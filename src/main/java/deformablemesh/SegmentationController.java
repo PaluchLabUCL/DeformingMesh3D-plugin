@@ -42,6 +42,7 @@ public class SegmentationController {
     final SegmentationModel model;
     private ActionStack actionStack = new ActionStack();
     MeshFrame3D meshFrame3D;
+    boolean meshModified = false;
 
     ExceptionThrowingService main = new ExceptionThrowingService();
 
@@ -257,10 +258,12 @@ public class SegmentationController {
         return model.getLastSavedFile();
     }
     public void addMesh(DeformableMesh3D m){
+        meshModified=true;
         addMesh(model.getCurrentFrame(), m);
     }
 
     public void startNewMeshTrack(int frame, DeformableMesh3D mesh){
+        meshModified=true;
         actionStack.postAction(new UndoableActions(){
             DeformableMesh3D m = mesh;
             int f = frame;
@@ -288,6 +291,7 @@ public class SegmentationController {
     }
 
     public void addMesh(int frame, DeformableMesh3D m){
+        meshModified=true;
         actionStack.postAction(new UndoableActions(){
 
             final DeformableMesh3D old = model.getSelectedMesh(frame);
@@ -404,11 +408,13 @@ public class SegmentationController {
      *
      */
     public void deformMesh(){
+        meshModified=true;
         if(model.hasSelectedMesh()) {
             deformMesh(-1);
         }
     }
     public void deformAllMeshes(){
+        meshModified=true;
         final List<DeformableMesh3D> meshes = new ArrayList<>();
         List<Track> tracks = model.getAllMeshes();
         Integer frame = model.getCurrentFrame();
@@ -458,6 +464,7 @@ public class SegmentationController {
         }
     }
     public void deformMesh(final int count){
+        meshModified = true;
         actionStack.postAction(new UndoableActions(){
             final DeformableMesh3D mesh = model.getSelectedMesh(model.getCurrentFrame());
             final double[] positions = Arrays.copyOf(mesh.positions, mesh.positions.length);
@@ -577,7 +584,10 @@ public class SegmentationController {
     }
 
     public void saveMeshes(File f) {
-        submit(()->model.saveMeshes(f));
+        submit(()->{
+            model.saveMeshes(f);
+            meshModified = false;
+        });
     }
 
     public void loadMeshes(File f) {
@@ -589,6 +599,7 @@ public class SegmentationController {
                 public void perform() {
                     submit(()->{
                         model.setMeshes(replacements);
+                        meshModified = false;
                     });
 
                 }
@@ -702,6 +713,7 @@ public class SegmentationController {
     }
 
     public void initializeMesh(DeformableMesh3D mesh) {
+        meshModified=true;
         int f = model.getCurrentFrame();
         if(model.getSelectedMesh(f)==null){
             addMesh(f, mesh);
@@ -721,6 +733,7 @@ public class SegmentationController {
 
     public void notifyMeshListeners() {
         submit(()->{
+            meshModified=true;
             model.notifyMeshListeners();
         });
     }
@@ -814,6 +827,10 @@ public class SegmentationController {
         MeshFaceObscuring.analyzeTracks(tracks, stack, frame, v/stack.SCALE);
 
 
+    }
+
+    public boolean getMeshModified() {
+        return meshModified;
     }
 
 
