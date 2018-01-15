@@ -232,6 +232,30 @@ public class SegmentationController {
         });
     }
 
+    public void restartMeshes(){
+        actionStack.postAction(new UndoableActions() {
+            final List<Track> old = model.getAllTracks();
+            final List<Track> newTrack = new ArrayList<>();
+            @Override
+            public void perform() {
+                submit(()->model.setMeshes(newTrack));
+            }
+
+            @Override
+            public void undo() {
+                submit(()->model.setMeshes(old));
+            }
+
+            @Override
+            public void redo() {
+                submit(()->model.setMeshes(newTrack));
+            }
+        });
+    }
+
+    public File getLastSavedFile(){
+        return model.getLastSavedFile();
+    }
     public void addMesh(DeformableMesh3D m){
         addMesh(model.getCurrentFrame(), m);
     }
@@ -856,6 +880,7 @@ class ExceptionThrowingService{
             throw new RuntimeException(exc);
         }
     }
+
 
     public void submit(final SegmentationController.Executable r){
 

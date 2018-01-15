@@ -6,7 +6,9 @@ import deformablemesh.gui.meshinitialization.CircularMeshInitializationDialog;
 import deformablemesh.track.MeshTrackManager;
 import deformablemesh.track.Track;
 import ij.IJ;
+import ij.ImageJ;
 import ij.ImagePlus;
+import ij.WindowManager;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -494,6 +496,79 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             finished();
         });
 
+        JMenuItem selectOpen = new JMenuItem("Select open image");
+        file.add(selectOpen);
+        selectOpen.addActionListener(evt->{
+
+            String[] imageLabels = WindowManager.getImageTitles();
+
+            if(imageLabels.length==0) return;
+
+            Object[] choices = new Object[imageLabels.length];
+            for(int i = 0; i<choices.length; i++){
+                choices[i] = imageLabels[i];
+            }
+
+            Object option = JOptionPane.showInputDialog(
+                    frame,
+                    "Choose from open images:",
+                    "Choose Open Image",
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    choices,
+                    choices[0]
+            );
+            if(option instanceof String) {
+                ImagePlus plus = WindowManager.getImage((String) option);
+                if (plus != null) {
+
+                    segmentationController.setOriginalPlus(plus);
+
+                }
+            }
+
+        });
+
+        JMenuItem newMeshes = new JMenuItem("Start new meshes.");
+        newMeshes.setToolTipText("Clear the current meshes, for starting a new set.");
+        file.add(newMeshes);
+        newMeshes.addActionListener(evt->{
+            segmentationController.restartMeshes();
+        });
+
+        JMenuItem saveAs = new JMenuItem("save meshes as...");
+        file.add(saveAs);
+        saveAs.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_MASK));
+        saveAs.addActionListener(actionEvent -> {
+            saveAs();
+        });
+
+        JMenuItem saveMesh = new JMenuItem("save");
+        file.add(saveMesh);
+        saveMesh.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK));
+        saveMesh.addActionListener(evt->{
+            File f = segmentationController.getLastSavedFile();
+            if(f==null){
+                saveAs();
+            } else{
+                segmentationController.saveMeshes(f);
+            }
+        });
+        JMenuItem load = new JMenuItem("load meshes");
+        file.add(load);
+        load.addActionListener(actionEvent -> {
+            setReady(false);
+            FileDialog fd = new FileDialog(frame,"File to load mesh from");
+            fd.setMode(FileDialog.LOAD);
+            fd.setVisible(true);
+            if(fd.getFile()==null || fd.getDirectory()==null){
+                return;
+            }
+            File f = new File(fd.getDirectory(),fd.getFile());
+            segmentationController.loadMeshes(f);
+            finished();
+        });
+
         JMenu edit = new JMenu("edit");
         menu.add(edit);
 
@@ -524,36 +599,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         JMenu mesh = new JMenu("mesh");
         menu.add(mesh);
 
-        JMenuItem save = new JMenuItem("save meshes");
-        mesh.add(save);
-        save.addActionListener(actionEvent -> {
-            setReady(false);
-            FileDialog fd = new FileDialog(frame,"File to save mesh too");
-            fd.setFile(segmentationController.getShortImageName() + ".bmf");
-            fd.setMode(FileDialog.SAVE);
-            fd.setVisible(true);
-            if(fd.getFile()==null || fd.getDirectory()==null){
-                return;
-            }
-            File f = new File(fd.getDirectory(),fd.getFile());
-            segmentationController.saveMeshes(f);
-            finished();
-        });
 
-        JMenuItem load = new JMenuItem("load meshes");
-        mesh.add(load);
-        load.addActionListener(actionEvent -> {
-            setReady(false);
-            FileDialog fd = new FileDialog(frame,"File to load mesh from");
-            fd.setMode(FileDialog.LOAD);
-            fd.setVisible(true);
-            if(fd.getFile()==null || fd.getDirectory()==null){
-                return;
-            }
-            File f = new File(fd.getDirectory(),fd.getFile());
-            segmentationController.loadMeshes(f);
-            finished();
-        });
 
         JMenuItem stlSave = new JMenuItem("Export as Stl");
         mesh.add(stlSave);
@@ -794,6 +840,21 @@ public class ControlFrame implements ReadyObserver, FrameListener {
 
 
         return menu;
+    }
+
+    public void saveAs(){
+        setReady(false);
+        FileDialog fd = new FileDialog(frame,"File to save mesh too");
+        fd.setFile(segmentationController.getShortImageName() + ".bmf");
+        fd.setMode(FileDialog.SAVE);
+        fd.setVisible(true);
+        if(fd.getFile()==null || fd.getDirectory()==null){
+            finished();
+            return;
+        }
+        File f = new File(fd.getDirectory(),fd.getFile());
+        segmentationController.saveMeshes(f);
+        finished();
     }
 
     private void buildTrackManager() {

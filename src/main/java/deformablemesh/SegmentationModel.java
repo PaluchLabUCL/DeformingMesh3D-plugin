@@ -87,6 +87,7 @@ public class SegmentationModel {
 
 
     private double normalize;
+    private File lastSavedFile;
 
     public SegmentationModel(){
 
@@ -343,7 +344,9 @@ public class SegmentationModel {
     }
 
     public void saveMeshes(final File f) throws IOException {
+        lastSavedFile = null;
         MeshWriter.saveMeshes(f, tracker);
+        lastSavedFile = f;
     }
 
     public void exportAsStl(File f) throws IOException {
@@ -582,12 +585,16 @@ public class SegmentationModel {
         tracker.clearMeshes();
         tracker.addMeshTracks(meshes);
         notifyMeshListeners();
+        lastSavedFile=null;
     }
 
 
 
     Pattern p = Pattern.compile("(\\.\\w+)$");
     public String getShortImageName() {
+        if(original_plus==null){
+            return "ImageNull";
+        }
         String original = original_plus.getTitle();
         Matcher m = p.matcher(original);
         int l = 0;
@@ -773,6 +780,14 @@ public class SegmentationModel {
 
     public void exportAsPly(File f) throws IOException {
         MeshWriter.exportToPly(f, tracker.getAllMeshTracks(), getCurrentFrame(), stack.offsets, stack.SCALE);
+    }
+
+    public File getLastSavedFile() {
+        return lastSavedFile;
+    }
+
+    public void setLastSavedFile(File lastSavedFile) {
+        this.lastSavedFile = lastSavedFile;
     }
 }
 

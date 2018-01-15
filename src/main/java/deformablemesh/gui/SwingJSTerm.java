@@ -85,6 +85,9 @@ public class SwingJSTerm {
         JScrollPane display_pane = new JScrollPane(display);
         display_pane.setPreferredSize(new Dimension(600, 100));
         root.add(display_pane);
+
+
+
         TextBoxSelections tbs = new TextBoxSelections(engine);
         input = tbs.input;
         input.setRows(10);
