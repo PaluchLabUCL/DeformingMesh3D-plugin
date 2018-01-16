@@ -13,10 +13,12 @@ import java.util.List;
 public class BinaryInterceptible implements Interceptable{
     double[] center;
     List<double[]> edge;
-    public BinaryInterceptible(List<int[]> pixels, MeshImageStack stack){
+    int label;
+    public BinaryInterceptible(List<int[]> pixels, MeshImageStack stack, int label){
         double[] img = new double[3];
         center = new double[3];
         edge = new ArrayList<>();
+        this.label = label;
         for(int[] px: pixels){
             img[0] = px[0];
             img[1] = px[1];
@@ -43,7 +45,7 @@ public class BinaryInterceptible implements Interceptable{
         for(int i = 0; i<3; i++){
             for(int j = 0; j<3; j++){
                 for(int k = 0; k<3; k++){
-                    if(stack.getValue(pt[0] + i -1, pt[1] + j - 1, pt[2] + k - 1)==0){
+                    if(stack.getValue(pt[0] + i -1, pt[1] + j - 1, pt[2] + k - 1)!=label){
                         return true;
                     }
                 }
