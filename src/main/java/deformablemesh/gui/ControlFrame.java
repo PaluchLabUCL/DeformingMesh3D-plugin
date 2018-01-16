@@ -552,6 +552,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
                 saveAs();
             } else{
                 segmentationController.saveMeshes(f);
+                finished();
             }
         });
         JMenuItem load = new JMenuItem("load meshes");
@@ -901,6 +902,27 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         segmentationController.submit(() -> {
             setReady(true);
             EventQueue.invokeLater(this::displayErrors);
+            setFrameModified(segmentationController.getMeshModified());
+        });
+    }
+
+    /**
+     *
+     * change the frame title when the meshes get modified.
+     *
+     */
+    public void setFrameModified(boolean v){
+        final String label;
+        File file = segmentationController.getLastSavedFile();
+        String title = file==null?segmentationController.getShortImageName():file.getName();
+
+        if(v){
+            label = "DM3D " + title + "[unsaved]";
+        }  else{
+            label = "DM3D " + title;
+        }
+        EventQueue.invokeLater(()->{
+            frame.setTitle(label);
         });
     }
 
