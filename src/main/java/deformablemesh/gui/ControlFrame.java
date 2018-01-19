@@ -321,7 +321,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         show_volume.addActionListener(e -> {
             setReady(false);
             segmentationController.showVolume();
-
             finished();
         });
     }
@@ -490,7 +489,10 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         original.addActionListener(evt -> {
             setReady(false);
             ImagePlus original1 = IJ.openImage();
-            if(original1 ==null) return;
+            if(original1 ==null){
+                finished();
+                return;
+            }
             segmentationController.setOriginalPlus(original1);
             original1.show();
             finished();

@@ -580,7 +580,21 @@ public class SegmentationController {
     }
 
     public void setOriginalPlus(ImagePlus plus) {
-        submit(()->model.setOriginalPlus(plus));
+
+        submit(
+
+                ()->{
+                    boolean volumeShowing = meshFrame3D.volumeShowing();
+
+                    if(volumeShowing){
+                        meshFrame3D.hideVolume();
+                    }
+                    model.setOriginalPlus(plus);
+                    if(volumeShowing) {
+                        showVolume();
+                    }
+                }
+        );
     }
 
     public void saveMeshes(File f) {
