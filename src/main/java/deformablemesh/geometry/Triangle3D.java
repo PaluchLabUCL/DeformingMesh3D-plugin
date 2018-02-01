@@ -1,5 +1,7 @@
 package deformablemesh.geometry;
 
+import com.sun.javaws.exceptions.InvalidArgumentException;
+
 /**
  *
  * An ordered collection of 3 nodes that will be used for calculating geometric properties.
@@ -104,5 +106,17 @@ public class Triangle3D {
         indexes[0] = A.index;
         indexes[1] = B.index;
         indexes[2] = C.index;
+    }
+
+    public double[] getCoordinates(int dex){
+        switch(dex%3){
+            case 0:
+                return A.getCoordinates();
+            case 1:
+                return B.getCoordinates();
+            case 2:
+                return C.getCoordinates();
+        }
+        throw new RuntimeException("Negative node value is not valid! " + dex);
     }
 }
