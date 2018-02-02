@@ -59,7 +59,7 @@ public class DeformableMesh3D{
      * @param node_positions collection of double arrays were each array should be {x,y,z}
      * @param connection_indices collection of indexes that indicate connections between nodes.
      */
-    public DeformableMesh3D(ArrayList<double[]> node_positions, ArrayList<int[]> connection_indices, ArrayList<int[]> triangle_indices){
+    public DeformableMesh3D(List<double[]> node_positions, List<int[]> connection_indices, List<int[]> triangle_indices){
         nodes = new ArrayList<>(node_positions.size());
         triangles = new ArrayList<>();
         connections = new ArrayList<>(connection_indices.size());

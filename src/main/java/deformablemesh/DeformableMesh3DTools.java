@@ -960,6 +960,57 @@ public class DeformableMesh3DTools {
         return mesh;
     }
 
+    public static DeformableMesh3D createRhombicDodecahedron(double l){
+        List<double[]> points = new ArrayList<>(14);
+        List<int[]> connections = new ArrayList<>(36); // 24 connections + 1 new connection per face
+        List<int[]> triangles = new ArrayList<>(24);  //12 faces cut into 2 triangles
+
+        for(int i = 0; i<4; i++){
+            double theta = Math.PI*2/4*i;
+            double[] a = {l*Math.sin(theta - Math.PI/4), 0, l*Math.cos(theta - Math.PI/4)};
+            double[] b = {Math.sqrt(2)/2*l*Math.sin(theta), -l/2, Math.sqrt(2)/2*l*Math.cos(theta)};
+            double[] c = {Math.sqrt(2)/2*l*Math.sin(theta), l/2 ,Math.sqrt(2)/2*l*Math.cos(theta)};
+            points.add(a);
+            points.add(b);
+            points.add(c);
+
+            //t1
+            connections.add(new int[]{i*3 + 0, i*3 +1});
+            connections.add(new int[]{i*3 + 1, i*3 + 2});
+            connections.add(new int[]{i*3 + 2, i*3 + 0});
+
+            //t2 remaining
+            connections.add(new int[]{i*3 + 1, (i*3 + 3)%12});
+            connections.add(new int[]{(i*3 + 3)%12, i*3 + 2});
+
+            //t3
+            connections.add(new int[]{i*3+1, 12});
+            connections.add(new int[]{(i*3+4)%12, i*3 + 1});
+
+            //t5
+            connections.add(new int[]{(i*3+2), 13});
+            connections.add(new int[]{(i*3+2)%12, (i*3 + 5)%12});
+
+            triangles.add(new int[]{i*3 + 0, i*3 + 1, i*3 + 2});
+            triangles.add(new int[]{i*3 + 1, (i*3 + 3)%12, i*3 + 2});
+
+            triangles.add(new int[]{i*3 + 1, 12, (i*3 + 4)%12});
+            triangles.add(new int[]{ (i*3 + 1), (i*3 + 4)%12, (i*3 + 3)%12});
+
+            triangles.add(new int[]{i*3 + 2, (i*3 + 5)%12, 13});
+            triangles.add(new int[]{ (i*3 + 2), (i*3 + 3)%12, (i*3 + 5)%12});
+
+        }
+        double[] d = {0, -l, 0};
+        points.add(d);
+        double[] e = {0, l, 0};
+        points.add(e);
+
+        return new DeformableMesh3D(points, connections, triangles);
+
+
+    }
+
     public static DeformableMesh3D createTestBlock(){
         ArrayList<double[]> pts = new ArrayList<double[]>();
         ArrayList<int[]> connections = new ArrayList<int[]>();
