@@ -1,6 +1,5 @@
 package deformablemesh.geometry;
 
-import com.sun.javaws.exceptions.InvalidArgumentException;
 
 /**
  *

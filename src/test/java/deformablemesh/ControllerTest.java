@@ -113,13 +113,13 @@ public class ControllerTest {
     public void checkExecutorService(){
         SegmentationModel model = new SegmentationModel();
         SegmentationController controller = new SegmentationController(model);
+
         controller.submit(()->{
             int[] x = new int[0];
             int y = x[0];
         });
-        controller.submit(()->{
-            Assert.assertEquals(waitFor(controller).size(), 1);
-        });
+
+        Assert.assertEquals(waitFor(controller).size(), 1);
 
         controller.submit(()->{
             controller.submit(()->{
@@ -135,7 +135,9 @@ public class ControllerTest {
     private List<Exception> waitFor(SegmentationController controller){
         synchronized (controller){
             controller.submit(()->{
-                synchronized(controller){controller.notifyAll();}
+                synchronized(controller){
+                    controller.notifyAll();
+                }
             });
 
             try {
@@ -145,6 +147,7 @@ public class ControllerTest {
                 e.printStackTrace();
                 return Collections.emptyList();
             }
+
         }
     }
     @Test
@@ -161,6 +164,7 @@ public class ControllerTest {
         Assert.assertEquals(a, model.ALPHA, 0);
         Assert.assertEquals(b, model.BETA, 0);
         Assert.assertEquals(g, model.GAMMA, 0);
+        controller.stopRunning();
 
     }
 
@@ -173,5 +177,7 @@ public class ControllerTest {
         controller.reMesh();
         Assert.assertEquals(0, waitFor(controller).size());
         Assert.assertEquals(1, model.getAllMeshes().size());
+
+        controller.stopRunning();
     }
 }
