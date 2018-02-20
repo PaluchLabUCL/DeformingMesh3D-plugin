@@ -2,6 +2,7 @@ package deformablemesh;
 
 import deformablemesh.geometry.Box3D;
 import ij.ImagePlus;
+import ij.ImageStack;
 import ij.io.FileInfo;
 import ij.process.ImageProcessor;
 
@@ -368,4 +369,39 @@ public class MeshImageStack {
     public static MeshImageStack getEmptyStack() {
         return  new MeshImageStack();
     }
+
+    public MeshImageSubStack createSubStack(Box3D box){
+        ImagePlus plus = samplePlus(box);
+        return new MeshImageSubStack(box, this, plus);
+    }
+
+    public ImagePlus samplePlus(Box3D box){
+        ImagePlus sample = original.createImagePlus();
+        //ret[i] = (r[i] + offsets[i])*SCALE/pixel_dimensions[i];
+        int w = (int)((box.high[0] - box.low[0])*SCALE/pixel_dimensions[0]);
+        int h = (int)((box.high[1] - box.low[1])*SCALE/pixel_dimensions[1]);
+        int d = (int)((box.high[2] - box.low[2])*SCALE/pixel_dimensions[2]);
+        double[] xyz1 = getImageCoordinates(box.low);
+        double[] xyz2 = getImageCoordinates(box.high);
+
+        ImageStack stack = new ImageStack(w, h);
+        ImageStack ori = original.getImageStack();
+
+        for(int i = (int)xyz1[2]; i<=xyz2[2]; i++){
+            ImageProcessor proc = ori.getProcessor(i);
+            ImageProcessor nproc = proc.createProcessor(w, h);
+            for(int j = 0; j<w; j++){
+                for(int k = 0; k<h; k++){
+                    nproc.set(j,k, proc.get((int)xyz1[0] + j, (int)xyz1[1] + k));
+                }
+            }
+            stack.addSlice(nproc);
+        }
+
+        sample.setStack(stack, 1, stack.getSize(), 1);
+
+
+        return sample;
+    }
 }
+

@@ -386,6 +386,7 @@ public class MeshFrame3D {
      */
     public void updateVolume(){
         if(!showingVolume) return;
+
         Color volumeColor = segmentationController.getVolumeColor();
         VolumeTexture volume = new VolumeTexture(texture_data, min, max, new Color3f(volumeColor));
         if(surface==null){

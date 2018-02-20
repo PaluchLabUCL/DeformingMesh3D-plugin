@@ -596,7 +596,19 @@ public class SegmentationController {
                 }
         );
     }
-
+    public void isolateMesh(){
+        submit( ()->{
+            DeformableMesh3D mesh = model.getSelectedMesh(model.getCurrentFrame());
+            if(mesh!=null){
+                Box3D box = mesh.getBoundingBox();
+                MeshImageStack stack = model.stack.createSubStack(box);
+                MeshFrame3D viewer = new MeshFrame3D();
+                viewer.showFrame(false);
+                viewer.setSegmentationController(this);
+                viewer.showVolume(stack);
+            }
+        });
+    }
     public void saveMeshes(File f) {
         submit(()->{
             model.saveMeshes(f);
