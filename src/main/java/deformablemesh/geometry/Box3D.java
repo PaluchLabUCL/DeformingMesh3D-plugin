@@ -98,6 +98,16 @@ public class Box3D implements Interceptable{
 
     }
 
+    public boolean intersects(Box3D other){
+        for(int i = 0; i<3; i++){
+            if(
+                    other.high[i]<low[i] || high[i]<other.low[i]){
+                return true;
+            }
+        }
+        return true;
+    }
+
 }
 
 class AxisPlane implements Interceptable{

@@ -1574,6 +1574,40 @@ public class DeformableMesh3DTools {
         return new double[]{min, max};
 
     }
+
+    public static DeformableMesh3D mergeMeshes(List<DeformableMesh3D> meshes){
+        int posCount = 0;
+        int triCount = 0;
+        int conCount = 0;
+        for(DeformableMesh3D mesh: meshes){
+            posCount += mesh.positions.length;
+            triCount += mesh.triangle_index.length;
+            conCount += mesh.connection_index.length;
+        }
+        double[] points = new double[posCount];
+        int[] triangles = new int[triCount];
+        int[] connections = new int[conCount];
+
+        int offset = 0;
+        int toff = 0;
+        int coff = 0;
+        for(DeformableMesh3D mesh: meshes){
+            System.arraycopy(mesh.positions, 0, points, offset, mesh.positions.length);
+            for(int i = 0; i<mesh.triangle_index.length; i++){
+                triangles[i + toff] = mesh.triangle_index[i] + offset/3;
+            }
+            for(int i = 0; i<mesh.connection_index.length; i++){
+                connections[i+coff] = mesh.connection_index[i] + offset/3;
+            }
+
+
+            offset += mesh.positions.length;
+            toff += mesh.triangle_index.length;
+            coff += mesh.connection_index.length;
+        }
+
+        return new DeformableMesh3D(points, connections, triangles);
+    }
 }
 
 class Node3DPath implements PossiblePath<Node3D>{
