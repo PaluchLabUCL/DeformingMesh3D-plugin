@@ -35,6 +35,7 @@ public class SlicePicker{
     int transpose = 0;
     JLabel label;
     Map<Projectable, Drawable> projectDrawingMapper = new HashMap<>();
+    double length = 1;
     public SlicePicker(SegmentationController m, double[] normal, double[] center){
 
         model = m;
@@ -44,8 +45,16 @@ public class SlicePicker{
 
     }
 
+    /**
+     * Sets the limits that this picker can choose, ranging from -l/2 to +l/2. This defaults to 1.
+     * @param l
+     */
+    public void setLength(double l){
+        length = l;
+    }
+
     public void setSliderValue(int v){
-        double f = 0.01*v - 0.5;
+        double f = (0.0001*v - 0.5)*length;
 
         pos[0] = f*normal[0];
         pos[1] = f*normal[1];
@@ -85,8 +94,8 @@ public class SlicePicker{
         label.setMaximumSize(new Dimension(600, 30));
 
         container.add(label, BorderLayout.NORTH);
-        JSlider slider = new JSlider(0, 100);
-        slider.setValue(50);
+        JSlider slider = new JSlider(0, 10000);
+        slider.setValue(5000);
         slider.setOrientation(JSlider.VERTICAL);
         slider.addChangeListener(evt->{
 

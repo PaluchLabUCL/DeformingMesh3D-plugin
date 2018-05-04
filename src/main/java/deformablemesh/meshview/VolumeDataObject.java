@@ -24,14 +24,35 @@ public class VolumeDataObject implements DataObject {
     double scale;
     int[] sizes;
     double[] offsets;
+    double[] lengths;
+
     BranchGroup branchGroup;
+    TransformGroup tg;
 
     public VolumeDataObject(Color c) {
         color = c;
         offsets = new double[]{0,0,0};
     }
+
+    /**
+     * Sets the position of the lowest corner.
+     * @param x
+     * @param y
+     * @param z
+     */
     public void setPosition(double x, double y, double z){
-        offsets = new double[]{x, y, z};
+        offsets = new double[]{x , y, z};
+
+        if(tg!=null){
+            Transform3D tt = new Transform3D();
+            tg.getTransform(tt);
+
+            Vector3d n = new Vector3d(x + lengths[0]/2,y + lengths[1]/2,z);
+
+            tt.setTranslation(n);
+
+            tg.setTransform(tt);
+        }
     }
 
     public void setTextureData(MeshImageStack stack, List<int[]> pts){
@@ -80,13 +101,17 @@ public class VolumeDataObject implements DataObject {
         int min = 0;
         int max = 1;
         double[] unit = {sizes[0], sizes[1], sizes[2]};
-        double[] lengths = original.scaleToNormalizedLength(unit);
+        lengths = original.scaleToNormalizedLength(unit);
         VolumeTexture volume = new VolumeTexture(texture_data, min, max, new Color3f(volumeColor));
         if(surface==null){
-
+            /*
+             * The surface is positioned such that the origin corner is at -lengths[0]/2, -lengths[1]/2, 0
+             */
             surface = new Sizeable3DSurface(volume, sizes, lengths);
 
-            final TransformGroup tg = new TransformGroup();
+            tg = new TransformGroup();
+            tg.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
+            tg.setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
 
             Transform3D tt = new Transform3D();
             tg.getTransform(tt);

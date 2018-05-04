@@ -269,6 +269,7 @@ public class CircularMeshInitializationDialog extends JDialog {
         SlicePicker xyPicker  = new SlicePicker(model, zDir, hPos );
         JPanel horizontal = xyPicker.buildView();
         xyPicker.setLabel("pick x-y points. Slider adjusts z.");
+        xyPicker.setLength(model.getNormalizedImageDepth());
         initializer.addPicker(xyPicker);
 
         return horizontal;
@@ -281,6 +282,7 @@ public class CircularMeshInitializationDialog extends JDialog {
         SlicePicker xzPicker  = new SlicePicker(model, yDir, hPos );
         JPanel horizontal = xzPicker.buildView();
         xzPicker.setLabel("pick x-z points. Slider adjusts y.");
+        xzPicker.setLength(model.getNormalizedImageHeight());
         initializer.addPicker(xzPicker);
 
         return horizontal;
@@ -293,6 +295,7 @@ public class CircularMeshInitializationDialog extends JDialog {
         SlicePicker yzPicker  = new SlicePicker(model, xDir, hPos );
         yzPicker.rotateView();
         JPanel horizontal = yzPicker.buildView();
+        yzPicker.setLength(model.getNormalizedImageWidth());
         yzPicker.setLabel("pick z-y points. Slider adjusts x position");
         initializer.addPicker(yzPicker);
 

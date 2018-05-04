@@ -895,6 +895,32 @@ public class SegmentationController {
 
     }
 
+    /**
+     * Normalized length of the image along the z-axis.
+     *
+     * @return
+     */
+    public double getNormalizedImageDepth(){
+        return model.stack.offsets[2]*2;
+    }
+
+    /**
+     * Normalized length of the image along the x-axis.
+     *
+     * @return
+     */
+    public double getNormalizedImageWidth(){
+        return model.stack.offsets[0]*2;
+    }
+
+    /**
+     * Normalized length of the image along the y-axis.
+     *
+     * @return
+     */
+    public double getNormalizedImageHeight(){
+        return model.stack.offsets[1]*2;
+    }
 
     public void addFrameListener(FrameListener listener){
         model.addFrameListener(listener);
