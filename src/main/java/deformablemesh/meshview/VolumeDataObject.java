@@ -84,7 +84,7 @@ public class VolumeDataObject implements DataObject {
         sizes = new int[]{w, h, d};
 
         for(int[] pt: pts){
-            texture_data[pt[0]-lowx][pt[1]-lowy][pt[2]-lowz] = 255;
+            texture_data[pt[0]-lowx][h - pt[1] + lowy - 1][pt[2]-lowz] = 255;
         }
         updateVolume(stack);
 

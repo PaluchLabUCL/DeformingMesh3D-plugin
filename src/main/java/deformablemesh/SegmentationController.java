@@ -895,6 +895,11 @@ public class SegmentationController {
 
     }
 
+    public MeshFrame3D getMeshFrame3D(){
+        return meshFrame3D;
+    }
+
+
     /**
      * Normalized length of the image along the z-axis.
      *
