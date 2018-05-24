@@ -54,11 +54,14 @@ public class CircularMeshInitializationDialog extends JDialog {
     Initializer initializer;
     Runnable callback;
     JCheckBox showMeshes;
+    ThreeDCursor cursor;
     public CircularMeshInitializationDialog(JFrame owner, SegmentationController model, Runnable callback){
         super(owner, false);
         this.model = model;
         this.callback = callback;
         initializer = new Initializer();
+        cursor = new ThreeDCursor(model.getNormalizedImageWidth(), model.getNormalizedImageHeight(), model.getNormalizedImageDepth());
+        cursor.addNotification(initializer::repaint);
     }
 
     public void start(){
@@ -346,6 +349,7 @@ public class CircularMeshInitializationDialog extends JDialog {
             pickers.put(picker.view.panel, picker);
             picker.addMouseListener(this);
             picker.addMouseMotionListener(this);
+            picker.addCursor(cursor);
         }
 
 
@@ -453,7 +457,6 @@ public class CircularMeshInitializationDialog extends JDialog {
                 p.addProjectable(project,c);
             }
         }
-
         void repaint(){
             for(SlicePicker p: pickers.values()){
                 p.view.panel.repaint();

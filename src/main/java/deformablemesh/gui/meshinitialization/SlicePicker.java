@@ -36,6 +36,7 @@ public class SlicePicker{
     JLabel label;
     Map<Projectable, Drawable> projectDrawingMapper = new HashMap<>();
     double length = 1;
+    ThreeDCursor cursor;
     public SlicePicker(SegmentationController m, double[] normal, double[] center){
 
         model = m;
@@ -53,13 +54,22 @@ public class SlicePicker{
         length = l;
     }
 
+    /**
+     *
+     * @param cursor
+     */
+    public void addCursor(ThreeDCursor cursor){
+        view.addDrawable(cursor.getDrawable(transformer));
+        this.cursor = cursor;
+    }
+
     public void setSliderValue(int v){
         double f = (0.0001*v - 0.5)*length;
 
         pos[0] = f*normal[0];
         pos[1] = f*normal[1];
         pos[2] = f*normal[2];
-
+        cursor.toPosition(f, normal);
         transformer = model.createFurrowTransform(pos, normal);
         for(int i = 0; i<transpose; i++){
             transformer.rotatePiOver2();
@@ -132,6 +142,7 @@ public class SlicePicker{
     public void clear(){
         projectDrawingMapper.clear();
         view.clear();
+        view.addDrawable(cursor.getDrawable(transformer));
     }
 
 

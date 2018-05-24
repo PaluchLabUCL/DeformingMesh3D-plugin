@@ -10,6 +10,7 @@ import deformablemesh.gui.FrameListener;
 import deformablemesh.gui.RingController;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.meshview.MeshFrame3D;
+import deformablemesh.meshview.PickSelector;
 import deformablemesh.ringdetection.FurrowTransformer;
 import deformablemesh.track.Track;
 import deformablemesh.util.MeshFaceObscuring;
@@ -288,6 +289,10 @@ public class SegmentationController {
     }
     public void selectNextMeshTrack(){
         submit(model::selectNextTrack);
+    }
+
+    public void selectMesh(DeformableMesh3D mesh) {
+        submit(()->model.selectTrackWithMesh(mesh));
     }
 
     public void addMesh(int frame, DeformableMesh3D m){
@@ -860,6 +865,8 @@ public class SegmentationController {
     }
 
 
+
+
     public interface Executable{
         void execute() throws Exception;
     }
@@ -891,7 +898,7 @@ public class SegmentationController {
 
         });
 
-
+        meshFrame3D.addPickListener(new PickSelector(this));
 
     }
 
