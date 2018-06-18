@@ -63,6 +63,9 @@ public class AStarBasic<T> {
         while(test){
             expandBest();
             best = open.peek();
+            if(best==null){
+                System.out.println("no choices, but goal not met.");
+            }
             if(best.sameDestination(goal)){
                 test = false;
             }

@@ -27,7 +27,6 @@ public class AStarXY{
         return new PossiblePathXY(start);
     }
     public static AStarBasic<int[]> createXYAStar(ImageProcessor ip, int[] start, int[] end){
-
         Rectangle2D bound = new Rectangle2D.Double(0,0,ip.getWidth(), ip.getHeight());
         Boundary<int[]> bb = pt->bound.contains(pt[0], pt[1]);
         BasicHeuristic<int[]> bh = a1 -> (10*Math.sqrt(Math.pow(a1[0] - end[0], 2) + Math.pow(a1[1] - end[1], 2)));
