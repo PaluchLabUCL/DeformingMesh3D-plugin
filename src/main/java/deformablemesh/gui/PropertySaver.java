@@ -31,44 +31,55 @@ public class PropertySaver {
     static public void loadProperties(SegmentationController control) throws IOException {
         String home = System.getProperty("user.home");
         File props = new File(home, ".dmesh3d");
-        if(props.exists()){
-            //try to read them properties.
-            List<String> lines = Files.readAllLines(props.toPath(), StandardCharsets.UTF_8);
-            for(String line: lines){
-                String[] pair = line.split("\\t");
-                try {
-                    switch (pair[0]) {
-                        case "gamma":
-                            control.setGamma(Double.parseDouble(pair[1]));
-                            break;
-                        case "pressure":
-                            control.setPressure(Double.parseDouble(pair[1]));
-                            break;
-                        case "image-weight":
-                            control.setWeight(Double.parseDouble(pair[1]));
-                            break;
-                        case "curve-weight":
-                            control.setCurveWeight(Double.parseDouble(pair[1]));
-                            break;
-                        case "alpha":
-                            control.setAlpha(Double.parseDouble(pair[1]));
-                            break;
-                        case "normalize":
-                            control.setNormalizerWeight(Double.parseDouble(pair[1]));
-                            break;
-                        case "divisions":
-                            control.setDivisions(Integer.parseInt(pair[1]));
-                            break;
-                        case "beta":
-                            control.setBeta(Double.parseDouble(pair[1]));
-                            break;
-                        default:
-                            System.out.println("skipping: " + pair[0]);
+        if(props.exists()) {
+            loadProperties(control, props);
+        }
+    }
 
-                    }
-                } catch(Exception e){
-                    e.printStackTrace();
+    /**
+     * Tries to find a user.home and .dmesh3d file for user preferences to reload the last used constants.
+     *
+     * @param control where the values go.
+     * @param props file properties will be loaded from.
+     * @throws IOException
+     */
+    static public void loadProperties(SegmentationController control, File props) throws IOException {
+        //try to read them properties.
+        List<String> lines = Files.readAllLines(props.toPath(), StandardCharsets.UTF_8);
+        for(String line: lines){
+            String[] pair = line.split("\\t");
+            try {
+                switch (pair[0]) {
+                    case "gamma":
+                        control.setGamma(Double.parseDouble(pair[1]));
+                        break;
+                    case "pressure":
+                        control.setPressure(Double.parseDouble(pair[1]));
+                        break;
+                    case "image-weight":
+                        control.setWeight(Double.parseDouble(pair[1]));
+                        break;
+                    case "curve-weight":
+                        control.setCurveWeight(Double.parseDouble(pair[1]));
+                        break;
+                    case "alpha":
+                        control.setAlpha(Double.parseDouble(pair[1]));
+                        break;
+                    case "normalize":
+                        control.setNormalizerWeight(Double.parseDouble(pair[1]));
+                        break;
+                    case "divisions":
+                        control.setDivisions(Integer.parseInt(pair[1]));
+                        break;
+                    case "beta":
+                        control.setBeta(Double.parseDouble(pair[1]));
+                        break;
+                    default:
+                        System.out.println("skipping: " + pair[0]);
+
                 }
+            } catch(Exception e){
+                e.printStackTrace();
             }
         }
     }
@@ -83,6 +94,11 @@ public class PropertySaver {
         if(!canSave) return;
         String home = System.getProperty("user.home");
         File props = new File(home, ".dmesh3d");
+        saveProperties(control, props);
+    }
+
+
+    static public void saveProperties(SegmentationController control, File props) throws IOException {
         try(BufferedWriter writer = Files.newBufferedWriter(props.toPath(), StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)){
             writer.write(String.format("%s\t%s\n","gamma", Double.toHexString(control.getGamma())));
             writer.write(String.format("%s\t%s\n","pressure", Double.toHexString(control.getPressure())));
@@ -97,6 +113,7 @@ public class PropertySaver {
             throw new IOException(exc);
         }
     }
+
 
     /**
      * For setting up the position of the windows. Currently just tries to place them side by side.

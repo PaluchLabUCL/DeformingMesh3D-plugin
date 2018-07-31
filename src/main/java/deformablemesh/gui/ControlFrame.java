@@ -23,7 +23,9 @@ import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * User: msmith
@@ -31,9 +33,8 @@ import java.util.List;
  * Time: 10:35 AM
  */
 public class ControlFrame implements ReadyObserver, FrameListener {
-    //SegmentationModel segmentationController;
     SegmentationController segmentationController;
-
+    Map<String, ParameterControl> parameterControls = new HashMap<>();
     boolean ready = true;
     ArrayList<JComponent> buttons = new ArrayList<>();
 
@@ -151,8 +152,33 @@ public class ControlFrame implements ReadyObserver, FrameListener {
 
         SetValue setBeta = d -> segmentationController.setBeta(d);
         inputs.add(GuiTools.createInputField("beta", createSavingValue(setBeta), segmentationController.getBeta(), this));
+
+        for(Component comp: inputs.getComponents()){
+            if(comp instanceof ParameterControl){
+                ParameterControl pc = (ParameterControl)comp;
+                parameterControls.put(pc.name, pc);
+            }
+        }
+
         return content;
     }
+
+    public void updateDisplayedParameters(){
+        updateValue("gamma", segmentationController.getGamma());
+        updateValue("alpha", segmentationController.getAlpha());
+        updateValue("pressure", segmentationController.getPressure());
+        updateValue("normalize", segmentationController.getNormalizeWeight());
+        updateValue("image weight", segmentationController.getImageWeight());
+        updateValue("divisions", segmentationController.getDivisions());
+        updateValue("curve weight", segmentationController.getCurveWeight());
+        updateValue("beta", segmentationController.getBeta());
+
+    }
+
+    public void updateValue(String name, double value){
+        parameterControls.get(name).updateValue(value);
+    }
+
     SetValue createSavingValue(SetValue value){
         SetValue saving = d->{
             value.setValue(d);
@@ -531,13 +557,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
 
         });
 
-        JMenuItem newMeshes = new JMenuItem("Start new meshes.");
-        newMeshes.setToolTipText("Clear the current meshes, for starting a new set.");
-        file.add(newMeshes);
-        newMeshes.addActionListener(evt->{
-            segmentationController.restartMeshes();
-        });
-
         JMenuItem saveAs = new JMenuItem("save meshes as...");
         file.add(saveAs);
         saveAs.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_MASK));
@@ -565,12 +584,56 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             fd.setMode(FileDialog.LOAD);
             fd.setVisible(true);
             if(fd.getFile()==null || fd.getDirectory()==null){
+                finished();
                 return;
             }
             File f = new File(fd.getDirectory(),fd.getFile());
             segmentationController.loadMeshes(f);
             finished();
         });
+
+        JMenuItem saveParameters = new JMenuItem("Save parameters");
+        file.add(saveParameters);
+        saveParameters.addActionListener(evt->{
+            setReady(false);
+            FileDialog fd = new FileDialog(frame,"Select file to save parameters to.");
+            fd.setMode(FileDialog.SAVE);
+            fd.setVisible(true);
+            if(fd.getFile()==null || fd.getDirectory()==null){
+                finished();
+                return;
+            }
+            File f = new File(fd.getDirectory(),fd.getFile());
+            segmentationController.saveParameters(f);
+            finished();
+        });
+
+        JMenuItem loadParameters = new JMenuItem("Load parameters");
+        file.add(loadParameters);
+        loadParameters.addActionListener(evt->{
+            setReady(false);
+            FileDialog fd = new FileDialog(frame,"Select file to load parameters from.");
+            fd.setMode(FileDialog.LOAD);
+            fd.setVisible(true);
+            if(fd.getFile()==null || fd.getDirectory()==null){
+                finished();
+                return;
+            }
+            File f = new File(fd.getDirectory(),fd.getFile());
+            segmentationController.loadParameters(f);
+            finished();
+            segmentationController.submit(this::updateDisplayedParameters);
+        });
+
+        JMenuItem newMeshes = new JMenuItem("Start new meshes.");
+        newMeshes.setToolTipText("Clear the current meshes, for starting a new set.");
+        file.add(newMeshes);
+        newMeshes.addActionListener(evt->{
+            segmentationController.restartMeshes();
+        });
+
+
+
 
         JMenu edit = new JMenu("edit");
         menu.add(edit);

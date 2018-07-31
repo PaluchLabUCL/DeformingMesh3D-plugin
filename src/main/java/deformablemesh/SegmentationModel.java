@@ -575,10 +575,6 @@ public class SegmentationModel {
 
     }
 
-    public List<Track> getAllMeshes() {
-        return new ArrayList<>(tracker.getAllMeshTracks());
-    }
-
 
 
     public void setMeshes(List<Track> meshes) {
@@ -647,7 +643,10 @@ public class SegmentationModel {
         notifyMeshListeners();
     }
 
-
+    /**
+     *
+     * @return an unmodifiable list of all the mesh tracks.
+     */
     public List<Track> getAllTracks() {
         return tracker.getAllMeshTracks();
     }

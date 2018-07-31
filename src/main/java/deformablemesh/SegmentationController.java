@@ -7,6 +7,7 @@ import deformablemesh.geometry.InterceptingMesh3D;
 import deformablemesh.geometry.RayCastMesh;
 import deformablemesh.geometry.SnakeBox;
 import deformablemesh.gui.FrameListener;
+import deformablemesh.gui.PropertySaver;
 import deformablemesh.gui.RingController;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.meshview.MeshFrame3D;
@@ -236,7 +237,7 @@ public class SegmentationController {
 
     public void restartMeshes(){
         actionStack.postAction(new UndoableActions() {
-            final List<Track> old = model.getAllTracks();
+            final List<Track> old = new ArrayList<>(model.getAllTracks());
             final List<Track> newTrack = new ArrayList<>();
             @Override
             public void perform() {
@@ -421,7 +422,7 @@ public class SegmentationController {
     public void deformAllMeshes(){
         meshModified=true;
         final List<DeformableMesh3D> meshes = new ArrayList<>();
-        List<Track> tracks = model.getAllMeshes();
+        List<Track> tracks = model.getAllTracks();
         Integer frame = model.getCurrentFrame();
         for(Track t: tracks){
             if(t.containsKey(frame)){
@@ -625,7 +626,7 @@ public class SegmentationController {
         submit(()->{
             List<Track> replacements = MeshWriter.loadMeshes(f);
             actionStack.postAction(new UndoableActions(){
-                final List<Track> old = model.getAllMeshes();
+                final List<Track> old = new ArrayList<>(model.getAllTracks());
                 @Override
                 public void perform() {
                     submit(()->{
@@ -652,7 +653,7 @@ public class SegmentationController {
     public void setMeshTracks(List<Track> replacements){
         submit(()->{
             actionStack.postAction(new UndoableActions(){
-                final List<Track> old = model.getAllMeshes();
+                final List<Track> old = new ArrayList<>(model.getAllTracks());
                 @Override
                 public void perform() {
                     submit(()->{
@@ -753,7 +754,10 @@ public class SegmentationController {
         }
     }
 
-
+    /**
+     *
+     * @return an unmodifiable view of the current mesh tracks.
+     */
     public List<Track> getAllTracks() {
         return model.getAllTracks();
     }
@@ -864,7 +868,17 @@ public class SegmentationController {
         return meshModified;
     }
 
+    public void saveParameters(File f) {
+        submit(()->{
+            PropertySaver.saveProperties(this, f);
+        });
+    }
 
+    public void loadParameters(File f){
+        submit(()->{
+            PropertySaver.loadProperties(this, f);
+        });
+    }
 
 
     public interface Executable{

@@ -56,7 +56,7 @@ public class ControllerTest {
         waitFor(controls);
         Assert.assertNotEquals(track, track2);
 
-        List<Track> meshes = model.getAllMeshes();
+        List<Track> meshes = model.getAllTracks();
         int sum = 0;
         Assert.assertEquals(2, meshes.size());
         for(Track tk: meshes){
@@ -71,7 +71,7 @@ public class ControllerTest {
         controls.undo();
         waitFor(controls);
 
-        meshes = model.getAllMeshes();
+        meshes = model.getAllTracks();
         sum = 0;
         Assert.assertEquals(1, meshes.size());
         for(Track t: meshes){
@@ -84,7 +84,7 @@ public class ControllerTest {
         controls.redo();
         waitFor(controls);
 
-        meshes = model.getAllMeshes();
+        meshes = model.getAllTracks();
         sum = 0;
         Assert.assertEquals(2, meshes.size());
         for(Track t: meshes){
@@ -96,7 +96,7 @@ public class ControllerTest {
         controls.undo();
         waitFor(controls);
 
-        meshes = model.getAllMeshes();
+        meshes = model.getAllTracks();
         sum = 0;
         Assert.assertEquals(1, meshes.size());
         for(Track t: meshes){
@@ -176,7 +176,7 @@ public class ControllerTest {
         controller.startNewMeshTrack(0, sphere);
         controller.reMesh();
         Assert.assertEquals(0, waitFor(controller).size());
-        Assert.assertEquals(1, model.getAllMeshes().size());
+        Assert.assertEquals(1, model.getAllTracks().size());
 
         controller.stopRunning();
     }

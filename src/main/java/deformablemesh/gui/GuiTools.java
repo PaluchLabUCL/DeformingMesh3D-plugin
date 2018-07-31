@@ -47,7 +47,6 @@ import static deformablemesh.gui.ControlFrame.instance;
  */
 public class GuiTools {
     final static String versionHTML = getVersionHTML();
-
     public static void createTextOuputPane(String s){
         final JFrame frame = new JFrame();
         final JTextComponent pane = new JTextArea();
@@ -92,13 +91,10 @@ public class GuiTools {
         frame.setVisible(true);
 
     }
-    public static Component createInputField(String name, final SetValue action, double initial, ReadyObserver observer){
-        JPanel row = new JPanel();
-        BoxLayout layout = new BoxLayout(row, BoxLayout.LINE_AXIS);
-        row.setLayout(layout);
+    public static ParameterControl createInputField(String name, final SetValue action, double initial, ReadyObserver observer){
+
         JLabel label = new JLabel(name);
-        row.add(label);
-        row.add(Box.createHorizontalGlue());
+
 
         final JTextField field = new JTextField();
         field.setText(displayFormat(initial));
@@ -107,7 +103,6 @@ public class GuiTools {
         field.setMaximumSize(new Dimension(200, 20));
         field.setEnabled(false);
         field.setHorizontalAlignment(JTextField.RIGHT);
-        row.add(field);
 
         field.addMouseListener(new MouseAdapter(){
             @Override
@@ -163,9 +158,9 @@ public class GuiTools {
             }
         });
 
-
-
-        return row;
+        ParameterControl control = new ParameterControl();
+        control.prepareValue(label, field);
+        return control;
     }
 
     public static void errorMessage(String s) {
