@@ -1251,78 +1251,24 @@ public class DeformableMesh3DTools {
         double[] xdirection = {1,0,0};
         double[] center = {0,0,0};
         for(Integer i: keys){
+            ImageStack substacked = new ImageStack(original.getWidth(), original.getHeight());
             DeformableMesh3D mesh = meshes.get(i);
-            InterceptingMesh3D picker = new InterceptingMesh3D(mesh);
             int slices = original.getNSlices();
             for(int slice = 0; slice<slices; slice++){
-                byte[] pixels = new byte[w*h];
-                center[2] = slice;
-                for(int j = 0; j<h; j++){
-                    int offset = j*w;
-                    center[1] = j;
-                    List<Intersection> sections = picker.getIntersections(stack.getNormalizedCoordinate(center), xdirection);
-                    sections.sort((a,b)->Double.compare(a.location[0], b.location[0]));
+                int[] pixels = new int[w*h];
 
-                    boolean inside = false;
-                    double count = 0;
-                    double[] boundaries = new double[sections.size()+1];
-                    int valid = 0;
-                    boolean startInside = false;
-                    for(int k = 0; k<sections.size(); k++){
+                ImageProcessor proc = new ColorProcessor(w, h, pixels);
+                substacked.addSlice(proc);
+            }
+            mosaicBinary(stack, substacked, mesh, 255);
 
-                        double bound = stack.getImageCoordinates(sections.get(k).location)[0];
-                        boolean facingLeft = sections.get(k).surfaceNormal[0]<0;
-                        boolean facingRight = !facingLeft;
-                        boolean outside = !inside;
-                        if(bound>0){
-                            //check if it is actually a boundary
-
-                            if(inside&&facingRight){
-                                //going outside
-                                inside = false;
-                                boundaries[valid] = bound;
-                                valid++;
-                            } else if(outside&facingLeft){
-                                //coming back in.
-                                inside = true;
-                                boundaries[valid] = bound;
-                                valid++;
-                            }
-
-                        } else{
-                            //check if entering or exiting.
-                            if(inside && facingRight){
-                                //entering.
-                                inside = false;
-
-                            } else if(outside&&facingLeft){
-                                //exiting
-                                inside = true;
-                            }
-                            startInside = inside;
-                        }
-                    }
-                    inside = startInside;
-                    boundaries[valid] = w;
-
-                    int current = 0;
-
-                    for(int p = 0; p<w; p++){
-                        if(p>boundaries[current]){
-                            //switch.
-                            current++;
-                            inside = !inside;
-                        }
-
-                        pixels[p + offset] = (byte)(inside?255:0);
-                    }
-                }
-                ImageProcessor proc = new ByteProcessor(w, h, pixels);
-                stacked.addSlice(proc);
+            for(int slice = 1; slice<=slices; slice++){
+                stacked.addSlice(substacked.getProcessor(slice).convertToByteProcessor());
             }
 
-
         }
+
+
         ImagePlus ret = original.createImagePlus();
         ret.setStack(stacked);
         ret.setTitle("bined-" + original.getTitle());
@@ -1339,81 +1285,27 @@ public class DeformableMesh3DTools {
         int w = stack.getWidthPx();
         int h = stack.getHeightPx();
 
-        ImageStack stacked = new ImageStack(w, h);
+        ImageStack binStack = new ImageStack(w, h);
+        ImageStack colorStack = new ImageStack(w, h);
         double[] xdirection = {1,0,0};
         double[] center = {0,0,0};
         InterceptingMesh3D picker = new InterceptingMesh3D(mesh);
         int slices = stack.getNSlices();
         for(int slice = 0; slice<slices; slice++){
-            byte[] pixels = new byte[w*h];
-            center[2] = slice;
-            for(int j = 0; j<h; j++){
-                int offset = j*w;
-                center[1] = j;
-                List<Intersection> sections = picker.getIntersections(stack.getNormalizedCoordinate(center), xdirection);
-                sections.sort((a,b)->Double.compare(a.location[0], b.location[0]));
-
-                boolean inside = false;
-                double count = 0;
-                double[] boundaries = new double[sections.size()+1];
-                int valid = 0;
-                boolean startInside = false;
-                for(int k = 0; k<sections.size(); k++){
-
-                    double bound = stack.getImageCoordinates(sections.get(k).location)[0];
-                    boolean facingLeft = sections.get(k).surfaceNormal[0]<0;
-                    boolean facingRight = !facingLeft;
-                    boolean outside = !inside;
-                    if(bound>0){
-                        //check if it is actually a boundary
-
-                        if(inside&&facingRight){
-                            //going outside
-                            inside = false;
-                            boundaries[valid] = bound;
-                            valid++;
-                        } else if(outside&facingLeft){
-                            //coming back in.
-                            inside = true;
-                            boundaries[valid] = bound;
-                            valid++;
-                        }
-
-                    } else{
-                        //check if entering or exiting.
-                        if(inside && facingRight){
-                            //entering.
-                            inside = false;
-
-                        } else if(outside&&facingLeft){
-                            //exiting
-                            inside = true;
-                        }
-                        startInside = inside;
-                    }
-                }
-                inside = startInside;
-                boundaries[valid] = w;
-
-                int current = 0;
-
-                for(int p = 0; p<w; p++){
-                    if(p>boundaries[current]){
-                        //switch.
-                        current++;
-                        inside = !inside;
-                    }
-
-                    pixels[p + offset] = (byte)(inside?255:0);
-                }
-            }
-            ImageProcessor proc = new ByteProcessor(w, h, pixels);
-            stacked.addSlice(proc);
+            int[] pixels = new int[w*h];
+            ImageProcessor proc = new ColorProcessor(w, h, pixels);
+            colorStack.addSlice(proc);
         }
+
+        for(int slice = 0; slice<slices; slice++){
+
+            binStack.addSlice(colorStack.getProcessor(slice+1).convertToByteProcessor());
+        }
+        mosaicBinary(stack, binStack, mesh, 255);
 
 
         ImagePlus ret = new ImagePlus();
-        ret.setStack(stacked);
+        ret.setStack(binStack);
         ret.setDimensions(1, stack.getNSlices(), 1);
         Calibration cal = ret.getCalibration();
         cal.pixelWidth = stack.pixel_dimensions[0];
@@ -1430,6 +1322,9 @@ public class DeformableMesh3DTools {
         Set<Integer> frames = new TreeSet<>();
 
         for(Track t: allMeshTracks){
+            new Thread(()->{
+                System.out.println(t);
+            }).start();
             for(Integer i = 0; i<=stack.FRAMES; i++){
 
                 if(t.containsKey(i)){
@@ -1443,7 +1338,7 @@ public class DeformableMesh3DTools {
         int h = original_plus.getHeight();
         int n = original_plus.getNSlices();
 
-        ImageStack s2 = new ImageStack(w, h);
+        ImageStack timeStack = new ImageStack(w, h);
 
         for(Integer i: frames){
             ImageStack out = new ImageStack(w, h);
@@ -1452,21 +1347,21 @@ public class DeformableMesh3DTools {
             }
             for(Track t: allMeshTracks){
                 if(t.containsKey(i)){
-                    mosaicBinary(stack, out, t.getMesh(i), t.getColor());
+                    mosaicBinary(stack, out, t.getMesh(i), t.getColor().getRGB());
                 }
             }
 
             for(int j = 1; j<= n; j++){
 
-                s2.addSlice(out.getProcessor(j));
+                timeStack.addSlice(out.getProcessor(j));
             }
         }
-        plus.setStack(s2);
+        plus.setStack(timeStack);
         plus.setDimensions(1, n, frames.size());
         return plus;
     }
 
-    static void mosaicBinary(MeshImageStack stack, ImageStack out, DeformableMesh3D mesh, Color color){
+    static void mosaicBinary(MeshImageStack stack, ImageStack out, DeformableMesh3D mesh, int rgb){
         InterceptingMesh3D picker = new InterceptingMesh3D(mesh);
         double[] xdirection = {1,0,0};
 
@@ -1474,7 +1369,6 @@ public class DeformableMesh3DTools {
         int w = out.getWidth();
         int h = out.getHeight();
         double center[] = new double[3];
-        int rgb = color.getRGB();
         for(int slice = 0; slice<slices; slice++){
             int[] pixels = (int[])(out.getProcessor(slice+1).getPixels());
             center[2] = slice;
