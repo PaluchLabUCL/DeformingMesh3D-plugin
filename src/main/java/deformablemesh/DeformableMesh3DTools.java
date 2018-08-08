@@ -1,12 +1,14 @@
 package deformablemesh;
 
+import deformablemesh.geometry.DeformableMesh3D;
+import deformablemesh.geometry.Triangle3D;
+import deformablemesh.geometry.Node3D;
+import deformablemesh.geometry.RayCastMesh;
+import deformablemesh.geometry.InterceptingMesh3D;
 import deformablemesh.geometry.Box3D;
 import deformablemesh.geometry.Connection3D;
-import deformablemesh.geometry.DeformableMesh3D;
-import deformablemesh.geometry.InterceptingMesh3D;
 import deformablemesh.geometry.Intersection;
-import deformablemesh.geometry.Node3D;
-import deformablemesh.geometry.Triangle3D;
+
 import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;
 import deformablemesh.util.astar.AStarBasic;
@@ -1360,6 +1362,7 @@ public class DeformableMesh3DTools {
 
     static void mosaicBinary(MeshImageStack stack, ImageStack out, DeformableMesh3D mesh, int rgb){
         InterceptingMesh3D picker = new InterceptingMesh3D(mesh);
+        picker = new InterceptingMesh3D(RayCastMesh.rayCastMesh(picker, picker.getCenter(), 4));
         double[] xdirection = {1,0,0};
 
         int slices = out.getSize();
