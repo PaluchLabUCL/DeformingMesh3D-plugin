@@ -1322,9 +1322,6 @@ public class DeformableMesh3DTools {
         Set<Integer> frames = new TreeSet<>();
 
         for(Track t: allMeshTracks){
-            new Thread(()->{
-                System.out.println(t);
-            }).start();
             for(Integer i = 0; i<=stack.FRAMES; i++){
 
                 if(t.containsKey(i)){
