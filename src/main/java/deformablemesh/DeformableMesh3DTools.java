@@ -1299,12 +1299,13 @@ public class DeformableMesh3DTools {
             colorStack.addSlice(proc);
         }
 
+
+        mosaicBinary(stack, colorStack, mesh, 255);
+
         for(int slice = 0; slice<slices; slice++){
 
             binStack.addSlice(colorStack.getProcessor(slice+1).convertToByteProcessor());
         }
-        mosaicBinary(stack, binStack, mesh, 255);
-
 
         ImagePlus ret = new ImagePlus();
         ret.setStack(binStack);

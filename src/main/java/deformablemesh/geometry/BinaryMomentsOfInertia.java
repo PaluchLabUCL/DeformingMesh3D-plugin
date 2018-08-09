@@ -261,4 +261,28 @@ public class BinaryMomentsOfInertia {
         }
     }
 
+    public double measureAverageIntensity() {
+        ImageStack stack = binary.getStack();
+        double sum = 0;
+        double count = 0;
+        double[] pxSpace = new double[3];
+        for(int i = 1; i<=binary.getStackSize(); i++){
+            ImageProcessor binProc = stack.getProcessor(i);
+            pxSpace[2] = i;
+            for(int j = 0; j<stack.getWidth(); j++){
+                for(int k = 0; k<stack.getHeight(); k++){
+                    if(binProc.get(j, k)!=0){
+                        pxSpace[0] = j;
+                        pxSpace[1] = k;
+
+                        count++;
+                        sum += mis.getInterpolatedValue(mis.getNormalizedCoordinate(pxSpace));
+
+                    }
+                }
+            }
+        }
+        return sum/count;
+
+    }
 }

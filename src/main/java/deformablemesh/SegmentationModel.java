@@ -702,8 +702,9 @@ public class SegmentationModel {
         builder.append("#\tv1_x, v1_y, v1_z: first eigen vector.\n");
         builder.append("#\tv2_x, v2_y, v2_z: second eigen vector.\n");
         builder.append("#\tv3_x, v3_y, v3_z: third eigen vector.\n");
+        builder.append("#\t<I>: average intensity.\n");
         builder.append("#\n");
-        builder.append("#Frame\tVolume\tArea\tc_x\tc_y\tc_z\tdmean\tdmax\tdmin\t");
+        builder.append("#Frame\tVolume\tArea\t<I>\tc_x\tc_y\tc_z\tdmean\tdmax\tdmin\t");
         builder.append("lambda1\tlambda2\tlambda3\tv1_x\tv1_y\tv1_z\tv2_x\tv2_y\tv2_z\tv3_x\tv3_y\tv3_z\n");
         for(int j = 0; j<original_plus.getNFrames(); j++){
             if(!track.containsKey(j)){
@@ -722,6 +723,7 @@ public class SegmentationModel {
                 centroid[i] = centroid[i]*stack.SCALE;
             }
             BinaryMomentsOfInertia bmi = new BinaryMomentsOfInertia(mesh, stack);
+            double intensity = bmi.measureAverageIntensity();
             List<double[]> ev = bmi.getEigenVectors();
             double[] eigenValues = ev.get(3);
 
@@ -731,9 +733,11 @@ public class SegmentationModel {
             builder.append(String.format(Locale.US, "%d\t", j+1));
             builder.append(String.format(Locale.US, "%f\t", volume));
             builder.append(String.format(Locale.US, "%f\t", are));
+            builder.append(String.format(Locale.US, "%f\t", intensity));
             builder.append(String.format(Locale.US, "%f\t%f\t%f\t", centroid[0], centroid[1], centroid[2]));
             builder.append(String.format(Locale.US, "%f\t%f\t%f\t", centroid[3], minMax[1], minMax[0]));
             builder.append(String.format(Locale.US, "%f\t%f\t%f\t", eigenValues[0], eigenValues[1], eigenValues[2]));
+
             for(int i = 0; i<3; i++){
                 double[] v = ev.get(i);
                 builder.append(String.format(Locale.US, "%f\t%f\t%f\t", v[0], v[1], v[2]));

@@ -650,6 +650,34 @@ public class SegmentationController {
 
     }
 
+    public void importMeshes(File f){
+        submit(()->{
+            List<Track> imports = MeshWriter.loadMeshes(f);
+            actionStack.postAction(new UndoableActions(){
+                final List<Track> old = new ArrayList<>(model.getAllTracks());
+                @Override
+                public void perform() {
+                    submit(()->{
+                        imports.addAll(old);
+                        model.setMeshes(imports);
+                        meshModified = true;
+                    });
+
+                }
+
+                @Override
+                public void undo() {
+                    submit(()->model.setMeshes(old));
+                }
+
+                @Override
+                public void redo() {
+                    submit(()->model.setMeshes(imports));
+                }
+            });
+        });
+    }
+
     public void setMeshTracks(List<Track> replacements){
         submit(()->{
             actionStack.postAction(new UndoableActions(){

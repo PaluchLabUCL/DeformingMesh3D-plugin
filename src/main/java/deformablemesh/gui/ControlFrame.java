@@ -838,6 +838,22 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             segmentationController.showFurrowValues();
         });
 
+        JMenuItem imprt = new JMenuItem("import meshes");
+        tools.add(imprt);
+        imprt.addActionListener(actionEvent -> {
+            setReady(false);
+            FileDialog fd = new FileDialog(frame,"File to load mesh from");
+            fd.setMode(FileDialog.LOAD);
+            fd.setVisible(true);
+            if(fd.getFile()==null || fd.getDirectory()==null){
+                finished();
+                return;
+            }
+            File f = new File(fd.getDirectory(),fd.getFile());
+            segmentationController.importMeshes(f);
+            finished();
+        });
+
         JMenuItem trackManager = new JMenuItem("Manage Tracks");
         tools.add(trackManager);
         trackManager.addActionListener(evt->{
