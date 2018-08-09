@@ -55,6 +55,7 @@ public class CircularMeshInitializationDialog extends JDialog {
     Runnable callback;
     JCheckBox showMeshes;
     ThreeDCursor cursor;
+    JCheckBox showCursor;
     public CircularMeshInitializationDialog(JFrame owner, SegmentationController model, Runnable callback){
         super(owner, false);
         this.model = model;
@@ -87,6 +88,12 @@ public class CircularMeshInitializationDialog extends JDialog {
             showMeshes();
         });
 
+        showCursor = new JCheckBox("show cursor");
+        showCursor.setSelected(true);
+        showCursor.addActionListener(evt->{
+            showCursor();
+        });
+
 
         JButton cancel = new JButton("cancel");
         cancel.addActionListener((evt)->{
@@ -94,6 +101,7 @@ public class CircularMeshInitializationDialog extends JDialog {
             afterClosing();
         });
 
+        row.add(showCursor);
         row.add(showMeshes);
         row.add(cancel);
         row.add(add);
@@ -492,6 +500,13 @@ public class CircularMeshInitializationDialog extends JDialog {
             meshMap.clear();
         }
     }
+
+    void showCursor(){
+
+        cursor.setVisible(showCursor.isSelected());
+        repaint();
+    }
+
 
     void showMeshes(){
 

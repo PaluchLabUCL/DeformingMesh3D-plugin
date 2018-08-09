@@ -19,6 +19,7 @@ public class ThreeDCursor{
     double[] xyz = new double[3];
     double lx, ly, lz;
     List<Runnable> notify = new ArrayList<>();
+    boolean drawing = true;
     public ThreeDCursor(double lx, double ly, double lz){
         this.lx = lx;
         this.ly = ly;
@@ -55,10 +56,17 @@ public class ThreeDCursor{
         path.lineTo(pt[0], pt[1]);
         return path;
     }
+
+    public void setVisible(boolean visible){
+        drawing = visible;
+    }
+
     Drawable getDrawable(FurrowTransformer transformer){
         return g2d-> {
-            g2d.setColor(Color.WHITE);
-            g2d.draw(getProjection(transformer));
+            if(drawing) {
+                g2d.setColor(Color.WHITE);
+                g2d.draw(getProjection(transformer));
+            }
         };
     }
 
