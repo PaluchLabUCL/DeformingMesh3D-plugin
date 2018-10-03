@@ -19,6 +19,9 @@ public class NewtonMesh3D extends DeformableMesh3D {
     public NewtonMesh3D(double[] positions, int[] connection_indices, int[] triangle_indices) {
         super(positions, connection_indices, triangle_indices);
     }
+    public NewtonMesh3D(DeformableMesh3D mesh){
+        super(mesh.positions, mesh.connection_index, mesh.triangle_index);
+    }
 
     private Map<Node3D, List<Connection3D>> noder;
     private Map<Connection3D, Set<Connection3D>> conner;

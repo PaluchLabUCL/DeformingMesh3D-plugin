@@ -179,21 +179,27 @@ public class GuiTools {
     }
 
     private static String getVersionHTML(){
-       BufferedReader r = new BufferedReader(new InputStreamReader(Thread.currentThread().getClass().getResourceAsStream("/about.html"), Charset.forName("UTF8")));
-       StringBuilder b = new StringBuilder();
-        String s;
+
         try {
+            String versionTag = "%%VERSION%%";
+            BufferedReader r = new BufferedReader(new InputStreamReader(Thread.currentThread().getClass().getResourceAsStream("/about.html"), Charset.forName("UTF8")));
+            StringBuilder b = new StringBuilder();
+            String s;
+
             while((s=r.readLine())!=null){
                 b.append(s);
             }
-        } catch (IOException e) {
-            return "<html><body style=\"background-color: black; color: green;\">Version 0.01</bod></html>";
-        }
-        String versionTag = "%%VERSION%%";
-        int i = b.indexOf(versionTag);
-        b.replace(i, i + versionTag.length(), Deforming3DMesh_Plugin.version);
 
-        return b.toString();
+            int i = b.indexOf(versionTag);
+            b.replace(i, i + versionTag.length(), Deforming3DMesh_Plugin.version);
+
+            return b.toString();
+
+        } catch (Exception e) {
+            return String.format("<html><body style=\"background-color: black; color: green;\">Version %s</bod></html>", Deforming3DMesh_Plugin.version);
+        }
+
+
     }
 
     public static String displayFormat(double value){
