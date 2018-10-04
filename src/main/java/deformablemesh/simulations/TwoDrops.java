@@ -9,33 +9,37 @@ import deformablemesh.geometry.RayCastMesh;
 import deformablemesh.geometry.Sphere;
 import deformablemesh.meshview.MeshFrame3D;
 
+import java.awt.Color;
+
 /**
  * This class is to test deforming two meshes that are influenced by "gravity", each other and a surface.
  */
 public class TwoDrops {
     DeformableMesh3D a;
     DeformableMesh3D b;
-    double gravityMagnitude = -0.001;
-    double surfaceFactor = 0.01;
-    double volumeConservation = 0.1;
-    double steric = 10;
+    double gravityMagnitude = 0.01;
+    double surfaceFactor = 1;
+    double volumeConservation = 10.0;
+    double steric = 100;
     public TwoDrops(){
         Sphere sA = new Sphere(new double[]{-0.075, 0, 0.5}, 0.1);
-        //a = new NewtonMesh3D(RayCastMesh.rayCastMesh(sA, sA.getCenter(), 2));
-        a = RayCastMesh.rayCastMesh(sA, sA.getCenter(), 3);
+        //a = new NewtonMesh3D(RayCastMesh.rayCastMesh(sA, sA.getCenter(), 1));
+        a = RayCastMesh.rayCastMesh(sA, sA.getCenter(), 1);
         a.GAMMA = 500;
-        a.ALPHA = 0.1;
-        a.BETA = 0.1;
+        a.ALPHA = 10;
+        a.BETA = 0.0;
         a.reshape();
         a.setShowSurface(true);
+        a.setColor(Color.RED);
         Sphere sB = new Sphere(new double[]{0.075, 0, 0.5}, 0.1);
-        //b = new NewtonMesh3D(RayCastMesh.rayCastMesh(sB, sB.getCenter(), 2));
-        b = RayCastMesh.rayCastMesh(sB, sB.getCenter(), 3);
+        //b = new NewtonMesh3D(RayCastMesh.rayCastMesh(sB, sB.getCenter(), 1));
+        b = RayCastMesh.rayCastMesh(sB, sB.getCenter(), 1);
 
         b.ALPHA = 0.1;
         b.BETA = 0.1;
         b.GAMMA = 500;
         b.reshape();
+        b.setColor(Color.BLUE);
         b.setShowSurface(true);
     }
 
@@ -45,7 +49,7 @@ public class TwoDrops {
             @Override
             public void updateForces(double[] positions, double[] fx, double[] fy, double[] fz) {
                 for(int i = 0; i<fz.length; i++){
-                    fz[i] += gravityMagnitude;
+                    fz[i] += -gravityMagnitude;
                 }
             }
 
@@ -56,37 +60,20 @@ public class TwoDrops {
         };
 
         ExternalEnergy hardSurface = new ExternalEnergy(){
-            double a = 2;
+
             @Override
             public void updateForces(double[] positions, double[] fx, double[] fy, double[] fz) {
-                for(int i = 0; i<fz.length; i++){
+                for(int i = 0; i<fx.length; i++){
                     double z = positions[i*3 + 2];
-                    double y = positions[i*3 + 1];
-                    double x = positions[i*3 + 0];
-                    double r = x*x + y*y;
-                    if(z<r*a){
-                        r = Math.sqrt(r);
-                        x = x/r;
-                        y = y/r;
-
-                        double dz_dr = 2*a*r;
-                        dz_dr = dz_dr*dz_dr;
-                        double dz = Math.sqrt(dz_dr/(1+dz_dr));
-                        double dr = Math.sqrt(1 - dz);
-                        fz[i] += -gravityMagnitude - (positions[3*i + 2]-2*r) * surfaceFactor*dr;
-                        fy[i] += -dz*y*surfaceFactor;
-                        fx[i] += -dz*x*surfaceFactor;
+                    if(z<0){
+                        fz[i] += gravityMagnitude + surfaceFactor;
                     }
-
                 }
             }
 
             @Override
             public double getEnergy(double[] pos) {
-                if(pos[2]>0){
-                    return 0;
-                }
-                return -pos[2];
+                return 0;
             }
         };
 
@@ -106,6 +93,7 @@ public class TwoDrops {
     public void createDisplay(){
         MeshFrame3D frame = new MeshFrame3D();
         frame.showFrame(true);
+        frame.addLights();
         a.create3DObject();
         b.create3DObject();
         frame.addDataObject(a.data_object);
