@@ -83,35 +83,75 @@ public class MeshWriter {
 
     /**
      * Saves the current mesh to an ascii
+     *
      * @param output
-     * @param mesh
+     * @param tracks
      * @param offset
+     * @param SCALE
+     * @param frame
+     * @throws IOException
      */
-    static public void saveStlMesh(File output, DeformableMesh3D mesh, double[] offset, double SCALE) throws IOException{
-        List<Triangle3D> triangles = mesh.triangles;
+    static public void saveStlMesh(File output, List<Track> tracks, double[] offset, double SCALE, Integer frame) throws IOException{
         BufferedWriter writes = Files.newBufferedWriter(output.toPath(), Charset.forName("UTF8"));
-        writes.write("solid mesh\n");
-        for(Triangle3D triangle: triangles){
-            triangle.update();
-            double[] n = triangle.getNormal();
-            writes.write(String.format(Locale.US, "facet normal %e %e %e\n", n[0], n[1], n[2]));
-            writes.write("  outer loop\n");
-            int[] indexes = triangle.getIndices();
-            for(int dex: indexes){
-                double[] p = mesh.getCoordinates(dex);
-                writes.write(
-                        String.format(Locale.US,
-                                "    vertex %e %e %e\n",
-                                (p[0] + offset[0])*SCALE,
-                                (p[1] + offset[1])*SCALE,
-                                (p[2] + offset[2])*SCALE
-                        )
-                );
+        double ox = offset[0];
+        double oy = offset[1];
+        double oz = offset[2];
+        for(Track track: tracks) {
+            /*
+                For increasing the offset if some points are negative.
+             */
+            if (!track.containsKey(frame)) {
+                continue;
             }
-            writes.write("  endloop\n");
-            writes.write("endfacet\n");
+            DeformableMesh3D mesh = track.getMesh(frame);
+            for(int i = 0; i<mesh.positions.length/3; i++){
+                double[] p = mesh.getCoordinates(i);
+                if(p[0]+ox < 0){
+                    ox = -p[0];
+                }
+                if(p[1]+oy < 0){
+                    oy = -p[1];
+                }
+                if(p[2]+oz < 0){
+                    oz = -p[2];
+                }
+
+            }
         }
-        writes.write("endsolid mesh\n");
+        System.out.println(ox + ", " + oy + ", " + oz);
+        for(Track track: tracks) {
+            if(!track.containsKey(frame)){
+                continue;
+            }
+            DeformableMesh3D mesh = track.getMesh(frame);
+            List<Triangle3D> triangles = mesh.triangles;
+            writes.write("solid mesh\n");
+            for (Triangle3D triangle : triangles) {
+                triangle.update();
+                double[] n = triangle.getNormal();
+                writes.write(String.format(Locale.US, "facet normal %e %e %e\n", n[0], n[1], n[2]));
+                writes.write("  outer loop\n");
+                int[] indexes = triangle.getIndices();
+                for (int dex : indexes) {
+                    double[] p = mesh.getCoordinates(dex);
+                    writes.write(
+                            String.format(Locale.US,
+                                    "    vertex %e %e %e\n",
+                                    (p[0] + ox) * SCALE,
+                                    (p[1] + oy) * SCALE,
+                                    (p[2] + oz) * SCALE
+                            )
+                    );
+                }
+
+
+
+                writes.write("  endloop\n");
+                writes.write("endfacet\n");
+            }
+            writes.write("endsolid mesh\n");
+
+        }
         writes.close();
     }
 

@@ -353,7 +353,7 @@ public class SegmentationModel {
         if(f==null){
             return;
         }
-        MeshWriter.saveStlMesh(f, tracker.getSelectedMesh(getCurrentFrame()), stack.offsets, stack.SCALE);
+        MeshWriter.saveStlMesh(f, tracker.getAllMeshTracks(), stack.offsets, stack.SCALE, getCurrentFrame());
     }
 
     public DeformableMesh3D getSelectedMesh(int frame){

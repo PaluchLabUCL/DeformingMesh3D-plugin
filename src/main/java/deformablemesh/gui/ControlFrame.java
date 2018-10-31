@@ -9,6 +9,7 @@ import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.WindowManager;
+import ij.io.OpenDialog;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -580,14 +581,20 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         file.add(load);
         load.addActionListener(actionEvent -> {
             setReady(false);
+
+
             FileDialog fd = new FileDialog(frame,"File to load mesh from");
+            fd.setDirectory(OpenDialog.getDefaultDirectory());
             fd.setMode(FileDialog.LOAD);
             fd.setVisible(true);
+
             if(fd.getFile()==null || fd.getDirectory()==null){
                 finished();
                 return;
             }
+
             File f = new File(fd.getDirectory(),fd.getFile());
+
             segmentationController.loadMeshes(f);
             finished();
         });
@@ -596,7 +603,9 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         file.add(saveParameters);
         saveParameters.addActionListener(evt->{
             setReady(false);
+
             FileDialog fd = new FileDialog(frame,"Select file to save parameters to.");
+            fd.setDirectory(OpenDialog.getDefaultDirectory());
             fd.setMode(FileDialog.SAVE);
             fd.setVisible(true);
             if(fd.getFile()==null || fd.getDirectory()==null){
@@ -928,6 +937,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         setReady(false);
         FileDialog fd = new FileDialog(frame,"File to save mesh too");
         fd.setFile(segmentationController.getShortImageName() + ".bmf");
+        fd.setDirectory(OpenDialog.getDefaultDirectory());
         fd.setMode(FileDialog.SAVE);
         fd.setVisible(true);
         if(fd.getFile()==null || fd.getDirectory()==null){
