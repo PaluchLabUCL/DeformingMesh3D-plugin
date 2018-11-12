@@ -1,11 +1,7 @@
 package deformablemesh;
 
 import deformablemesh.externalenergies.ImageEnergyType;
-import deformablemesh.geometry.Box3D;
-import deformablemesh.geometry.DeformableMesh3D;
-import deformablemesh.geometry.InterceptingMesh3D;
-import deformablemesh.geometry.RayCastMesh;
-import deformablemesh.geometry.SnakeBox;
+import deformablemesh.geometry.*;
 import deformablemesh.gui.FrameListener;
 import deformablemesh.gui.PropertySaver;
 import deformablemesh.gui.RingController;
@@ -235,6 +231,14 @@ public class SegmentationController {
         });
     }
 
+    public void binaryScaleRemesh(){
+        main.submit(()->{
+            int f = model.getCurrentFrame();
+            DeformableMesh3D mesh = model.getSelectedMesh(f);
+            DeformableMesh3D newMesh = BinaryMeshGenerator.remesh(mesh, model.stack);
+            addMesh(f, newMesh);
+        });
+    }
     public void restartMeshes(){
         actionStack.postAction(new UndoableActions() {
             final List<Track> old = new ArrayList<>(model.getAllTracks());
