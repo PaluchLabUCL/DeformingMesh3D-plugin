@@ -14,27 +14,9 @@ import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.util.Vector3DOps;
 import ij.ImagePlus;
 
-import javax.swing.AbstractAction;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.KeyStroke;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.EventQueue;
-import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -56,6 +38,13 @@ public class CircularMeshInitializationDialog extends JDialog {
     JCheckBox showMeshes;
     ThreeDCursor cursor;
     JCheckBox showCursor;
+
+    JPanel grid;
+    JTabbedPane tabs;
+    JPanel content;
+    JPanel host;
+    JComponent showing;
+
     public CircularMeshInitializationDialog(JFrame owner, SegmentationController model, Runnable callback){
         super(owner, false);
         this.model = model;
@@ -63,11 +52,13 @@ public class CircularMeshInitializationDialog extends JDialog {
         initializer = new Initializer();
         cursor = new ThreeDCursor(model.getNormalizedImageWidth(), model.getNormalizedImageHeight(), model.getNormalizedImageDepth());
         cursor.addNotification(initializer::repaint);
+
     }
 
     public void start(){
-        JPanel content = new JPanel();
+        content = new JPanel();
         content.setLayout(new BorderLayout());
+        host = new JPanel();
 
         JPanel row = new JPanel();
         row.setLayout(new BoxLayout(row, BoxLayout.LINE_AXIS));
@@ -94,7 +85,28 @@ public class CircularMeshInitializationDialog extends JDialog {
             showCursor();
         });
 
+        Map<String, JPanel> views = new HashMap<>();
+        views.put("xy", createHorizontalMidPlaneSelectionPanel());
+        views.put("zy", createVerticalFacingSelectionPanel());
+        views.put("xz", createVerticalMidPlaneSelectionPanel());
 
+        JButton gridView = new JButton("grid");
+        gridView.addActionListener(evt->{
+
+            grid.add(views.get("xy"));
+            grid.add(views.get("zy"));
+            grid.add(views.get("xz"));
+            setView(grid);
+        });
+
+        JButton tabbedView = new JButton("tab view");
+        tabbedView.addActionListener(evt->{
+
+            for(String key: views.keySet()){
+                tabs.add(key, views.get(key));
+            }
+            setView(tabs);
+        });
         JButton cancel = new JButton("cancel");
         cancel.addActionListener((evt)->{
             setVisible(false);
@@ -106,17 +118,22 @@ public class CircularMeshInitializationDialog extends JDialog {
         row.add(cancel);
         row.add(add);
         row.add(finish);
+        row.add(gridView);
+        row.add(tabbedView);
         content.add(row, BorderLayout.SOUTH);
 
 
-        JPanel panel = new JPanel();
-        panel.setLayout(new GridLayout(2, 2));
 
-        panel.add(createHorizontalMidPlaneSelectionPanel());
-        panel.add(createVerticalFacingSelectionPanel());
-        panel.add(createVerticalMidPlaneSelectionPanel());
+        grid = new JPanel();
+        grid.setLayout(new GridLayout(2, 2));
+        grid.add(views.get("xy"));
+        grid.add(views.get("zy"));
+        grid.add(views.get("xz"));
+        showing = grid;
+        //host.add(grid);
+        content.add(showing, BorderLayout.CENTER);
+        tabs = new JTabbedPane();
 
-        content.add(panel, BorderLayout.CENTER);
 
         setContentPane(content);
 
@@ -142,8 +159,23 @@ public class CircularMeshInitializationDialog extends JDialog {
         showMeshes();
         setVisible(true);
 
-
     }
+
+    public void setView(JComponent panel){
+        Dimension d = host.getSize();
+        panel.setMaximumSize(d);
+        panel.setMinimumSize(d);
+        panel.setPreferredSize(d);
+        panel.invalidate();
+
+        content.remove(showing);
+        showing = panel;
+        content.add(panel);
+
+        content.invalidate();
+        validate();
+    }
+
     private void attachActions(JComponent jcomp){
         jcomp.getInputMap().put(KeyStroke.getKeyStroke('n'), "nexted");
         jcomp.getActionMap().put("nexted", new AbstractAction() {

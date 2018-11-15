@@ -8,14 +8,10 @@ import deformablemesh.gui.Drawable;
 import deformablemesh.gui.Slice3DView;
 import deformablemesh.ringdetection.FurrowTransformer;
 
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSlider;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Image;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.geom.Rectangle2D;
@@ -37,6 +33,8 @@ public class SlicePicker{
     Map<Projectable, Drawable> projectDrawingMapper = new HashMap<>();
     double length = 1;
     ThreeDCursor cursor;
+
+    JScrollPane scroll;
     public SlicePicker(SegmentationController m, double[] normal, double[] center){
 
         model = m;
@@ -96,7 +94,7 @@ public class SlicePicker{
 
         view.setSlice(img);
         bounds = new Rectangle2D.Double(0, 0, img.getWidth(view.panel), img.getHeight(view.panel));
-        JScrollPane scroll = new JScrollPane(view.panel);
+        scroll = new JScrollPane(view.panel);
         scroll.setMaximumSize(new Dimension(600, 600));
         container.add(scroll, BorderLayout.CENTER);
 
@@ -115,6 +113,7 @@ public class SlicePicker{
         });
         slider.setMaximumSize(new Dimension(30, 600));
         container.add(slider, BorderLayout.EAST);
+        addDragListener();
         return container;
     }
 
@@ -145,6 +144,46 @@ public class SlicePicker{
         view.addDrawable(cursor.getDrawable(transformer));
     }
 
+    public void addDragListener(){
+        int[] xy = new int[2];
+        view.panel.addMouseListener(new MouseAdapter(){
+            @Override
+            public void mousePressed(MouseEvent e) {
+                xy[0] = e.getX();
+                xy[1] = e.getY();
+            }
+        });
+        view.panel.addMouseMotionListener(new MouseMotionListener() {
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                int nx = e.getX();
+                int ny = e.getY();
+                int dx = nx - xy[0];
+                int dy = ny - xy[1];
+
+                JViewport port = scroll.getViewport();
+                Point pt = port.getViewPosition();
+
+                int vx = (int)pt.getX() - dx;
+                if(vx<0){
+                    vx = 0;
+                }
+                int vy = (int)pt.getY() - dy;
+                if(vy<0){
+                    vy = 0;
+                }
+                port.setViewPosition(new Point(vx, vy));
+
+                xy[0] = nx;
+                xy[1] = ny;
+            }
+
+            @Override
+            public void mouseMoved(MouseEvent e) {
+
+            }
+        });
+    }
 
 
     public void addMouseListener(MouseListener ml){
