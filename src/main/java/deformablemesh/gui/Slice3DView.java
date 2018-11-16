@@ -10,6 +10,8 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Shape;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Path2D;
 import java.awt.image.BufferedImage;
@@ -33,6 +35,9 @@ public class Slice3DView {
     public final JPanel panel = buildComponent();
     Dimension dimension;
     List<Drawable> drawables = new ArrayList<>();
+
+
+
     public Slice3DView(){
         setSlice(NO_IMAGE);
         setBinary(NULL_IMAGE);
@@ -41,6 +46,7 @@ public class Slice3DView {
                 slice.getHeight(null) + binary.getHeight(null)
         );
     }
+
     JPanel buildComponent(){
         JPanel panel = new JPanel(){
             @Override
@@ -84,6 +90,9 @@ public class Slice3DView {
 
 
         panel.addMouseWheelListener(evt->{
+            if(evt.isConsumed()){
+                return;
+            }
             if(evt.getWheelRotation()>0){
                 zoom = zoom - 0.125;
                 if(zoom==0) zoom = 0.125;
@@ -246,5 +255,17 @@ public class Slice3DView {
             drawables.clear();
         }
         panel.repaint();
+    }
+
+    public void setZoom(double zoom) {
+        this.zoom = zoom;
+        resize();
+    }
+
+    public void deactivateWheelZoom(){
+        MouseWheelListener[] ml = panel.getMouseWheelListeners();
+        for(MouseWheelListener l: ml){
+            panel.removeMouseWheelListener(l);
+        }
     }
 }

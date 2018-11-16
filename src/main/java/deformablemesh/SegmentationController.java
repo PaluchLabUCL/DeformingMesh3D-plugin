@@ -8,6 +8,7 @@ import deformablemesh.gui.RingController;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.meshview.PickSelector;
+import deformablemesh.meshview.VolumeDataObject;
 import deformablemesh.ringdetection.FurrowTransformer;
 import deformablemesh.track.Track;
 import deformablemesh.util.MeshFaceObscuring;
@@ -239,6 +240,48 @@ public class SegmentationController {
             addMesh(f, newMesh);
         });
     }
+
+    public void showBinaryBlob(){
+        if(model.hasSelectedMesh()) {
+            main.submit(() -> {
+
+                int f = model.getCurrentFrame();
+                DeformableMesh3D mesh = model.getSelectedMesh(f);
+                ImagePlus plus = DeformableMesh3DTools.createBinaryRepresentation(model.stack, mesh);
+                List<int[]> pts = new ArrayList<>();
+                ImageStack stack = plus.getStack();
+                int lx = Integer.MAX_VALUE;
+                int ly = Integer.MAX_VALUE;
+                int lz = Integer.MAX_VALUE;
+
+                for(int j = 1; j<= plus.getNSlices(); j++){
+                    ImageProcessor proc = stack.getProcessor(j);
+                    final int w = proc.getWidth();
+                    final int h = proc.getHeight();
+                    for(int i = 0; i<w*h; i++){
+                        if(proc.get(i)!=0){
+                            int x = i%w;
+                            int y = i/w;
+                            int z = j-1;
+                            pts.add(new int[]{x, y, z});
+                            lx = x<lx?x:lx;
+                            ly = y<ly?y:ly;
+                            lz = z<lz?z:lz;
+                        }
+                    }
+                }
+                VolumeDataObject obj = new VolumeDataObject(model.getSelectedTrack().getColor());
+                obj.setTextureData(model.stack, pts);
+                double[] corner = model.stack.getNormalizedCoordinate(
+                        new double[]{
+                                lx-model.stack.offsets[0]*0.5, ly-model.stack.offsets[0]*0.5, lz-model.stack.offsets[0]*0.5
+                        });
+                obj.setPosition(corner[0], corner[1], corner[2]);
+                meshFrame3D.addTransientObject(obj);
+            });
+        }
+    }
+
     public void restartMeshes(){
         actionStack.postAction(new UndoableActions() {
             final List<Track> old = new ArrayList<>(model.getAllTracks());

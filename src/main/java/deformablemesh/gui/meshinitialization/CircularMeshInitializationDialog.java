@@ -118,6 +118,7 @@ public class CircularMeshInitializationDialog extends JDialog {
         row.add(cancel);
         row.add(add);
         row.add(finish);
+        row.add(Box.createHorizontalGlue());
         row.add(gridView);
         row.add(tabbedView);
         content.add(row, BorderLayout.SOUTH);
@@ -460,6 +461,9 @@ public class CircularMeshInitializationDialog extends JDialog {
 
         @Override
         public void mouseDragged(MouseEvent e) {
+            if(e.isConsumed()){
+                return;
+            }
             if(dragging!=null){
                 SlicePicker picker = pickers.get((JPanel)e.getSource());
 

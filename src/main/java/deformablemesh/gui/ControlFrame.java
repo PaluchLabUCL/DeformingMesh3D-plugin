@@ -118,7 +118,8 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         createButtonShowVolume(buttonPanel);
         createEnergySelector(buttonPanel);
 
-        createButtonShowEnergy(buttonPanel);
+        //createButtonShowEnergy(buttonPanel);
+        createButtonShowMeshVolume(buttonPanel);
         createButtonHideVolume(buttonPanel);
 
         buttonPanel.add(new JLabel("contrast: "));
@@ -362,6 +363,20 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             finished();
         });
     }
+
+    public void createButtonShowMeshVolume(JPanel buttonPanel){
+        JButton showMeshVolume = new JButton("show mesh volume");
+        buttons.add(showMeshVolume);
+        buttonPanel.add(showMeshVolume);
+        showMeshVolume.addActionListener(e->{
+            setReady(false);
+            segmentationController.showBinaryBlob();
+            finished();
+        });
+    }
+
+
+
     public void createFrameIndicator(JPanel panel){
         JLabel l = new JLabel("frame: ");
 

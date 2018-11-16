@@ -156,6 +156,12 @@ public class SlicePicker{
         view.panel.addMouseMotionListener(new MouseMotionListener() {
             @Override
             public void mouseDragged(MouseEvent e) {
+
+                if(!e.isControlDown()){
+                    return;
+                }
+                e.consume();
+
                 int nx = e.getX();
                 int ny = e.getY();
                 int dx = nx - xy[0];
@@ -183,8 +189,52 @@ public class SlicePicker{
 
             }
         });
+        view.deactivateWheelZoom();
+        view.panel.addMouseWheelListener(evt->{
+            evt.consume();
+            double originalZoom = view.getZoom();
+            Point p = evt.getPoint();
+
+            double zoom;
+            if(evt.getWheelRotation()>0){
+                zoom = originalZoom - 0.125;
+                if(zoom==0) zoom = 0.125;
+            } else{
+                zoom = originalZoom + 0.125;
+            }
+            if(zoom==originalZoom){
+                return;
+            }
+
+            double nx = p.getX()*zoom/originalZoom;
+            double ny = p.getY()*zoom/originalZoom;
+
+            double dx = nx - p.getX();
+            double dy = ny - p.getY();
+            
+            view.setZoom(zoom);
+            shiftViewport(dx, dy);
+        });
+
     }
 
+    public void shiftViewport(double dx, double dy){
+
+        JViewport port = scroll.getViewport();
+        Point pt = port.getViewPosition();
+        System.out.println(port.getViewRect());
+        int vx = (int)(pt.getX()  + dx);
+        if(vx<0){
+            vx = 0;
+        }
+        int vy = (int)(pt.getY() + dy);
+        if(vy<0){
+            vy = 0;
+        }
+        port.setViewPosition(new Point(vx, vy));
+
+
+    }
 
     public void addMouseListener(MouseListener ml){
         view.panel.addMouseListener(ml);
