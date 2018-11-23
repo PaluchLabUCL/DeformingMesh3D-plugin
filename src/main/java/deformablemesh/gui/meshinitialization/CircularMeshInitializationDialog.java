@@ -140,6 +140,25 @@ public class CircularMeshInitializationDialog extends JDialog {
 
 
         pack();
+
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        Dimension size = getSize();
+
+
+        if(size.width>=0.8*screenSize.width || size.height>=0.8*screenSize.height){
+            int nw = (int)(size.width*0.8);
+            int nh = (int)(size.height*0.8);
+
+            if(nw>size.width){
+                nw = size.width;
+            }
+            if(nh>size.height){
+                nh = size.height;
+            }
+            setSize(nw, nh);
+        }
+
+
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         addWindowListener(new WindowListener(){
 

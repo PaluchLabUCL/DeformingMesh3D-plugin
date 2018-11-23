@@ -211,7 +211,7 @@ public class SlicePicker{
 
             double dx = nx - p.getX();
             double dy = ny - p.getY();
-            
+
             view.setZoom(zoom);
             shiftViewport(dx, dy);
         });
