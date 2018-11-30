@@ -578,6 +578,7 @@ public class SegmentationModel {
 
 
     public void setMeshes(List<Track> meshes) {
+
         tracker.clearMeshes();
         tracker.addMeshTracks(meshes);
         notifyMeshListeners();
@@ -782,7 +783,7 @@ public class SegmentationModel {
     }
 
     public void exportAsPly(File f) throws IOException {
-        MeshWriter.exportToPly(f, tracker.getAllMeshTracks(), getCurrentFrame(), stack.offsets, stack.SCALE);
+        MeshWriter.exportToPly(f, tracker.getAllMeshTracks(), getCurrentFrame(), stack.offsets, 1.0);
     }
 
     public File getLastSavedFile() {

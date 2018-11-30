@@ -487,6 +487,11 @@ public class MeshTrackManager {
         return verified;
     }
 
+    /**
+     * Receives the list of tracks and creates duplicate tracks for managing.
+     *
+     * @param tracks
+     */
     public void manageMeshTrackes(List<Track> tracks){
         this.tracks.clear();
         labels.clear();

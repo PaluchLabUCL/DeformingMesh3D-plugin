@@ -222,7 +222,6 @@ public class SlicePicker{
 
         JViewport port = scroll.getViewport();
         Point pt = port.getViewPosition();
-        System.out.println(port.getViewRect());
         int vx = (int)(pt.getX()  + dx);
         if(vx<0){
             vx = 0;

@@ -312,7 +312,6 @@ public class MeshWriter {
     public static void exportToPly(File output, List<Track> tracks, int frame, double[] offsets, double scale) throws IOException {
         List<DeformableMesh3D> meshes = new ArrayList<>();
         List<Color> colors = new ArrayList<>();
-
         int vertices = 0;
         int faces = 0;
 

@@ -43,6 +43,11 @@ public class MeshTracker {
 
     public void clearMeshes() {
         tracks.clear();
+       if(selectedTrack!=null){
+            selectedTrack.setSelected(false);
+            selectedTrack = null;
+        }
+
     }
 
     public List<Track> getAllMeshTracks(){
