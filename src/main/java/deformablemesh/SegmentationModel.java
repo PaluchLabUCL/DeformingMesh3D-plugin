@@ -88,6 +88,7 @@ public class SegmentationModel {
 
     private double normalize;
     private File lastSavedFile;
+    private boolean hardBoundaries = false;
 
     public SegmentationModel(){
 
@@ -123,6 +124,9 @@ public class SegmentationModel {
         }
         while(!stop&&c<count){
             selectedMesh.update();
+            if(hardBoundaries){
+                selectedMesh.confine(getBounds());
+            }
             c++;
         }
     }
@@ -164,6 +168,10 @@ public class SegmentationModel {
             for(DeformableMesh3D mesh: meshes){
 
                 mesh.update();
+                if(hardBoundaries){
+                    mesh.confine(getBounds());
+                }
+
                 if(stop){
                     break;
                 }
@@ -792,6 +800,14 @@ public class SegmentationModel {
 
     public void setLastSavedFile(File lastSavedFile) {
         this.lastSavedFile = lastSavedFile;
+    }
+
+    public boolean isHardBoundaries() {
+        return hardBoundaries;
+    }
+
+    public void setHardBoundaries(boolean hardBoundaries) {
+        this.hardBoundaries = hardBoundaries;
     }
 }
 

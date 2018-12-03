@@ -144,6 +144,7 @@ public class DeformableMesh3D{
 
     }
 
+
     static public DeformableMesh3D loadMesh(double[] positions, int[] connection_indices, int[] triangle_indices){
         return new DeformableMesh3D(positions, connection_indices, triangle_indices);
     }
@@ -804,6 +805,35 @@ public class DeformableMesh3D{
 
 
         return map;
+    }
+
+    public void confine(Box3D box) {
+        boolean global_change = false;
+        for (Node3D node : nodes) {
+            double[] pt = node.getCoordinates();
+            boolean changed = false;
+
+            for (int i = 0; i < 3; i++) {
+                if (pt[i] < box.low[i]) {
+                    pt[i] = box.low[i];
+                    changed = true;
+                }
+                if (pt[i] > box.high[i]) {
+                    pt[i] = box.high[i];
+                    changed = true;
+                }
+            }
+
+            if (changed) {
+                global_change = true;
+                node.setPosition(pt);
+            }
+
+        }
+
+        if(global_change && data_object!=null){
+            data_object.updateGeometry(positions);
+        }
     }
 
     public Map<Connection3D, Set<Connection3D>> getAdjacencyMap(Map<Node3D, List<Connection3D>> connectionMap){

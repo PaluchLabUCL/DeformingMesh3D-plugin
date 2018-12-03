@@ -108,6 +108,14 @@ public class Box3D implements Interceptable{
         return true;
     }
 
+    public boolean contains(Box3D boundingBox) {
+        for(int i = 0; i<3; i++){
+            if(boundingBox.low[i]<low[i] || boundingBox.high[i]>high[i]){
+                return false;
+            }
+        }
+        return true;
+    }
 }
 
 class AxisPlane implements Interceptable{

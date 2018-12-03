@@ -216,6 +216,7 @@ public class SegmentationController {
                     stack = new ImageStack(proc.getWidth(), proc.getHeight());
                 }
                 stack.addSlice("snapshot " + i, proc);
+
             }
             if(stack!=null){
                 new ImagePlus("snapshots", stack).show();
@@ -516,6 +517,43 @@ public class SegmentationController {
             });
         }
     }
+
+
+    public void confineMesh(final DeformableMesh3D mesh){
+        final Box3D box = getBounds();
+        if(box.contains(mesh.getBoundingBox())){
+            return;
+        }
+        actionStack.postAction(new UndoableActions(){
+            final double[] positions = Arrays.copyOf(mesh.positions, mesh.positions.length);
+            double[] newPositions;
+            @Override
+            public void perform() {
+                main.submit(() -> {
+                    mesh.confine(box);
+                    newPositions = Arrays.copyOf(mesh.positions, mesh.positions.length);
+                });
+
+            }
+
+            @Override
+            public void undo() {
+                main.submit(()->mesh.setPositions(positions));
+            }
+
+            @Override
+            public void redo() {
+                main.submit(()->mesh.setPositions(newPositions));
+            }
+        });
+
+
+    }
+
+    public void setHardBoundaries(boolean v){
+        model.setHardBoundaries(v);
+    }
+
     public void deformMesh(final int count){
         meshModified = true;
         actionStack.postAction(new UndoableActions(){
@@ -953,6 +991,10 @@ public class SegmentationController {
         submit(()->{
             PropertySaver.loadProperties(this, f);
         });
+    }
+
+    public void setRigidBoundaries(boolean selected) {
+        model.setHardBoundaries(selected);
     }
 
 

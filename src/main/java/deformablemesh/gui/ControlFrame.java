@@ -113,7 +113,8 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         createFrameIndicator(buttonPanel);
         createButtonPrevious(buttonPanel);
         createButtonNext(buttonPanel);
-        buttonPanel.add(Box.createGlue());
+        createRigidBoundaryCheckbox(buttonPanel);
+        //buttonPanel.add(Box.createGlue());
 
         createButtonShowVolume(buttonPanel);
         createEnergySelector(buttonPanel);
@@ -163,6 +164,16 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         }
 
         return content;
+    }
+
+    private void createRigidBoundaryCheckbox(JPanel buttonPanel) {
+        JCheckBox check = new JCheckBox("rigid boundaries");
+        check.addActionListener(evt->{
+            segmentationController.setRigidBoundaries(check.isSelected());
+        });
+        buttonPanel.add(check);
+        buttons.add(check);
+
     }
 
     public void updateDisplayedParameters(){
