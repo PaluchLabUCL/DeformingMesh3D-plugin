@@ -121,6 +121,8 @@ class InterceptingTriangle3D{
 
     }
 
+
+
     void getIntersection(double[] origin, double[] direction, List<Intersection> result){
         //project of direction along normal.
         double rn = Vector3DOps.dot(direction, normal);

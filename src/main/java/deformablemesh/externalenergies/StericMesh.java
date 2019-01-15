@@ -4,15 +4,18 @@ import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.InterceptingMesh3D;
 
 public class StericMesh implements ExternalEnergy{
-    final InterceptingMesh3D mesh;
+    //final InterceptingMesh3D mesh;
+    final DeformableMesh3D deformableMesh;
     final double weight;
     public StericMesh(DeformableMesh3D a, double weight){
-        mesh = new InterceptingMesh3D(a);
+        //mesh = new InterceptingMesh3D(a);
+        deformableMesh = a;
         this.weight=weight;
     }
 
     @Override
     public void updateForces(double[] positions, double[] fx, double[] fy, double[] fz) {
+        InterceptingMesh3D mesh = new InterceptingMesh3D(deformableMesh);
         double[] pt = new double[3];
         double[] center = mesh.getCenter();
         for(int i = 0; i<fx.length; i++){
