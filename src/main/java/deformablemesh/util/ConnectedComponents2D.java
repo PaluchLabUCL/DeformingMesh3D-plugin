@@ -5,6 +5,7 @@ import ij.process.ImageProcessor;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
   /*
     For performing connected components on 2d images.
@@ -20,7 +21,7 @@ public class ConnectedComponents2D{
   HashMap<Integer,Integer> final_map;
   
   //Contains all of the points for an associated value
-  HashMap<Integer,ArrayList<int[]>> log;
+  HashMap<Integer,List<int[]>> log;
   
   //list of centroids, x,y,weight
   ArrayList<double[]> output;
@@ -180,7 +181,7 @@ public class ConnectedComponents2D{
     for(Integer key: log.keySet()){
         //each key represents a region
         if(!key.equals(0)){
-            ArrayList<int[]> pts = log.get(key);
+            List<int[]> pts = log.get(key);
             double sumx = 0;
             double sumy = 0;
             double weight = pts.size();
@@ -206,7 +207,7 @@ public class ConnectedComponents2D{
     return output;
   }
 
-  public HashMap<Integer, ArrayList<int[]>> getPoints(){
+  public HashMap<Integer, List<int[]>> getPoints(){
       return log;
   }
 

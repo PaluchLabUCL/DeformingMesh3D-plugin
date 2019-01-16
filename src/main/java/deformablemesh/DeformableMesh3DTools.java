@@ -1325,7 +1325,7 @@ public class DeformableMesh3DTools {
         Set<Integer> frames = new TreeSet<>();
 
         for(Track t: allMeshTracks){
-            for(Integer i = 0; i<=stack.FRAMES; i++){
+            for(Integer i = 0; i<stack.FRAMES; i++){
 
                 if(t.containsKey(i)){
                     frames.add(i);
@@ -1361,7 +1361,7 @@ public class DeformableMesh3DTools {
         return plus;
     }
 
-    static void mosaicBinary(MeshImageStack stack, ImageStack out, DeformableMesh3D mesh, int rgb){
+    public static void mosaicBinary(MeshImageStack stack, ImageStack out, DeformableMesh3D mesh, int rgb){
         InterceptingMesh3D picker = new InterceptingMesh3D(mesh);
         picker = new InterceptingMesh3D(RayCastMesh.rayCastMesh(picker, picker.getCenter(), 4));
         double[] xdirection = {1,0,0};

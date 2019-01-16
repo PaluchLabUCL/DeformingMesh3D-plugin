@@ -74,6 +74,29 @@ public class Track {
             track.remove(found);
         }
     }
+    public Integer getFirstFrame(){
+        Integer min = Integer.MAX_VALUE;
+        for(Integer i: track.keySet()){
+            if(i<min){
+                min = i;
+            }
+        }
+        return min;
+    }
+
+    public Integer getLastFrame(){
+        Integer max = -1;
+        for(Integer i: track.keySet()){
+            if(i>max){
+                max = i;
+            }
+        }
+        return max;
+    }
+
+    public int size(){
+        return track.size();
+    }
 
     public boolean containsMesh(DeformableMesh3D mesh) {
         return track.values().contains(mesh);

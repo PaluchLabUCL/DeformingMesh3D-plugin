@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import struct
+import struct, json
 
 
 class MeshReader:
@@ -79,6 +79,25 @@ def loadMeshTracks(filename):
         reader.load()
         return reader.tracks
     return None
+
+def createJsonOutput(tracks, output_file):
+    track_dictionary = {}
+    id_num = 0
+    for track in tracks:
+        single = {"name" : track.name, "meshes": {}}
+        for k in track.meshes:
+            mesh = track.meshes[k]
+            packed = {}
+            
+            packed["points"] = [ (mesh.positions[i], mesh.positions[i+1], mesh.positions[i+2]) for i in range(0, len(mesh.positions), 3)]
+            packed["triangles"] = [ (mesh.triangles[i], mesh.triangles[i+1], mesh.triangles[i+2]) for i in range(0, len(mesh.triangles), 3) ]
+            single["meshes"][k] = packed
+            
+        track_dictionary["id_%s"%id_num] = single
+        id_num += 1
+        
+    with open(output_file, 'w') as out:
+        json.dump(track_dictionary, out, indent="  ")
 
 if __name__=="__main__":
     import sys

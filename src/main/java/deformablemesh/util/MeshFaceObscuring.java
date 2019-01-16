@@ -26,6 +26,10 @@ public class MeshFaceObscuring {
     public void setNeighbors(List<DeformableMesh3D> meshes){
         this.meshes = meshes.stream().map(InterceptingMesh3D::new).collect(Collectors.toList());
     }
+    public void setNeighbor(DeformableMesh3D mesh){
+        this.meshes = new ArrayList<>(1);
+        meshes.add(new InterceptingMesh3D(mesh));
+    }
 
     public Set<Triangle3D> getOverlapArea(DeformableMesh3D mesh){
         Set<Triangle3D> touching = new HashSet<>();
@@ -97,6 +101,41 @@ public class MeshFaceObscuring {
 
         TextWindow window = new TextWindow("covered meshes", build.toString());
         window.display();
+    }
+
+    static public List<double[]> analyzeTracks(Track target, List<Track> others, double cutoff){
+        List<double[]> overlaps = new ArrayList<>();
+
+
+        for(Integer frame: target.getTrack().keySet()){
+            MeshFaceObscuring finder =  new MeshFaceObscuring();
+            finder.cutoff = cutoff;
+            //1 over lap  per track plus frame plus total area.
+            double[] values = new double[others.size() + 2];
+            overlaps.add(values);
+            DeformableMesh3D mesh = target.getMesh(frame);
+            double area = DeformableMesh3DTools.calculateSurfaceArea(mesh);
+            values[0] = frame;
+            values[1] = area;
+
+            int dex = 0;
+            for(Track ot: others){
+                double ol = 0;
+                if(ot.containsKey(frame)) {
+                    finder.setNeighbor(ot.getMesh(frame));
+                    Set<Triangle3D> triangles = finder.getOverlapArea(mesh);
+                    for(Triangle3D t: triangles){
+                        ol += t.area;
+                    }
+                }
+                values[2 + dex] = ol;
+                dex++;
+            }
+
+        }
+
+
+        return overlaps;
     }
 
 

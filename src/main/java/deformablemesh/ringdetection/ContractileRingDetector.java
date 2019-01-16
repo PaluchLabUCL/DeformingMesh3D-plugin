@@ -314,12 +314,12 @@ public class ContractileRingDetector implements Iterable<Integer>{
         ConnectedComponents2D components = new ConnectedComponents2D();
 
         ArrayList<double[]> centroids = components.getCentroids(binary);
-        HashMap<Integer, ArrayList<int[]>> blobs = components.getPoints();
+        HashMap<Integer, List<int[]>> blobs = components.getPoints();
         int max = 0;
         int min = binary.getHeight()*binary.getWidth();
         int biggest = 0;
-        for(Map.Entry<Integer, ArrayList<int[]>> row: blobs.entrySet()){
-            ArrayList<int[]> pts = row.getValue();
+        for(Map.Entry<Integer, List<int[]>> row: blobs.entrySet()){
+            List<int[]> pts = row.getValue();
             if(pts.size()>max){
                 max = pts.size();
                 biggest = row.getKey();
@@ -330,7 +330,7 @@ public class ContractileRingDetector implements Iterable<Integer>{
 
         }
 
-        for(Map.Entry<Integer, ArrayList<int[]>> row: blobs.entrySet()){
+        for(Map.Entry<Integer, List<int[]>> row: blobs.entrySet()){
             if(row.getKey()!=biggest){
                 for(int[] pt: row.getValue()){
                     binary.set(pt[0], pt[1],0);
