@@ -68,6 +68,12 @@
 		</dependency>
 		<dependency>
 			<groupId>org.orangepalantir</groupId>
+			<artifactId>light-weight-graphing</artifactId>
+			<version>1.0</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.orangepalantir</groupId>
 			<artifactId>leastsquares</artifactId>
 			<version>1.0.0</version>
 		</dependency>
