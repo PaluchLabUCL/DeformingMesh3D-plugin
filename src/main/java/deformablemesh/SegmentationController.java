@@ -18,6 +18,8 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
+import lightgraph.DataSet;
+import lightgraph.Graph;
 import snakeprogram3d.display3d.DataObject;
 
 import javax.swing.JLabel;
@@ -25,14 +27,12 @@ import java.awt.Color;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 /**
  * Created by msmith on 2/11/16.
@@ -240,6 +240,81 @@ public class SegmentationController {
             DeformableMesh3D newMesh = BinaryMeshGenerator.remesh(mesh, model.stack);
             addMesh(f, newMesh);
         });
+    }
+    public void curvatureSnapShot(){
+
+        main.submit(()->{
+            _curvatureSnapShot();
+        });
+
+    }
+
+    private void _curvatureSnapShot(){
+        final Track track = model.getSelectedTrack();
+        final int frame = model.getCurrentFrame();
+        if(track==null || !track.containsKey(frame)) return;
+        DeformableMesh3D mesh = track.getMesh(frame);
+
+        List<Track> neighbors = model.getAllTracks().stream().filter(
+                t->!track.equals(t)
+            ).filter(
+                t->t.containsKey(frame)
+            ).collect(Collectors.toList());
+
+        Graph curvatures = new Graph();
+
+        CurvatureCalculator cc = new CurvatureCalculator(mesh);
+
+        cc.setMaxCurvature(5);
+        cc.setMinCurvature(-5);
+
+        List<double[]> xy = cc.createCurvatureHistogram();
+
+        DataSet set = curvatures.addData(xy.get(0), xy.get(1));
+        set.setColor(mesh.getColor());
+        set.setLabel("total");
+
+        for(Track track2: neighbors) {
+            MeshFaceObscuring face = new MeshFaceObscuring();
+            face.setNeighbor(track2.getMesh(frame));
+            Set<Triangle3D> triangles = face.getOverlapArea(mesh);
+            int[] triIndexes = new int[triangles.size() * 3];
+            int[] conIndexes = new int[triangles.size() * 3 * 2];
+            int dex = 0;
+            for (Triangle3D tri : triangles) {
+                int[] indices = tri.getIndices();
+                triIndexes[dex] = indices[0];
+                triIndexes[dex + 1] = indices[1];
+                triIndexes[dex + 2] = indices[2];
+                conIndexes[dex * 2] = indices[0];
+                conIndexes[dex * 2 + 1] = indices[1];
+                conIndexes[dex * 2 + 2] = indices[1];
+                conIndexes[dex * 2 + 3] = indices[2];
+                conIndexes[dex * 2 + 4] = indices[2];
+                conIndexes[dex * 2 + 5] = indices[0];
+
+                dex += 3;
+            }
+            DeformableMesh3D m2 = new DeformableMesh3D(mesh.positions, conIndexes, triIndexes);
+            m2.setColor(track2.getColor());
+            m2.create3DObject();
+            m2.setShowSurface(true);
+            addTransientObject(m2.data_object);
+
+            cc = new CurvatureCalculator(m2);
+
+            cc.setMaxCurvature(5);
+            cc.setMinCurvature(-5);
+
+            xy = cc.createCurvatureHistogram();
+
+            set = curvatures.addData(xy.get(0), xy.get(1));
+            set.setColor(m2.getColor());
+            set.setLabel(track2.getName());
+
+        }
+
+        curvatures.show(false, "Curvature Snapshot of " + getSelectedMeshName() + " frame: " + frame);
     }
 
     public void showBinaryBlob(){

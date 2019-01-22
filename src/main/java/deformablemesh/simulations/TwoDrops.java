@@ -5,6 +5,7 @@ import deformablemesh.externalenergies.StericMesh;
 import deformablemesh.externalenergies.VolumeConservation;
 import deformablemesh.geometry.*;
 import deformablemesh.meshview.MeshFrame3D;
+import lightgraph.Graph;
 
 import java.awt.Color;
 import java.util.*;
@@ -15,27 +16,28 @@ import java.util.*;
 public class TwoDrops {
     DeformableMesh3D a;
     DeformableMesh3D b;
-    double gravityMagnitude = 0.001;
-    double surfaceFactor = 1;
-    double volumeConservation = 10.0;
-    double steric = 0.1;
-    double sticky = 100.0;
+    double gravityMagnitude = 0.0;
+    double surfaceFactor = 0.0;
+    double volumeConservation = 1.0;
+    double steric = 0.0;
+    double sticky = 1.0;
+    List<StickyVertex> links = new ArrayList<>();
     public TwoDrops(){
-        Sphere sA = new Sphere(new double[]{-0.075, 0, 0.5}, 0.1);
-        //a = new NewtonMesh3D(RayCastMesh.rayCastMesh(sA, sA.getCenter(), 1));
-        a = RayCastMesh.rayCastMesh(sA, sA.getCenter(), 2);
+        Sphere sA = new Sphere(new double[]{-0.1, 0, 0.5}, 0.1);
+        a = new NewtonMesh3D(RayCastMesh.rayCastMesh(sA, sA.getCenter(), 2));
+        //a = RayCastMesh.rayCastMesh(sA, sA.getCenter(), 2);
         a.GAMMA = 500;
-        a.ALPHA = 1;
-        a.BETA = 1;
+        a.ALPHA = 0.01;
+        a.BETA = 0.0;
         a.reshape();
         a.setShowSurface(true);
         a.setColor(Color.RED);
-        Sphere sB = new Sphere(new double[]{0.075, 0, 0.5}, 0.1);
-        //b = new NewtonMesh3D(RayCastMesh.rayCastMesh(sB, sB.getCenter(), 1));
-        b = RayCastMesh.rayCastMesh(sB, sB.getCenter(), 2);
+        Sphere sB = new Sphere(new double[]{0.1, 0, 0.5}, 0.1);
+        b = new NewtonMesh3D(RayCastMesh.rayCastMesh(sB, sB.getCenter(), 2));
+        //b = RayCastMesh.rayCastMesh(sB, sB.getCenter(), 2);
 
-        b.ALPHA = 1;
-        b.BETA = 1;
+        b.ALPHA = 0.1;
+        b.BETA = 0.0;
         b.GAMMA = 500;
         b.reshape();
         b.setColor(Color.BLUE);
@@ -77,35 +79,55 @@ public class TwoDrops {
         };
 
 
+        if(gravityMagnitude != 0) {
+            a.addExternalEnergy(gravity);
+            b.addExternalEnergy(gravity);
 
-        a.addExternalEnergy(gravity);
-        a.addExternalEnergy(hardSurface);
+        }
 
-        a.addExternalEnergy(new VolumeConservation(a, volumeConservation));
-        //a.addExternalEnergy(new StericMesh(b, steric));
+        if(surfaceFactor != 0){
+            a.addExternalEnergy(hardSurface);
+            b.addExternalEnergy(hardSurface);
+        }
 
-        b.addExternalEnergy(gravity);
-        b.addExternalEnergy(hardSurface);
-        b.addExternalEnergy(new VolumeConservation(b, volumeConservation));
-        //b.addExternalEnergy(new StericMesh(a, steric));
+        if(volumeConservation != 0) {
+            a.addExternalEnergy(new VolumeConservation(a, volumeConservation));
+            b.addExternalEnergy(new VolumeConservation(b, volumeConservation));
+        }
 
-        stickVertexes(a,b);
+        if(steric != 0){
+            a.addExternalEnergy(new StericMesh(b, steric));
+            b.addExternalEnergy(new StericMesh(a, steric));
+        }
+
+        if(sticky != 0) {
+            stickVertexes(a, b);
+        }
     }
     public void stickVertexes(DeformableMesh3D a, DeformableMesh3D b){
-        InterceptingMesh3D ia = new InterceptingMesh3D(a);
-        Set<Node3D> intersecting = new HashSet<>();
+
+        Set<Node3D> possibleA = new HashSet<>();
+        Set<Node3D> possibleB = new HashSet<>();
 
         for(Node3D node: b.nodes){
             double[] pt = node.getCoordinates();
-            if(ia.contains(pt)){
-                intersecting.add(node);
+            if(pt[0]<0.05){
+                possibleB.add(node);
             }
         }
 
-        List<NodePair> pairs = new ArrayList<>();
-        for(Node3D node: intersecting){
+        for(Node3D node: a.nodes){
+            double[] pt = node.getCoordinates();
+            if(pt[0]>-0.05){
+                possibleA.add(node);
+            }
+        }
+        System.out.println(possibleA.size() + ", " + possibleB.size());
 
-            for(Node3D other: a.nodes){
+        List<NodePair> pairs = new ArrayList<>();
+        for(Node3D node: possibleA){
+
+            for(Node3D other: possibleB){
                 pairs.add(new NodePair(node, other));
             }
 
@@ -114,22 +136,26 @@ public class TwoDrops {
 
         List<NodePair> stuck = new ArrayList<>();
         for(NodePair pair: pairs){
-
-            if(intersecting.remove(pair.a)){
+            if(possibleA.contains(pair.a) && possibleB.contains(pair.b)){
+                possibleA.remove(pair.a);
+                possibleB.remove(pair.b);
                 stuck.add(pair);
-                if(intersecting.size()==0){
-                    break;
-                }
+            }
+
+            if(possibleA.isEmpty() || possibleB.isEmpty()){
+                break;
             }
 
         }
 
         System.out.println(stuck.size());
+        Graph graph = new Graph();
 
         for(NodePair pair: stuck){
 
-            a.addExternalEnergy(new StickyVertex(pair.b.index, pair.a, sticky));
-            b.addExternalEnergy(new StickyVertex(pair.a.index, pair.b, sticky));
+            a.addExternalEnergy(new StickyVertex(pair.a.index, pair.b, sticky));
+            b.addExternalEnergy(new StickyVertex(pair.b.index, pair.a, sticky));
+
         }
 
     }
@@ -147,7 +173,7 @@ public class TwoDrops {
             double dy = pa[1] - pb[1];
             double dz = pa[2] - pb[2];
 
-            d = dx*dx + dy*dy + dz*dz;
+            d = dy*dy + dz*dz;
 
         }
 
@@ -190,6 +216,7 @@ class StickyVertex implements ExternalEnergy{
     int affected;
     Node3D other;
     double k;
+    double potential_energy = 0;
     public StickyVertex(int affected, Node3D other, double k){
         this.affected = affected;
         this.other = other;
@@ -206,12 +233,12 @@ class StickyVertex implements ExternalEnergy{
         fx[affected] += -dx*k;
         fy[affected] += -dy*k;
         fz[affected] += -dz*k;
-
+        potential_energy = 0.5*k*(dx*dx + dy*dy + dz*dz);
 
     }
 
     @Override
     public double getEnergy(double[] pos) {
-        return 0;
+        return potential_energy;
     }
 }
