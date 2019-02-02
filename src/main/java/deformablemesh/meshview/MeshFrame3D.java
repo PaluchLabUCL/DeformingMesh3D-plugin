@@ -8,16 +8,8 @@ import deformablemesh.geometry.Furrow3D;
 import deformablemesh.geometry.SnakeBox;
 import deformablemesh.gui.RingController;
 import deformablemesh.track.Track;
-import org.scijava.java3d.AmbientLight;
-import org.scijava.java3d.BoundingSphere;
-import org.scijava.java3d.BranchGroup;
-import org.scijava.java3d.PointLight;
-import org.scijava.java3d.Transform3D;
-import org.scijava.java3d.TransformGroup;
-import org.scijava.vecmath.Color3f;
-import org.scijava.vecmath.Point3d;
-import org.scijava.vecmath.Point3f;
-import org.scijava.vecmath.Vector3d;
+import org.scijava.java3d.*;
+import org.scijava.vecmath.*;
 import snakeprogram3d.display3d.CanvasView;
 import snakeprogram3d.display3d.DataCanvas;
 import snakeprogram3d.display3d.DataObject;
@@ -91,6 +83,30 @@ public class MeshFrame3D {
     }
 
     public void addLights(){
+        AmbientLight amber = new AmbientLight(new Color3f(new float[]{
+                0.85f, 0.85f, 0.85f
+        }));
+
+        BoundingSphere bounds =	new BoundingSphere (new Point3d(0, 0.0, 0.0), 25.0);
+        amber.setInfluencingBounds(bounds);
+        DirectionalLight light1 = new DirectionalLight(new Color3f(0.05f,0.05f,0.05f), new Vector3f(1f, 0f, 1f));
+        DirectionalLight light2= new DirectionalLight(new Color3f(0.05f,0.05f,0.05f), new Vector3f(-1f, 0f, 1f));
+        DirectionalLight light3= new DirectionalLight(new Color3f(0.05f,0.05f,0.05f), new Vector3f(0f, 1f, 1f));
+
+        light1.setInfluencingBounds(bounds);
+        light2.setInfluencingBounds(bounds);
+        light3.setInfluencingBounds(bounds);
+        addDataObject(() -> {
+            BranchGroup bg = new BranchGroup();
+            bg.addChild(amber);
+            bg.addChild(light1);
+            bg.addChild(light2);
+            bg.addChild(light3);
+            return bg;
+        });
+    }
+
+    public void _addLights(){
         BoundingSphere bounds =	new BoundingSphere (new Point3d(0, 0.0, 0.0), 5.0);
 
         PointLight light = new PointLight(new Color3f(1f, 1f, 1f), new Point3f(0f, 1.5f, 2f), new Point3f(1.0f, 1.0f, 0f));
