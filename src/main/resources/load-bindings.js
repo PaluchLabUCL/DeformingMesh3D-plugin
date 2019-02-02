@@ -5,4 +5,4 @@ var DeformableMesh3D = Java.type("deformablemesh.geometry.DeformableMesh3D");
 var RayCastMesh = Java.type("deformablemesh.geometry.RayCastMesh");
 var ImagePlus = Java.type("ij.ImagePlus");
 var MeshImageStack = Java.type("deformablemesh.MeshImageStack");
-
+var Color = Java.type("java.awt.Color");
