@@ -16,29 +16,29 @@ import java.util.*;
 public class TwoDrops {
     DeformableMesh3D a;
     DeformableMesh3D b;
-    double gravityMagnitude = 0.0;
-    double surfaceFactor = 0.0;
-    double volumeConservation = 1.0;
+    double gravityMagnitude = 0.00001;
+    double surfaceFactor = 0.0002;
+    double volumeConservation = 0.01;
     double steric = 0.0;
-    double sticky = 1.0;
+    double sticky = 0.01;
     List<StickyVertex> links = new ArrayList<>();
     public TwoDrops(){
         Sphere sA = new Sphere(new double[]{-0.1, 0, 0.5}, 0.1);
-        a = new NewtonMesh3D(RayCastMesh.rayCastMesh(sA, sA.getCenter(), 2));
-        //a = RayCastMesh.rayCastMesh(sA, sA.getCenter(), 2);
-        a.GAMMA = 500;
+        //a = new NewtonMesh3D(RayCastMesh.rayCastMesh(sA, sA.getCenter(), 2));
+        a = RayCastMesh.rayCastMesh(sA, sA.getCenter(), 2);
+        a.GAMMA = 1;
         a.ALPHA = 0.01;
         a.BETA = 0.0;
         a.reshape();
         a.setShowSurface(true);
         a.setColor(Color.RED);
         Sphere sB = new Sphere(new double[]{0.1, 0, 0.5}, 0.1);
-        b = new NewtonMesh3D(RayCastMesh.rayCastMesh(sB, sB.getCenter(), 2));
-        //b = RayCastMesh.rayCastMesh(sB, sB.getCenter(), 2);
+        //b = new NewtonMesh3D(RayCastMesh.rayCastMesh(sB, sB.getCenter(), 2));
+        b = RayCastMesh.rayCastMesh(sB, sB.getCenter(), 2);
 
-        b.ALPHA = 0.1;
-        b.BETA = 0.0;
-        b.GAMMA = 500;
+        b.ALPHA = 0.01;
+        b.BETA = 0.001;
+        b.GAMMA = 1;
         b.reshape();
         b.setColor(Color.BLUE);
         b.setShowSurface(true);
@@ -100,10 +100,43 @@ public class TwoDrops {
             b.addExternalEnergy(new StericMesh(a, steric));
         }
 
-        if(sticky != 0) {
-            stickVertexes(a, b);
-        }
+
     }
+
+    Set<Integer> stuckA = new HashSet<>();
+    Set<Integer> stuckB = new HashSet<>();
+    double cutoff = 0.0001;
+    public void stickyCell(DeformableMesh3D sticky, DeformableMesh3D neighbor){
+        int nA = sticky.positions.length/3;
+        int nB = neighbor.positions.length/3;
+
+
+
+        for(int i = 0; i<nA; i++){
+            if(stuckA.contains(i)) continue;
+            for(int j = 0; j<nB; j++){
+                if(stuckB.contains(j)) continue;
+
+                double[] a = sticky.getCoordinates(i);
+                double[] b = neighbor.getCoordinates(j);
+
+                double dx = b[0] - a[0];
+                double dy = b[1] - a[1];
+                double dz = b[2] - a[2];
+
+                if(dx*dx + dy*dy + dz*dz < cutoff){
+                    stuckA.add(i);
+                    stuckB.add(j);
+                    sticky.addExternalEnergy(new StickyVertex(i, neighbor.nodes.get(j), this.sticky));
+                    neighbor.addExternalEnergy(new StickyVertex(j, sticky.nodes.get(i), this.sticky));
+                }
+
+            }
+        }
+
+
+    }
+
     public void stickVertexes(DeformableMesh3D a, DeformableMesh3D b){
 
         Set<Node3D> possibleA = new HashSet<>();
@@ -198,6 +231,13 @@ public class TwoDrops {
     public void step(){
         a.update();
         b.update();
+        if(sticky!=0){
+            int before = stuckA.size();
+            stickyCell(a,b);
+            if(stuckA.size() > before){
+                System.out.println("stuck!");
+            }
+        }
     }
     public static void main(String[] args){
         TwoDrops sim = new TwoDrops();

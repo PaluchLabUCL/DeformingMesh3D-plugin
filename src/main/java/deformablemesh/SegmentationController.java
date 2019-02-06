@@ -61,6 +61,10 @@ public class SegmentationController {
         model.setPressure(d);
     }
 
+    public void setStericNeighborWeight(double d){
+        model.setStericNeighborWeight(d);
+    }
+
     public void setCortexThickness(double d) {
         model.setCortexThickness(d);
     }

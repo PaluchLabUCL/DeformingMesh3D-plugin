@@ -1,13 +1,6 @@
 package deformablemesh;
 
-import deformablemesh.externalenergies.ExternalEnergy;
-import deformablemesh.externalenergies.GradientEnergy;
-import deformablemesh.externalenergies.ImageEnergyType;
-import deformablemesh.externalenergies.IntensityEnergy;
-import deformablemesh.externalenergies.PerpendicularGradientEnergy;
-import deformablemesh.externalenergies.PerpendicularIntensityEnergy;
-import deformablemesh.externalenergies.PressureForce;
-import deformablemesh.externalenergies.TriangleAreaDistributor;
+import deformablemesh.externalenergies.*;
 import deformablemesh.geometry.BinaryMomentsOfInertia;
 import deformablemesh.geometry.Box3D;
 import deformablemesh.geometry.DeformableMesh3D;
@@ -61,6 +54,8 @@ public class SegmentationModel {
     double ALPHA = 1.0;
     double BETA = 0.0;
     double pressure = 0.0;
+    double stericNeighborWeight;
+
     private double cortex_thickness = 0.3;
 
     boolean reshape = true;
@@ -351,6 +346,13 @@ public class SegmentationModel {
         return pressure;
     }
 
+    public void setStericNeighborWeight(double d){
+        stericNeighborWeight = d;
+    }
+
+    public double getStericNeighborWeight(){
+        return stericNeighborWeight;
+    }
     public void saveMeshes(final File f) throws IOException {
         lastSavedFile = null;
         MeshWriter.saveMeshes(f, tracker);
@@ -528,11 +530,31 @@ public class SegmentationModel {
 
         if(normalize!=0){
             selectedMesh.addExternalEnergy(new TriangleAreaDistributor(stack, selectedMesh, normalize));
+        }
 
+        if(stericNeighborWeight!=0){
+            List<ExternalEnergy> segs = generateStericEnergies();
+            for(ExternalEnergy eg: segs){
+                selectedMesh.addExternalEnergy(eg);
+            }
         }
 
         snakeBox.addRingEnergy(stack.CURRENT, selectedMesh);
 
+    }
+
+    private List<ExternalEnergy> generateStericEnergies() {
+        List<Track> tracks = tracker.getAllMeshTracks();
+        DeformableMesh3D sel = getSelectedMesh(stack.CURRENT);
+        List<ExternalEnergy> es = new ArrayList<>(tracks.size());
+        for(Track track: tracks){
+            if(!track.containsMesh(sel) && track.containsKey(stack.CURRENT) ){
+
+                es.add(new StericMesh(track.getMesh(stack.CURRENT), stericNeighborWeight));
+
+            }
+        }
+        return es;
     }
 
     public double getCurveWeight() {
