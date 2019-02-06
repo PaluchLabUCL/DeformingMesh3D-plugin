@@ -8,16 +8,8 @@ import deformablemesh.geometry.Furrow3D;
 import deformablemesh.geometry.SnakeBox;
 import deformablemesh.gui.RingController;
 import deformablemesh.track.Track;
-import org.scijava.java3d.AmbientLight;
-import org.scijava.java3d.BoundingSphere;
-import org.scijava.java3d.BranchGroup;
-import org.scijava.java3d.PointLight;
-import org.scijava.java3d.Transform3D;
-import org.scijava.java3d.TransformGroup;
-import org.scijava.vecmath.Color3f;
-import org.scijava.vecmath.Point3d;
-import org.scijava.vecmath.Point3f;
-import org.scijava.vecmath.Vector3d;
+import org.scijava.java3d.*;
+import org.scijava.vecmath.*;
 import snakeprogram3d.display3d.CanvasView;
 import snakeprogram3d.display3d.DataCanvas;
 import snakeprogram3d.display3d.DataObject;
@@ -69,6 +61,9 @@ public class MeshFrame3D {
     SnakeBox snakeBox;
     RingController ringController;
 
+    DataObject lights;
+    float ambient = 0.75f;
+    float directional = 0.1f;
 
     public MeshFrame3D(){
 
@@ -89,29 +84,54 @@ public class MeshFrame3D {
 
 
     }
+    public void removeLights(){
+        removeDataObject(lights);
+    }
+    public void changeAmbientBrightness(float delta){
+
+        ambient = ambient + delta;
+        if(ambient<0) ambient = 0;
+        if(ambient>1) ambient = 1;
+        addLights();
+    }
+    public void changeDirectionalBrightness(float delta){
+
+        directional = directional + delta;
+        if(directional<0) directional = 0;
+        if(directional>1) directional = 1;
+        addLights();
+    }
 
     public void addLights(){
-        BoundingSphere bounds =	new BoundingSphere (new Point3d(0, 0.0, 0.0), 5.0);
-
-        PointLight light = new PointLight(new Color3f(1f, 1f, 1f), new Point3f(0f, 1.5f, 2f), new Point3f(1.0f, 1.0f, 0f));
-        PointLight light2 = new PointLight(new Color3f(1f, 1f, 1f), new Point3f(-1.5f, -1.5f, 2f), new Point3f(1.0f, 1.0f, 0f));
-        PointLight light3 = new PointLight(new Color3f(1f, 1f, 1f), new Point3f(1.5f, -1.5f, 2f), new Point3f(1.0f, 1.0f, 0f));
-        light.setInfluencingBounds(bounds);
-
         AmbientLight amber = new AmbientLight(new Color3f(new float[]{
-                1f, 1f, 1f
+                ambient, ambient, ambient
         }));
-        amber.setInfluencingBounds(bounds);
 
-        addDataObject(() -> {
-            BranchGroup bg = new BranchGroup();
-            bg.addChild(light);
-            bg.addChild(light2);
-            bg.addChild(light3);
-            bg.addChild(amber);
-            return bg;
-        });
+        BoundingSphere bounds =	new BoundingSphere (new Point3d(0, 0.0, 0.0), 25.0);
+        amber.setInfluencingBounds(bounds);
+        DirectionalLight light1 = new DirectionalLight(new Color3f(directional, directional, directional), new Vector3f(1f, 0f, 1f));
+        DirectionalLight light2= new DirectionalLight(new Color3f(directional, directional, directional), new Vector3f(-1f, 0f, 1f));
+        DirectionalLight light3= new DirectionalLight(new Color3f(directional, directional, directional), new Vector3f(0f, 1f, 1f));
+
+        light1.setInfluencingBounds(bounds);
+        light2.setInfluencingBounds(bounds);
+        light3.setInfluencingBounds(bounds);
+        if(lights!=null){
+            removeLights();
+        }
+
+        BranchGroup bg = new BranchGroup();
+        bg.setCapability(BranchGroup.ALLOW_DETACH);
+        bg.addChild(amber);
+        bg.addChild(light1);
+        bg.addChild(light2);
+        bg.addChild(light3);
+
+        lights = () -> bg;
+
+        addDataObject(lights);
     }
+
 
     public void showAxis(){
         axis = new Axis3D();

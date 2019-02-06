@@ -20,7 +20,7 @@ public class Deforming3DMesh_Plugin implements PlugInFilter {
     public static SegmentationModel createDeformingMeshApplication(){
         MeshFrame3D mf3d = new MeshFrame3D();
         mf3d.showFrame(false);
-
+        mf3d.addLights();
         SegmentationModel model = new SegmentationModel();
         SegmentationController controls = new SegmentationController(model);
         try {

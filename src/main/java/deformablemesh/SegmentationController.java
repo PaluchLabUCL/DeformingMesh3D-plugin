@@ -969,6 +969,11 @@ public class SegmentationController {
         return model.volumeColor;
     }
 
+    public void setVolumeColor(Color color){
+        model.volumeColor = color;
+        showVolume();
+    }
+
     public double getZToYScale() {
         return model.getZToYScale();
     }

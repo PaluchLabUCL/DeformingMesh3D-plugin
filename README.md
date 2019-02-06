@@ -28,3 +28,15 @@ ThreeD image segmentation algorithm, for roundish cells.
 - exports to ply file.
 - Mesh track manager for tracking arranging meshes through time.
 - user preferences are saved
+
+# Javascript console examples
+
+## Changing the color scheme (>=0.36)
+
+mf = controls.getMeshFrame3D();
+mf.setBackgroundColor(Color.BLACK);
+controls.setVolumeColor(Color.GREEN);
+
+set it back.
+mf.setBackgroundColor(Color.WHITE);
+controls.setVolumeColor(Color.GREEN);
