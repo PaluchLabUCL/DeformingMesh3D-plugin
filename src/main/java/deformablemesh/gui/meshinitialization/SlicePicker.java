@@ -41,7 +41,8 @@ public class SlicePicker{
         pos = center;
         this.normal = normal;
         transformer = model.createFurrowTransform(pos, normal);
-
+        cursor = new ThreeDCursor(0,0,0);
+        cursor.setVisible(false);
     }
 
     /**
