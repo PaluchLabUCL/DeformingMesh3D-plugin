@@ -1,6 +1,7 @@
 package deformablemesh.meshview;
 
 import deformablemesh.MeshImageStack;
+import deformablemesh.geometry.Box3D;
 import org.scijava.java3d.BranchGroup;
 import org.scijava.java3d.Transform3D;
 import org.scijava.java3d.TransformGroup;
@@ -53,6 +54,23 @@ public class VolumeDataObject implements DataObject {
 
             tg.setTransform(tt);
         }
+    }
+
+    public void setTextureData(MeshImageStack stack){
+
+        int w = stack.data.length;
+        int h = stack.data[0].length;
+        int d = stack.data[0][0].length;
+        List<int[]> points = new ArrayList<>();
+        for(int z = 0; z<d; z++){
+            for(int y = 0; y<h; y++){
+                for(int x = 0; x<w; x++){
+                    points.add(new int[]{x,y,z});
+                }
+            }
+        }
+
+       setTextureData(stack, points);
     }
 
     public void setTextureData(MeshImageStack stack, List<int[]> pts){
