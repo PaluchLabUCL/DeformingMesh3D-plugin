@@ -79,6 +79,7 @@ public class DeformableMeshDataObject implements DataObject {
         }
 
     }
+
     private Appearance createSurfaceAppearance() {
         Appearance a = new Appearance();
         float[] rgb = color.getRGBComponents(new float[4]);

@@ -37,7 +37,6 @@ public class LineDataObject implements DataObject {
     }
     public LineDataObject(List<Node3D> points, float width){
         points.forEach(p->positions.add(p.getCoordinates()));
-
         LineArray line = new LineArray(2*(positions.size()-1), GeometryArray.COORDINATES);
         for(int i=0; i<positions.size()-1; i++){
             line.setCoordinate(2*i,new Point3d(positions.get(i)));
@@ -48,6 +47,7 @@ public class LineDataObject implements DataObject {
         LINEWIDTH=width;
 
         line3d.setAppearance(createAppearance());
+
 
 
     }

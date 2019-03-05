@@ -32,7 +32,7 @@ public class Track {
         this.color = ColorSuggestions.fromNameOrSuggestion(name);
     }
 
-    void addMesh(Integer i, DeformableMesh3D mesh){
+    public void addMesh(Integer i, DeformableMesh3D mesh){
         mesh.setColor(color);
         track.put(i, mesh);
         mesh.setSelected(selected);
