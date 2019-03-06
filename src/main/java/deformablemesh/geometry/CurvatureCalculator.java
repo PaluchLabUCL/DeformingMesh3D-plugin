@@ -275,7 +275,7 @@ public class CurvatureCalculator {
     public static void main(String[] args) throws IOException {
         List<Track> tracks = new ArrayList<>();
         tracks.addAll(MeshWriter.loadMeshes(new File(args[0])));
-        Track t = new Track();
+        Track t = new Track(new ArrayList<>());
         DeformableMesh3D ex = RayCastMesh.sphereRayCastMesh(4);
 
         tracks.add(t);

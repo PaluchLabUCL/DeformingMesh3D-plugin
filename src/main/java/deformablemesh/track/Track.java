@@ -4,6 +4,7 @@ import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.util.ColorSuggestions;
 
 import java.awt.Color;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -17,8 +18,8 @@ public class Track {
     private Map<Integer, DeformableMesh3D> track = new TreeMap<>();
     private boolean selected;
 
-    public Track(){
-        this.color = ColorSuggestions.getSuggestion();
+    public Track(List<Color> usedColors){
+        this.color = ColorSuggestions.getSuggestion(usedColors);
         this.name = ColorSuggestions.getColorName(this.color);
     }
 

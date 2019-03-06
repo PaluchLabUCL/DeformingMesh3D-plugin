@@ -69,7 +69,7 @@ public class MeshTracker {
     public void addMesh(int frame, DeformableMesh3D replacementMesh) {
 
         if(selectedTrack==null){
-            selectedTrack = new Track();
+            selectedTrack = new Track(tracks.stream().map(Track::getColor).collect(Collectors.toList()));
             selectedTrack.setSelected(true);
             tracks.add(selectedTrack);
         }
@@ -89,7 +89,7 @@ public class MeshTracker {
             selectedTrack.setSelected(false);
         }
 
-        selectedTrack = new Track();
+        selectedTrack = new Track(tracks.stream().map(Track::getColor).collect(Collectors.toList()));
         selectedTrack.setSelected(true);
         tracks.add(selectedTrack);
         selectedTrack.addMesh(frame, freshMesh);

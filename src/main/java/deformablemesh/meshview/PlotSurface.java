@@ -48,19 +48,6 @@ public class PlotSurface implements DataObject {
 
     public Appearance createAppearance(){
         Appearance a = new Appearance();
-        /*float[] rgb = {1f, 1f, 1f};
-        Color3f ambient = new Color3f(rgb[0], rgb[1], rgb[2]);
-        Color3f emmisive = new Color3f(Color.BLACK);
-        Color3f difuse = new Color3f(rgb[0], rgb[1], rgb[2]);
-
-        Color3f specular = new Color3f(1f, 1f, 1f);
-        Material mat = new Material(
-                ambient, //ambient.
-                emmisive, //emmisive.
-                difuse,
-                specular,
-                0.1f);
-        a.setMaterial(mat);*/
         return a;
     }
     public PlotSurface(double[] positions, int[] triangle_index, float[] colors){

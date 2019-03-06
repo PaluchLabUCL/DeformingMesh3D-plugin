@@ -8,9 +8,12 @@ import deformablemesh.gui.RingController;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.meshview.PickSelector;
+import deformablemesh.meshview.PlotSurface;
 import deformablemesh.meshview.VolumeDataObject;
 import deformablemesh.ringdetection.FurrowTransformer;
 import deformablemesh.track.Track;
+import deformablemesh.util.HotAndCold;
+import deformablemesh.util.IntensitySurfacePlot;
 import deformablemesh.util.MeshFaceObscuring;
 import deformablemesh.util.actions.ActionStack;
 import deformablemesh.util.actions.UndoableActions;
@@ -251,6 +254,85 @@ public class SegmentationController {
             _curvatureSnapShot();
         });
 
+    }
+
+    /**
+     * Creates a 3D plot frame for the currently selected mesh, and plots the curvature on the surface.
+     *
+     */
+    public MeshFrame3D curvatureSurfacePlot(){
+
+        DeformableMesh3D mesh = getSelectedMesh();
+        if(mesh==null){
+            return null;
+        }
+
+        MeshFrame3D viewer = new MeshFrame3D();
+
+        viewer.showFrame(false);
+        viewer.addLights();
+        viewer.setBackgroundColor(Color.BLACK);
+
+        CurvatureCalculator calc = new CurvatureCalculator(mesh);
+
+        List<double[]> curvatures = calc.calculateCurvature();
+
+        double kave = 0;
+        double kave_2 = 0;
+        double kmin = 0;
+        double kmax = 0;
+
+        for(double[] row: curvatures){
+            kave += row[3];
+            kave_2 += row[3]*row[3];
+            kmax = row[3]>kmax?row[3]:kmax;
+            kmin = row[3]<kmin?row[3]:kmin;
+        }
+
+        kave = kave/curvatures.size();
+        kave_2 = kave_2/curvatures.size() - kave*kave;
+
+        double sigma = Math.sqrt(kave_2);
+
+        kmax = kmax>sigma + kave?sigma + kave:kmax;
+        kmin = kmin<kave - sigma?kave - sigma :kmin;
+
+        HotAndCold neg = new HotAndCold(Color.BLUE, Color.BLACK);
+        HotAndCold pos = new HotAndCold(Color.ORANGE, Color.BLACK);
+
+        if(kmin<0){
+            kmin = -kmin;
+        }
+
+        neg.setMinMax(0, kmin);
+        pos.setMinMax(0, kmax);
+
+        float[] colors = new float[mesh.positions.length];
+        for (int i = 0; i<curvatures.size(); i++){
+            double[] row = curvatures.get(i);
+            float[] c;
+            if(row[3]<0){
+                c = neg.getColor(-row[3]);
+            } else{
+                c = pos.getColor(row[3]);
+            }
+            System.arraycopy(c, 0, colors, 3*i, 3);
+
+        }
+
+        PlotSurface surface = new PlotSurface(mesh.positions, mesh.triangle_index, colors);
+        viewer.addDataObject(surface);
+        return viewer;
+    }
+
+    public IntensitySurfacePlot intensitySurfacePlot(){
+        DeformableMesh3D mesh = getSelectedMesh();
+        if(mesh==null){
+            return null;
+        }
+
+        IntensitySurfacePlot plot = new IntensitySurfacePlot(mesh, model.stack);
+        return plot;
     }
 
     private void _curvatureSnapShot(){

@@ -4,27 +4,41 @@ import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Node3D;
 import deformablemesh.geometry.RayCastMesh;
+import deformablemesh.gui.GuiTools;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.meshview.PlotSurface;
 import deformablemesh.track.Track;
 import ij.ImagePlus;
 
+import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class IntensitySurfacePlot {
-    public Color hot = Color.ORANGE;
-    public Color cool = Color.PINK;
+    Color high = new Color(255, 255, 0);
+    Color low = new Color(0, 0, 55);
+    int range = 10;
+
+
+    double min = Double.MAX_VALUE;
+    double max = -min;
 
     final DeformableMesh3D mesh;
     final MeshImageStack stack;
 
-    int range = 10;
+
     double delta;
+    MeshFrame3D viewer;
+    float[] colors;
+    double[] values;
 
     public IntensitySurfacePlot(DeformableMesh3D mesh, ImagePlus plus){
         this.mesh = mesh;
@@ -39,12 +53,46 @@ public class IntensitySurfacePlot {
 
     }
 
-    public void processAndShow(){
+    public void setHighColor(Color high) {
+        this.high = high;
+    }
+    public Color getHighColor(){
+        return high;
+    }
 
-        double[] values = new double[mesh.nodes.size()];
+    public Color getLow() {
+        return low;
+    }
 
-        double min = Double.MAX_VALUE;
-        double max = -min;
+    public void setLow(Color low) {
+        this.low = low;
+    }
+
+    public double getMin() {
+        return min;
+    }
+
+    public void setMin(double min){
+        this.min = min;
+    }
+
+    public void setMax(double max){
+        this.max = max;
+    }
+
+    public double getMax(){
+        return max;
+    }
+
+
+
+    /**
+     * Calculates all of the local intensities at each node.
+     */
+    public void process(){
+        values = new double[mesh.nodes.size()];
+
+
         for(int i = 0;  i<mesh.nodes.size(); i++){
             Node3D node = mesh.nodes.get(i);
             double v = sample(node);
@@ -54,25 +102,66 @@ public class IntensitySurfacePlot {
         }
 
 
-        System.out.println("delta: " + delta + " min, max " + min + ", " + max);
+    }
 
-        float[] colors = new float[mesh.positions.length];
-        HotAndCold ci = new HotAndCold(new Color(255, 255, 255), new Color(0, 0, 0));
+
+    public void showValuesWindow(){
+        StringBuilder builder = new StringBuilder("#n\tx\ty\tz\ti\tc\n");
+        float[] comps = new float[4];
+        for(int i = 0;  i<mesh.nodes.size(); i++){
+            double[] pt = mesh.nodes.get(i).getCoordinates();
+            double v = values[i];
+            System.arraycopy(colors, 3*i, comps, 0, 3);
+            int c = new Color(comps[0], comps[1], comps[2]).getRGB();
+            builder.append(String.format(Locale.US, "%d\t%f\t%f\t%f\t%f\t%d\n", i, pt[0], pt[1], pt[2], v, c ));
+
+        }
+
+        GuiTools.createTextOuputPane(builder.toString());
+    }
+
+    public void show(){
+        show(false);
+    }
+
+
+
+    public void show(boolean exitOnClose){
+        viewer = new MeshFrame3D();
+
+        viewer.showFrame(exitOnClose);
+        viewer.addLights();
+        viewer.setBackgroundColor(Color.BLACK);
+
+        JFrame frame = viewer.getJFrame();
+        JMenuBar bar = new JMenuBar();
+        JMenu data = new JMenu("data");
+        JMenuItem showValues = new JMenuItem("show values");
+        showValues.addActionListener(e->{
+            showValuesWindow();
+        });
+        data.add(showValues);
+        bar.add(data);
+        frame.setJMenuBar(bar);
+
+        colors = new float[mesh.positions.length];
+        HotAndCold ci = new HotAndCold(high, low);
         ci.setMinMax(min, max);
         for(int i = 0; i<mesh.nodes.size(); i++){
             float[] f = ci.getColor(values[i]);
             System.arraycopy(f, 0, colors, 3*i, 3);
         }
 
-        MeshFrame3D viewer = new MeshFrame3D();
-
-        viewer.showFrame(true);
-        viewer.addLights();
-        viewer.setBackgroundColor(Color.BLACK);
-
-
         PlotSurface surface = new PlotSurface(mesh.positions, mesh.triangle_index, colors);
         viewer.addDataObject(surface);
+    }
+
+    public MeshFrame3D processAndShow(boolean exitOnClose){
+
+        process();
+        show(exitOnClose);
+
+        return viewer;
 
     }
 
@@ -101,7 +190,7 @@ public class IntensitySurfacePlot {
         ImagePlus plus = new ImagePlus(new File(args[1]).getAbsolutePath());
         for(Track track: tracks) {
             for (Integer key : track.getTrack().keySet()) {
-                new IntensitySurfacePlot(track.getMesh(key), plus).processAndShow();
+                new IntensitySurfacePlot(track.getMesh(key), plus).processAndShow(true);
             }
         }
     }
