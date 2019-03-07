@@ -38,48 +38,103 @@ import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 /**
+ * This manages the SegmentationModel and provides an interface for interacting with meshes through an action stack
+ * such that changes can be un-done.
+ *
  * Created by msmith on 2/11/16.
  */
 public class SegmentationController {
+
     final SegmentationModel model;
+
     private ActionStack actionStack = new ActionStack();
+
     MeshFrame3D meshFrame3D;
+
     boolean meshModified = false;
 
     ExceptionThrowingService main = new ExceptionThrowingService();
 
+    /**
+     * Creates a controller for the supplied model.
+     *
+     * @param model
+     */
     public SegmentationController(SegmentationModel model){
         this.model = model;
     }
 
+    /**
+     * Deformation parameter, high values limit the rate of deformation.
+     * @param gamma
+     */
     public void setGamma(double gamma){
         model.setGamma(gamma);
     }
 
+    /**
+     * Deformation parameter, effectively the spring-like stiffness connections.
+     *
+     * @param d
+     */
     public void setAlpha(double d) {
         model.setAlpha(d);
     }
 
+    /**
+     * Non-zero values create an effective force that either causes the mesh to expand (positive) or shrink (negative).
+     * @param d
+     */
     public void setPressure(double d) {
         model.setPressure(d);
     }
 
+    /**
+     * Causes a 'steric' force that other meshes will prevent inclusion by causing a force directed from their center
+     * on any nodes that enter.
+     *
+     *
+     * @param d
+     */
     public void setStericNeighborWeight(double d){
         model.setStericNeighborWeight(d);
     }
 
+    /**
+     * @Depracated
+     *
+     * @param d
+     */
     public void setCortexThickness(double d) {
         model.setCortexThickness(d);
     }
 
+    /**
+     * Sets the magnitude of force the image causes on the mesh.
+     *
+     * @param d
+     */
     public void setWeight(double d) {
         model.setWeight(d);
     }
 
+    /**
+     * When a new mesh is created, it is subdivided this number of times. 0 deformations corresponds to 20 triangles.
+     * Each division divides the triangles into 4, so there will be 20*4**N triangles. 5 divisions is 20480 triangles,
+     * which displays fine, but not practical for deforming.
+     *
+     * TODO: Add a limit.
+     * @param d
+     */
     public void setDivisions(int d) {
         model.setDivisions(d);
     }
 
+    /**
+     * Causes a mesh to deform/be attracked to curves that have been added from the furrow editing.
+     *
+     * @param d
+     */
     public void setCurveWeight(double d) {
         model.setCurveWeight(d);
     }
@@ -97,6 +152,13 @@ public class SegmentationController {
         return model.getPressure();
     }
 
+    /**
+     * Adds a listener, that gets notified every time a track changes: when a mesh is added or removed, all of the meshes are set
+     * the track selection is changed. Also notified when 'clear transients' is used to remove transient objects added
+     * to meshframe.
+     *
+     * @param listener
+     */
     public void addMeshListener(FrameListener listener ){
         model.addMeshListener(listener);
     }
@@ -124,6 +186,10 @@ public class SegmentationController {
         return model.getCurveWeight();
     }
 
+    /**
+     * Remove the currently selected mesh, from the current frame only.
+     *
+     */
     public void clearSelectedMesh() {
 
         if(!model.hasSelectedMesh()){
@@ -160,22 +226,38 @@ public class SegmentationController {
 
     }
 
+    /**
+     * Moves the action stack back.
+     */
     public void undo(){
         if(canUndo()){
             actionStack.undo();
         }
     }
 
+    /**
+     * moves the action stack forward.
+     */
     public void redo(){
         if(canRedo()){
             actionStack.redo();
         }
     }
 
+    /**
+     * Checks if there is an action to be undone. Primarily used for the menu.
+     *
+     * @return
+     */
     public boolean canUndo(){
         return actionStack.hasUndo();
     }
 
+    /**
+     * Checks if there is an action to be undone. Primarily used for the menu.
+     *
+     * @return
+     */
     public boolean canRedo(){
         return actionStack.hasRedo();
     }
@@ -185,22 +267,43 @@ public class SegmentationController {
      * performed after the current jobs have finished. For example when stop has been clicked
      * and deforming is indicated to stop, but it has not completed yet.
      *
+     * This can be used from javascript console by declaring a function.
+     *   eg.
+     *
+     *   controller.submit(function(){ print("Made it through the queue");});
+     *
+     * Would not print until everything submitted before has finished.
      * @param runnable
      */
     public void submit(Executable runnable) {
         main.submit(runnable);
     }
 
+    /**
+     * Changes image frame.
+     *
+     */
     public void previousFrame() {
         submit(model::previousFrame);
     }
 
+    /**
+     * Changes image frame.
+     */
     public void nextFrame() {
         submit(model::nextFrame);
     }
 
+    /**
+     * Sets the frame.
+     *
+     * @param f desired frame, silently fails if out of range.
+     */
     public void toFrame(int f){ submit(()->model.setFrame(f));}
 
+    /**
+     * Creates a snapshot of the current 3d view and creates an image plus window.
+     */
     public void takeSnapShot() {
         submit(()-> {
                     BufferedImage img = meshFrame3D.snapShot();
@@ -212,6 +315,12 @@ public class SegmentationController {
             );
     }
 
+    /**
+     * Creates an imageplus with snapshots from each frame.
+     *
+     * @param start the first frame to be imaged, frame 1 is 0.
+     * @param end last frame, inclusive.
+     */
     public void recordSnapshots(int start, int end){
         submit(()->{
             ImageStack stack = null;
@@ -231,6 +340,11 @@ public class SegmentationController {
         });
     }
 
+    /**
+     * Remeshes the currently selected mesh by raycasting a sphere. The number of triangles is determined by the
+     * divisions parameter.
+     *
+     */
     public void reMesh() {
         main.submit(()->{
             int f = model.getCurrentFrame();
@@ -240,6 +354,10 @@ public class SegmentationController {
         });
     }
 
+    /**
+     * Experimental mesh generation. This will convert the mesh to a binary stack, then put rectangular meshes around
+     * each voxel.
+     */
     public void binaryScaleRemesh(){
         main.submit(()->{
             int f = model.getCurrentFrame();
@@ -248,6 +366,13 @@ public class SegmentationController {
             addMesh(f, newMesh);
         });
     }
+
+    /**
+     * Takes the currently selected mesh and looks for neighbors. Locates 'touching' faces and adds transient objects
+     * That show the touching surface. Also produces curvature histograms, for the whole cell, and the regions touch.
+     *
+     *
+     */
     public void curvatureSnapShot(){
 
         main.submit(()->{
@@ -258,6 +383,8 @@ public class SegmentationController {
 
     /**
      * Creates a 3D plot frame for the currently selected mesh, and plots the curvature on the surface.
+     *
+     * TODO change this to return an object similar to IntensitySurfacePlot
      *
      */
     public MeshFrame3D curvatureSurfacePlot(){
@@ -325,6 +452,11 @@ public class SegmentationController {
         return viewer;
     }
 
+    /**
+     * Creates an object that is used for producing an intensity plot based on the currently selected mesh and image.
+     *
+     * @return
+     */
     public IntensitySurfacePlot intensitySurfacePlot(){
         DeformableMesh3D mesh = getSelectedMesh();
         if(mesh==null){
@@ -403,6 +535,11 @@ public class SegmentationController {
         curvatures.show(false, "Curvature Snapshot of " + getSelectedMeshName() + " frame: " + frame);
     }
 
+    /**
+     * Shows the volume of the currently selected mesh by adding a voxel transient object, similar to the way
+     * show volume works, but the result is binary and colored.
+     *
+     */
     public void showBinaryBlob(){
         if(model.hasSelectedMesh()) {
             main.submit(() -> {
@@ -444,6 +581,10 @@ public class SegmentationController {
         }
     }
 
+    /**
+     * Clears ALL of the current meshes.
+     *
+     */
     public void restartMeshes(){
         actionStack.postAction(new UndoableActions() {
             final List<Track> old = new ArrayList<>(model.getAllTracks());
@@ -465,14 +606,31 @@ public class SegmentationController {
         });
     }
 
+    /**
+     * For using save without save-as.
+     *
+     * @return
+     */
     public File getLastSavedFile(){
         return model.getLastSavedFile();
     }
+
+    /**
+     * Adds the mesh to the currently selected track.
+     * @see SegmentationController#addMesh(int frame, DeformableMesh3D mesh)
+     * @param m
+     */
     public void addMesh(DeformableMesh3D m){
         meshModified=true;
         addMesh(model.getCurrentFrame(), m);
     }
 
+    /**
+     * Starts a new mesh track with one mesh on the specified frame.
+     *
+     * @param frame frame mesh is added to. Note 0 based indexing.
+     * @param mesh
+     */
     public void startNewMeshTrack(int frame, DeformableMesh3D mesh){
         meshModified=true;
         actionStack.postAction(new UndoableActions(){
@@ -497,14 +655,32 @@ public class SegmentationController {
             }
         });
     }
+
     public void selectNextMeshTrack(){
         submit(model::selectNextTrack);
     }
 
+    /**
+     * Attempts to select the track that contains the provided mesh.
+     *
+     * @param mesh
+     */
     public void selectMesh(DeformableMesh3D mesh) {
         submit(()->model.selectTrackWithMesh(mesh));
     }
 
+    /**
+     * Adds the provided mesh to the model. The behavior is conditional on the currently selected track.
+     *
+     * If there is a selected track, the mesh is added to the selected track. Replacing any previous meshes at the
+     * at the provided frame.
+     *
+     * If there isn't a selected track, then a new track is started.
+     *
+     *
+     * @param frame
+     * @param m
+     */
     public void addMesh(int frame, DeformableMesh3D m){
         meshModified=true;
         actionStack.postAction(new UndoableActions(){
@@ -547,52 +723,118 @@ public class SegmentationController {
         });
     }
 
+    /**
+     * The provided normal and position represent a plane. This transformer is used for transforming between the
+     * plane coordinates, and world coordinates.
+     *
+     * @param pos center of the plane
+     * @param normal normal of the plane.
+     * @return for transforming coordinates.
+     */
     public FurrowTransformer createFurrowTransform(double[] pos, double[] normal) {
         return model.createFurrowTransform(pos, normal);
     }
 
+    /**
+     * Creates an image based on a furrow transformer built using the provided position and normal.
+     *
+     * Primarily used for GUI.
+     *
+     * @param pos center of plane
+     * @param normal direction of normal
+     * @return
+     */
     public Image createSlice(double[] pos, double[] normal) {
         return model.createSlice(pos, normal);
     }
 
+    /**
+     * Creates an Image based on slicing the working volume with the plane represented by this transformer.
+     *
+     * Primarily used for GUI.
+     * @param transformer
+     * @return
+     */
     public Image createSlice(FurrowTransformer transformer){
         return model.createSlice(transformer);
     }
 
+    /**
+     * Adds a data object to the current meshframe, the object is "transient" and can be cleared independent of the
+     * model.
+     *
+     * @param dataObject
+     */
     public void addTransientObject(DataObject dataObject) {
         submit( ()->meshFrame3D.addTransientObject(dataObject) );
     }
 
+    /**
+     * clears all transient objects, objects being displayed in the 3d viewer that were added as transient objects.
+     *
+     */
     public void clearTransientObjects(){
         submit( ()->meshFrame3D.clearTransients());
     }
 
+    /**
+     * Opens a window with volume measurements for the currently selected mesh track. If There is a furrow, then the
+     * volume is split into front and back halfs.
+     *
+     */
     public void measureVolume() {
         model.calculateVolume();
     }
 
+    /**
+     *
+     * @see deformablemesh.util.MeshAnalysis#createOutput(double)
+     * TODO rename.
+     */
     public void createOutput() {
         model.createOutput();
     }
 
+    /**
+     * TODO remove
+     * @Deprecated
+     * @see deformablemesh.util.MeshAnalysis
+     */
     public void calculateActinIntensity() {
 
         model.calculateActinIntensity();
 
     }
 
+    /**
+     * TODO remove
+     * @Deprecated
+     * @see deformablemesh.util.MeshAnalysis
+     */
     public void calculateLineScans() {
         model.calculateLineScans();
     }
 
+    /**
+     * TODO remove
+     * @Deprecated
+     */
     public void showStress() {
         model.showStress();
     }
 
+    /**
+     * TODO remove
+     * @Deprecated
+     */
     public void showCurvature() {
         model.showCurvature();
     }
 
+    /**
+     * Shows the volume data in the meshframe. The program is much slower with the volume showing. It can be faster
+     * to adjust min/max (contrast) and set the frame with the volume hidden.
+     */
     public void showVolume() {
         submit(()->{
             meshFrame3D.showVolume(model.stack);
@@ -600,20 +842,39 @@ public class SegmentationController {
         });
     }
 
+    /**
+     * TODO remove
+     * @Deprecated
+     */
     public void showEnergy() {
         submit(()->{
             meshFrame3D.showEnergy(model.stack, model.generateImageEnergy());
         });
     }
 
+    /**
+     * There are 4 types of energy based on the image.
+     * @param selectedItem
+     */
     public void setImageEnergyType(ImageEnergyType selectedItem) {
         model.setImageEnergyType(selectedItem);
     }
 
+    /**
+     * Stops displaying the volume in the meshframe3d.
+     *
+     */
     public void hideVolume() {
         submit(meshFrame3D::hideVolume);
     }
 
+    /**
+     * Adjust the min/max values for clipping the image. Any values less than minDelta are transparent, and values above
+     * maxDelta are opaque.
+     *
+     * @param minDelta
+     * @param maxDelta
+     */
     public void changeVolumeClipping(int minDelta, int maxDelta) {
         submit(()->meshFrame3D.changeVolumeClipping(minDelta, maxDelta));
     }
@@ -628,6 +889,11 @@ public class SegmentationController {
             deformMesh(-1);
         }
     }
+
+    /**
+     * Deforms all of the meshes in the current frame sequentially.
+     *
+     */
     public void deformAllMeshes(){
         meshModified=true;
         final List<DeformableMesh3D> meshes = new ArrayList<>();
@@ -679,7 +945,11 @@ public class SegmentationController {
         }
     }
 
-
+    /**
+     * If a point is outside of the boundary, it is moved to the edge along that axis.
+     *
+     * @param mesh
+     */
     public void confineMesh(final DeformableMesh3D mesh){
         final Box3D box = getBounds();
         if(box.contains(mesh.getBoundingBox())){
@@ -711,10 +981,21 @@ public class SegmentationController {
 
     }
 
+    /**
+     * Hard boundaries cause a mesh to be confined after each step during deformation.
+     *
+     * @see SegmentationController#confineMesh(DeformableMesh3D)
+     * @param v
+     */
     public void setHardBoundaries(boolean v){
         model.setHardBoundaries(v);
     }
 
+    /**
+     * Deforms mesh for a set number of iterations.
+     *
+     * @param count number of iterations, if less than zero, it continues to deform until stopped.
+     */
     public void deformMesh(final int count){
         meshModified = true;
         actionStack.postAction(new UndoableActions(){
@@ -742,9 +1023,21 @@ public class SegmentationController {
         });
     }
 
+    /**
+     * Creates a copy of the provided mesh.
+     *
+     * @param mesh
+     * @return
+     */
     public DeformableMesh3D copyMesh(DeformableMesh3D mesh){
         return DeformableMesh3DTools.copyOf(mesh);
     }
+
+    /**
+     * Creates a copy of the current mesh, advances a frame and adds it to the current track.
+     *
+     *
+     */
     public void trackMesh(){
 
         if(model.hasSelectedMesh() && model.hasNextFrame()){
@@ -787,6 +1080,10 @@ public class SegmentationController {
 
     }
 
+    /**
+     * Copies the current mesh, moves to the previous frame and adds the copy to the currently selected track.
+     *
+     */
     public void trackMeshBackwards(){
 
         if(model.hasSelectedMesh() && model.getCurrentFrame()>0){
@@ -827,10 +1124,18 @@ public class SegmentationController {
         }
     }
 
+    /**
+     * Primarily used to stop deforming a mesh.
+     */
     public void stopRunning() {
         model.stopRunning();
     }
 
+    /**
+     * Causes the provided image to be the main backing image data. The image needs to be 1 channel, with xyz it can
+     * also have frames.
+     * @param plus
+     */
     public void setOriginalPlus(ImagePlus plus) {
 
         submit(
@@ -848,6 +1153,11 @@ public class SegmentationController {
                 }
         );
     }
+
+    /**
+     * Development. This is for isolating regions to see them better. Possibly will not be finished.
+     *
+     */
     public void isolateMesh(){
         submit( ()->{
             DeformableMesh3D mesh = model.getSelectedMesh(model.getCurrentFrame());
@@ -861,6 +1171,12 @@ public class SegmentationController {
             }
         });
     }
+
+    /**
+     * Saves the current meshes
+     *
+     * @param f where they'll be saved.
+     */
     public void saveMeshes(File f) {
         submit(()->{
             model.saveMeshes(f);
@@ -868,6 +1184,11 @@ public class SegmentationController {
         });
     }
 
+    /**
+     * Loads meshes and replaces the current meshes. This is undo-able.
+     *
+     * @param f
+     */
     public void loadMeshes(File f) {
         submit(()->{
             List<Track> replacements = MeshWriter.loadMeshes(f);
@@ -896,6 +1217,11 @@ public class SegmentationController {
 
     }
 
+    /**
+     * Opens the meshfile and adds all of the meshes to the current meshes.
+     *
+     * @param f
+     */
     public void importMeshes(File f){
         submit(()->{
             List<Track> imports = MeshWriter.loadMeshes(f);
@@ -924,6 +1250,11 @@ public class SegmentationController {
         });
     }
 
+    /**
+     * Replaces the current tracks with the provided. Used for the mesh track manager.
+     *
+     * @param replacements
+     */
     public void setMeshTracks(List<Track> replacements){
         submit(()->{
             actionStack.postAction(new UndoableActions(){
@@ -949,53 +1280,108 @@ public class SegmentationController {
         });
     }
 
+    /**
+     * Saves all of the meshes in the current frame as an ascii stl file.
+     *
+     * @param f
+     */
     public void exportAsStl(File f) {
         submit(()->model.exportAsStl(f));
     }
 
+    /**
+     * Loads furrows, 3D plane 1 per frame.
+     *
+     * @param f
+     */
     public void load3DFurrows(File f) {
         submit(()->model.load3DFurrows(f));
     }
 
+    /**
+     * Saves the furrow from each plane.
+     * @param f
+     */
     public void saveFurrows(File f) {
         submit(()->model.saveFurrows(f));
     }
 
+    /**
+     * Saves all of the curves, used for constraining meshs into a 3D snake file.
+     *
+     * @param f
+     */
     public void saveCurvesAsSnakes(File f) {
         submit(()->model.saveCurvesAsSnakes(f));
     }
 
+    /**
+     * Loads 3d snake control curves.
+     *
+     * @param f
+     */
     public void loadCurvesFromSnakes(File f) {
         submit(()->{
             model.loadCurvesFromSnakes(f);
         });
     }
 
+    /**
+     * For the gui to check for errors.
+     *
+     * @return
+     */
     public List<Exception> getExecutionErrors(){
         return main.getExceptions();
     }
 
+    /**
+     * Zero based frame number. The displayed frame number is 1 based.
+     * @return
+     */
     public int getCurrentFrame() {
         return model.getCurrentFrame();
     }
 
+    /**
+     * Loads an imageplus from the provided file.
+     *
+     * @param file_name
+     */
     public void loadImage(String file_name){
         ImagePlus plus = new ImagePlus(file_name);
         setOriginalPlus(plus);
     }
 
+    /**
+     * Contains curves for constraining meshes.
+     *
+     * @return
+     */
     public SnakeBox getSnakeBox() {
         return model.snakeBox;
     }
 
+    /**
+     * @return currently selected mesh.
+     */
     public DeformableMesh3D getMesh() {
         return model.getSelectedMesh(model.getCurrentFrame());
     }
 
+    /**
+     * Returns the short image name based on the full image title with the image name extension removed.
+     *
+     * @return
+     */
     public String getShortImageName() {
         return model.getShortImageName();
     }
 
+    /**
+     * deformation parameter: represents the bending stiffness.
+     * @param d
+     */
     public void setBeta(double d) {
         model.setBeta(d);
     }
@@ -1004,6 +1390,11 @@ public class SegmentationController {
         return model.getBeta();
     }
 
+    /**
+     * Turns on an image energy that trys to normalize triangles.
+     *
+     * @param d
+     */
     public void setNormalizerWeight(double d) {
         model.setNormalizerWeight(d);
     }
@@ -1012,12 +1403,25 @@ public class SegmentationController {
         return model.getNormalizeWeight();
     }
 
+    /**
+     * Creates an imageplus that is a binary image with pixes inside of a mesh 1 outside 0.
+     *
+     * @see DeformableMesh3DTools#createBinaryRepresentation(MeshImageStack, DeformableMesh3D)
+     * */
     public void createBinaryImage() {
         submit(()->{
            model.createBinaryImage();
         });
     }
 
+    /**
+     * For creating a new mesh, if there is a currently selected mesh in the current frame, this starts a new mesh track.
+     * If there isn't then addMesh is used.
+     *
+     * @see SegmentationController#addMesh(int, DeformableMesh3D)
+     *
+     * @param mesh
+     */
     public void initializeMesh(DeformableMesh3D mesh) {
         meshModified=true;
         int f = model.getCurrentFrame();
@@ -1029,7 +1433,6 @@ public class SegmentationController {
     }
 
     /**
-     *
      * @return an unmodifiable view of the current mesh tracks.
      */
     public List<Track> getAllTracks() {
@@ -1040,6 +1443,9 @@ public class SegmentationController {
         return model.getSelectedMesh(model.getCurrentFrame());
     }
 
+    /**
+     * Used to notify the mesh tracks have changed.
+     */
     public void notifyMeshListeners() {
         submit(()->{
             meshModified=true;
@@ -1051,33 +1457,64 @@ public class SegmentationController {
         return model.volumeColor;
     }
 
+    /**
+     * The color the image volume is display as, when the image volume is showing.
+     *
+     * @param color
+     */
     public void setVolumeColor(Color color){
         model.volumeColor = color;
         showVolume();
     }
 
+    /**
+     *
+     * @return the ration of distance between slices to the height of a pixel.
+     */
     public double getZToYScale() {
         return model.getZToYScale();
     }
 
+    /**
+     *
+     * @return {width (pixels), height(pixels), slices}
+     */
     public int[] getOriginalStackDimensions() {
         return model.getOriginalStackDimensions();
     }
 
+    /**
+     * The origin in the 3d view is in the center of the original image.
+     *
+     * @return
+     */
     public double[] getSurfaceOffsets() {
 
         return model.getSurfaceOffsets();
 
     }
 
+    /**
+     * Controls the furrow.
+     *
+     * @return
+     */
     public RingController getRingController() {
         return model.getRingController();
     }
 
+    /**
+     * Bounds of the current image being analyzed.
+     * @return
+     */
     public Box3D getBounds() {
         return model.getBounds();
     }
 
+    /**
+     * Creates a mosaic image, which is like a binary image, execept each mesh is labelled with it's color instead of
+     * binary.
+     */
     public void createMosaicImage() {
 
         submit(()->{
@@ -1086,16 +1523,29 @@ public class SegmentationController {
 
     }
 
+    /**
+     * Measures the volumes for all of the mesh tracks, creates a text window with the data like.
+     * #frame\ttrack1\ttrack2 ...
+     * If a track doesn't exist in a particular frame, then it's volume is -1.
+     */
     public void measureAllVolumes() {
         submit(()->{
             model.measureAllVolumes();
         });
     }
 
+    /**
+     * Checks if an image is loaded.
+     * @return
+     */
     public boolean hasOriginalPlus() {
         return model.original_plus!=null;
     }
 
+    /**
+     * Total number of frames in the movie.
+     * @return
+     */
     public int getNFrames() {
         if(model.original_plus==null){
             return -1;
@@ -1103,6 +1553,9 @@ public class SegmentationController {
         return model.original_plus.getNFrames();
     }
 
+    /**
+     * Toggles displaying the surface of the currently selected mesh track.
+     */
     public void toggleSurface() {
         if(model.hasSelectedMesh()){
             Track track = model.getSelectedTrack();
@@ -1110,16 +1563,39 @@ public class SegmentationController {
         }
     }
 
+    /**
+     * Measures the selected track through time and calculates:
+     *
+     * c_x, c_y, c_z: centroid position coordinates.
+     * dmean: mean distance of nodes to centroid.
+     * dmax: max distance of nodes to centroid.
+     * dmin: min distance of nodes to centroid.
+     * Eigen values and vectors
+     * lambda1, lambda2, lambda3: eigen values.
+     * v1_x, v1_y, v1_z: first eigen vector.
+     * v2_x, v2_y, v2_z: second eigen vector.
+     * v3_x, v3_y, v3_z: third eigen vector.
+     *
+     */
     public void measureSelected() {
         if(model.hasSelectedMesh()){
             submit(model::measureSelectedMesh);
         }
     }
 
+    /**
+     * Creates a text window with the current furrow values, position in image units and normal.
+     *
+     */
     public void showFurrowValues() {
         model.showFurrowValues();
     }
 
+    /**
+     * Export every mesh in the current frame as a ply file with color.
+     *
+     * @param f
+     */
     public void exportAsPly(File f) {
         submit(()->model.exportAsPly(f));
 
@@ -1133,6 +1609,12 @@ public class SegmentationController {
             return "";
     }
 
+    /**
+     * Calculates the surface area over time, and the surface areas that are obscured by neighboring meshes.
+     *
+     * @param v cutoff distance from the center of the triangle along the normal to another triangle. Units are
+     *          the units of the image.
+     */
     public void calculateObscuringMeshes(double v) {
 
         int frame = getCurrentFrame();
@@ -1143,6 +1625,10 @@ public class SegmentationController {
 
     }
 
+    /**
+     * returns true if the current state of mesh tracks has changed.
+     * @return
+     */
     public boolean getMeshModified() {
         return meshModified;
     }
@@ -1153,21 +1639,39 @@ public class SegmentationController {
         });
     }
 
+    /**
+     * gets deformation parameters that have been saved in a file.
+     * @see PropertySaver
+     * @param f
+     */
     public void loadParameters(File f){
         submit(()->{
             PropertySaver.loadProperties(this, f);
         });
     }
 
+    /**
+     * When true, deforming meshes are confined at each step.
+     * @param selected
+     */
     public void setRigidBoundaries(boolean selected) {
         model.setHardBoundaries(selected);
     }
 
-
+    /**
+     * Tasks for the exception throwing service.
+     */
     public interface Executable{
         void execute() throws Exception;
     }
 
+    /**
+     * Sets the position and normal of the furrow.
+     *
+     * @see RingController
+     * @param center
+     * @param normal
+     */
     public void setFurrowForCurrentFrame(double[] center, double[] normal){
 
         submit(()->{
@@ -1176,6 +1680,13 @@ public class SegmentationController {
         });
 
     }
+
+    /**
+     * Sets up the provided meshframe3d as the main threed display. There is no clean up if this is not the first
+     * meshframe3D.
+     *
+     * @param meshFrame3D
+     */
     public void setMeshFrame3D(MeshFrame3D meshFrame3D) {
 
         this.meshFrame3D = meshFrame3D;
@@ -1199,6 +1710,10 @@ public class SegmentationController {
 
     }
 
+    /**
+     * Returns the main 3D view. This can be used to set the background color.
+     * @return
+     */
     public MeshFrame3D getMeshFrame3D(){
         return meshFrame3D;
     }
@@ -1231,6 +1746,10 @@ public class SegmentationController {
         return model.stack.offsets[1]*2;
     }
 
+    /**
+     * Adds a new frame listener that gets notified whenever: nextFrame, previousFrame, setFrame, or the backing imageplus is changed.
+     * @param listener
+     */
     public void addFrameListener(FrameListener listener){
         model.addFrameListener(listener);
     }
@@ -1238,6 +1757,13 @@ public class SegmentationController {
 
 }
 
+/**
+ * Historical class, that should be replaced, developed because of confusion regarding the way ExecutorServices
+ * handle exceptions
+ *
+ * Executables are submitted and if they're already running on the main thread, then they're short circuited otherwise
+ * they're submitted to the main executor service, which puts them in the queue for execution.
+ */
 class ExceptionThrowingService{
     ExecutorService main;
     Thread main_thread;
@@ -1250,7 +1776,7 @@ class ExceptionThrowingService{
         });
     }
 
-    public void execute(SegmentationController.Executable e){
+    private void execute(SegmentationController.Executable e){
         try{
             e.execute();
         } catch (Exception exc) {

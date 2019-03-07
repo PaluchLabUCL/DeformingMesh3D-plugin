@@ -129,6 +129,12 @@ public class MeshAnalysis {
         EventQueue.invokeLater(() -> GuiTools.createTextOuputPane(op));
     }
 
+    /**
+     * Generates a text window with the time series for all of the tracks provided.
+     *
+     * @param tracks
+     * @param stack
+     */
     public static void calculateAllVolumes(List<Track> tracks, MeshImageStack stack){
         StringBuilder builder = new StringBuilder("#Volume at each time point.\n");
         builder.append("#frame");

@@ -40,14 +40,6 @@ import java.util.stream.Collectors;
 
 /**
  *
- *  Anything public that involves modifying synchronized data is automatically submitted to the
- *  main event loop. Getters that return volatile data will return the data at the current state,
- *  not at the state the data will be in when execution has completed. Attempting to change volatile
- *  data will be placed in the main event loop and updated after all other tasks have completed updating.
- *
- * User: msmith
- * Date: 7/16/13
- * Time: 11:06 AM
  */
 public class SegmentationModel {
     double GAMMA = 500.0;
@@ -112,7 +104,6 @@ public class SegmentationModel {
             selectedMesh.reshape();
             reshape=false;
         }
-        long begin = System.currentTimeMillis();
         int c = 0;
         if(count<0){
             count = Integer.MAX_VALUE;
