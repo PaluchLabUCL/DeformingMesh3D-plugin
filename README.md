@@ -2,6 +2,10 @@
 ThreeD image segmentation algorithm, for roundish cells.
 
 # Changes
+0.36
+
+- javascript available actions improved.
+
 
 0.35
 
@@ -33,10 +37,33 @@ ThreeD image segmentation algorithm, for roundish cells.
 
 ## Changing the color scheme (>=0.36)
 
+```javascript
 mf = controls.getMeshFrame3D();
 mf.setBackgroundColor(Color.BLACK);
 controls.setVolumeColor(Color.GREEN);
-
+```
 set it back.
+```javascript
 mf.setBackgroundColor(Color.WHITE);
 controls.setVolumeColor(Color.GREEN);
+```
+
+## Iterating through all of the frames and deforming each existing mesh 100 steps.
+
+```javascript
+n = controls.getNFrames();
+tracks = controls.getAllTracks();
+for(var i = 0; i<n; i++){
+    controls.toFrame(i)
+    ts = tracks.size();
+    for( var j = 0; j<ts; j++){
+        track = tracks.get(j);
+        if(track.containsKey(i)){
+            mesh = track.getMesh(i);
+            print(i + ", " + j + ", " + mesh);
+            controls.selectMesh(mesh);
+            controls.deformMesh(100);
+        }
+    }
+}
+```

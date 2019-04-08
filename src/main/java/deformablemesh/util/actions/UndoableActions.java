@@ -7,4 +7,5 @@ public interface UndoableActions {
     void perform();
     void undo();
     void redo();
+    default String getName(){return "";}
 }

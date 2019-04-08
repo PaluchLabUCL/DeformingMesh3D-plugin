@@ -13,13 +13,10 @@ import ij.io.OpenDialog;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.EventQueue;
-import java.awt.FileDialog;
-import java.awt.GridLayout;
-import java.awt.Insets;
+import javax.swing.plaf.MenuItemUI;
+import javax.swing.plaf.basic.BasicButtonUI;
+import javax.swing.plaf.basic.BasicMenuItemUI;
+import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
@@ -675,7 +672,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
 
         undo = new JMenuItem("undo");
         undo.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, ActionEvent.CTRL_MASK));
-
         edit.add(undo);
 
         undo.addActionListener((evt)->{
@@ -1066,6 +1062,21 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             for(JComponent b: buttons){
                 b.setEnabled(ready);
             }
+
+            String ut = segmentationController.getUndoName();
+            if(ut.isEmpty()){
+                undo.setText("<html>undo</html>");
+            } else{
+                undo.setText("<html>undo <span style='font-size:smaller;color:gray;'>\"" + ut + "\"</span></html>");
+            }
+
+            String rt = segmentationController.getRedoName();
+            if(rt.isEmpty()){
+                redo.setText("<html>redo</html>");
+            } else{
+                redo.setText("<html>redo <span style='font-size:smaller;color:gray;'>\"" + rt + "\"</span></html>");
+            }
+
 
             if(ready==false){
                 undo.setEnabled(false);

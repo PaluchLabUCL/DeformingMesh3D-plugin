@@ -222,6 +222,11 @@ public class SegmentationController {
                     model.removeMeshFromTrack(f, mesh, old);
                 });
             }
+
+            @Override
+            public String getName(){
+                return "clear selected mesh";
+            }
         });
 
     }
@@ -603,6 +608,11 @@ public class SegmentationController {
             public void redo() {
                 submit(()->model.setMeshes(newTrack));
             }
+
+            @Override
+            public String getName(){
+                return "restart meshes";
+            }
         });
     }
 
@@ -652,6 +662,10 @@ public class SegmentationController {
             @Override
             public void redo() {
                 submit(()->model.addMeshToTrack(f, m, track));
+            }
+            @Override
+            public String getName(){
+                return "start new track";
             }
         });
     }
@@ -719,6 +733,11 @@ public class SegmentationController {
                 submit(() -> {
                     model.addMeshToTrack(f, newer, track);
                 });
+            }
+
+            @Override
+            public String getName(){
+                return "add mesh";
             }
         });
     }
@@ -941,6 +960,11 @@ public class SegmentationController {
                     });
 
                 }
+
+                @Override
+                public String getName(){
+                    return "deform all meshes";
+                }
             });
         }
     }
@@ -975,6 +999,11 @@ public class SegmentationController {
             @Override
             public void redo() {
                 main.submit(()->mesh.setPositions(newPositions));
+            }
+
+            @Override
+            public String getName(){
+                return "confine mesh";
             }
         });
 
@@ -1020,6 +1049,12 @@ public class SegmentationController {
             public void redo() {
                 main.submit(()->mesh.setPositions(newPositions));
             }
+
+            @Override
+            public String getName(){
+                return "deform mesh";
+            }
+
         });
     }
 
@@ -1074,6 +1109,12 @@ public class SegmentationController {
                         model.addMeshToTrack(next, newer, track);
                     });
                 }
+
+                @Override
+                public String getName(){
+                    return "track mesh";
+                }
+
             });
             nextFrame();
         }
@@ -1119,6 +1160,12 @@ public class SegmentationController {
                         model.addMeshToTrack(previous, newer, track);
                     });
                 }
+
+                @Override
+                public String getName(){
+                    return "track mesh backwards";
+                }
+
             });
             previousFrame();
         }
@@ -1212,6 +1259,12 @@ public class SegmentationController {
                 public void redo() {
                     submit(()->model.setMeshes(replacements));
                 }
+
+                @Override
+                public String getName(){
+                    return "load meshes";
+                }
+
             });
         });
 
@@ -1246,6 +1299,11 @@ public class SegmentationController {
                 public void redo() {
                     submit(()->model.setMeshes(imports));
                 }
+
+                @Override
+                public String getName(){
+                    return "import meshes";
+                }
             });
         });
     }
@@ -1276,6 +1334,12 @@ public class SegmentationController {
                 public void redo() {
                     submit(()->model.setMeshes(replacements));
                 }
+
+                @Override
+                public String getName(){
+                    return "set tracks";
+                }
+
             });
         });
     }
@@ -1656,6 +1720,26 @@ public class SegmentationController {
      */
     public void setRigidBoundaries(boolean selected) {
         model.setHardBoundaries(selected);
+    }
+
+    /**
+     * Gets the name of the next action to be undone, if it has a name.
+     *
+     * @return ActionStack#getUndoableActionName
+     */
+    public String getUndoName() {
+
+        return actionStack.getUndoableActionName();
+
+    }
+
+    /**
+     * Returns the name of the next action that can be redone.
+     *
+     * @return ActionStack#getRedoableActionName()
+     */
+    public String getRedoName(){
+        return actionStack.getRedoableActionName();
     }
 
     /**

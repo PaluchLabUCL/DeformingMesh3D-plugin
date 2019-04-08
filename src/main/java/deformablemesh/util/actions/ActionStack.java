@@ -18,6 +18,20 @@ public class ActionStack {
         return undone.size()>0;
     }
 
+    public String getUndoableActionName(){
+        if(history.size()>0)
+            return history.getLast().getName();
+        else
+            return "";
+    }
+
+    public String getRedoableActionName(){
+        if(undone.size()>0)
+            return undone.getLast().getName();
+        else
+            return "";
+    }
+
     public void undo(){
         UndoableActions action = history.pollLast();
         undone.add(action);
@@ -69,6 +83,11 @@ public class ActionStack {
             public void redo() {
                 a.redo();
                 b.redo();
+            }
+
+            @Override
+            public String getName(){
+                return a.getName() + b.getName();
             }
         };
     }
