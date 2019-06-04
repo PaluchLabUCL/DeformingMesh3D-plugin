@@ -19,6 +19,7 @@ import snakeprogram3d.display3d.VolumeTexture;
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 import java.awt.Color;
+import java.awt.Graphics;
 import java.awt.GraphicsConfiguration;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -76,7 +77,16 @@ public class MeshFrame3D {
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         GraphicsConfiguration gc = DataCanvas.getBestConfigurationOnSameDevice(frame);
         Color3f background = new Color3f(1.0f,0.0f,1.0f);
-        canvas = new DataCanvas(gc, background);
+        canvas = new DataCanvas(gc, background){
+            @Override
+            public void postRender(){
+                System.out.println("working");
+                J3DGraphics2D g = getGraphics2D();
+                g.setColor(Color.WHITE);
+                g.drawString("Heads Up", 50, 50);
+                g.flush(false);
+            }
+        };
         frame.add(canvas);
         frame.setVisible(true);
         showAxis();

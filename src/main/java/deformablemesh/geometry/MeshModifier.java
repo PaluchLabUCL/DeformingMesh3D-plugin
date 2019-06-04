@@ -7,10 +7,14 @@ import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.meshview.SphereDataObject;
 import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;
+import org.scijava.java3d.BranchGroup;
+import org.scijava.java3d.utils.geometry.Text2D;
 import org.scijava.java3d.utils.picking.PickIntersection;
 import org.scijava.java3d.utils.picking.PickResult;
+import org.scijava.vecmath.Color3f;
 import org.scijava.vecmath.Point3d;
 import snakeprogram3d.display3d.CanvasView;
+import snakeprogram3d.display3d.DataObject;
 import snakeprogram3d.display3d.MoveableSphere;
 
 import javax.swing.JMenu;
@@ -39,6 +43,8 @@ public class MeshModifier {
     List<Node3D> selected = new ArrayList<>();
     List<MoveableSphere> markers = new ArrayList<>();
     LineDataObject obj;
+    Furrow3D furrow;
+
     public void start(){
         frame = new MeshFrame3D();
         JMenuBar bar = new JMenuBar();
@@ -66,21 +72,44 @@ public class MeshModifier {
             }
 
         });
+
+
         frame.showFrame(true);
         frame.getJFrame().setJMenuBar(bar);
+
+
+
         frame.setBackgroundColor(new Color(40, 40, 80));
         DeformableMesh3D mesh = RayCastMesh.sphereRayCastMesh(3);
         mesh.setColor(Color.YELLOW);
-        mesh.setShowSurface(true);
+        mesh.setShowSurface(false);
         setMesh(mesh);
         new Thread(this::mainLoop).start();
         frame.addPickListener(new PointPicking());
+        frame.addLights();
+
+        furrow = new Furrow3D(new double[]{0,0,0}, new double[]{0, -1, 0});
+        furrow.create3DObject();
+        frame.addDataObject(furrow.getDataObject());
     }
 
     public static void main(String[] args){
+
         EventQueue.invokeLater(()->{
-            new MeshModifier().start();
+            MeshModifier mod = new MeshModifier();
+            mod.start();
+            List<Track> tracks = null;
+            try {
+                tracks = MeshWriter.loadMeshes(new File("sample.bmf"));
+                DeformableMesh3D mesh = tracks.get(0).getMesh(tracks.get(0).getFirstFrame());
+                mod.setMesh(mesh);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         });
+
+
+
     }
 
 
@@ -125,7 +154,7 @@ public class MeshModifier {
                     final Node3D n = getClosesNode(pt.x, pt.y, pt.z);
                     post(() -> toggleSelectNode(n));
             }
-            System.out.println(evt);
+            //System.out.println(evt);
         }
     }
 
