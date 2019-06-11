@@ -12,9 +12,7 @@ import deformablemesh.meshview.PlotSurface;
 import deformablemesh.meshview.VolumeDataObject;
 import deformablemesh.ringdetection.FurrowTransformer;
 import deformablemesh.track.Track;
-import deformablemesh.util.HotAndCold;
-import deformablemesh.util.IntensitySurfacePlot;
-import deformablemesh.util.MeshFaceObscuring;
+import deformablemesh.util.*;
 import deformablemesh.util.actions.ActionStack;
 import deformablemesh.util.actions.UndoableActions;
 import ij.ImagePlus;
@@ -392,69 +390,17 @@ public class SegmentationController {
      * TODO change this to return an object similar to IntensitySurfacePlot
      *
      */
-    public MeshFrame3D curvatureSurfacePlot(){
+    public SurfacePlot curvatureSurfacePlot(){
 
         DeformableMesh3D mesh = getSelectedMesh();
         if(mesh==null){
             return null;
         }
 
-        MeshFrame3D viewer = new MeshFrame3D();
+        CurvatureSurfacePlot plot = new CurvatureSurfacePlot(mesh);
+        return plot;
 
-        viewer.showFrame(false);
-        viewer.addLights();
-        viewer.setBackgroundColor(Color.BLACK);
 
-        CurvatureCalculator calc = new CurvatureCalculator(mesh);
-
-        List<double[]> curvatures = calc.calculateCurvature();
-
-        double kave = 0;
-        double kave_2 = 0;
-        double kmin = 0;
-        double kmax = 0;
-
-        for(double[] row: curvatures){
-            kave += row[3];
-            kave_2 += row[3]*row[3];
-            kmax = row[3]>kmax?row[3]:kmax;
-            kmin = row[3]<kmin?row[3]:kmin;
-        }
-
-        kave = kave/curvatures.size();
-        kave_2 = kave_2/curvatures.size() - kave*kave;
-
-        double sigma = Math.sqrt(kave_2);
-
-        kmax = kmax>sigma + kave?sigma + kave:kmax;
-        kmin = kmin<kave - sigma?kave - sigma :kmin;
-
-        HotAndCold neg = new HotAndCold(Color.BLUE, Color.BLACK);
-        HotAndCold pos = new HotAndCold(Color.ORANGE, Color.BLACK);
-
-        if(kmin<0){
-            kmin = -kmin;
-        }
-
-        neg.setMinMax(0, kmin);
-        pos.setMinMax(0, kmax);
-
-        float[] colors = new float[mesh.positions.length];
-        for (int i = 0; i<curvatures.size(); i++){
-            double[] row = curvatures.get(i);
-            float[] c;
-            if(row[3]<0){
-                c = neg.getColor(-row[3]);
-            } else{
-                c = pos.getColor(row[3]);
-            }
-            System.arraycopy(c, 0, colors, 3*i, 3);
-
-        }
-
-        PlotSurface surface = new PlotSurface(mesh.positions, mesh.triangle_index, colors);
-        viewer.addDataObject(surface);
-        return viewer;
     }
 
     /**
@@ -462,7 +408,7 @@ public class SegmentationController {
      *
      * @return
      */
-    public IntensitySurfacePlot intensitySurfacePlot(){
+    public SurfacePlot intensitySurfacePlot(){
         DeformableMesh3D mesh = getSelectedMesh();
         if(mesh==null){
             return null;
@@ -500,25 +446,8 @@ public class SegmentationController {
         for(Track track2: neighbors) {
             MeshFaceObscuring face = new MeshFaceObscuring();
             face.setNeighbor(track2.getMesh(frame));
-            Set<Triangle3D> triangles = face.getOverlapArea(mesh);
-            int[] triIndexes = new int[triangles.size() * 3];
-            int[] conIndexes = new int[triangles.size() * 3 * 2];
-            int dex = 0;
-            for (Triangle3D tri : triangles) {
-                int[] indices = tri.getIndices();
-                triIndexes[dex] = indices[0];
-                triIndexes[dex + 1] = indices[1];
-                triIndexes[dex + 2] = indices[2];
-                conIndexes[dex * 2] = indices[0];
-                conIndexes[dex * 2 + 1] = indices[1];
-                conIndexes[dex * 2 + 2] = indices[1];
-                conIndexes[dex * 2 + 3] = indices[2];
-                conIndexes[dex * 2 + 4] = indices[2];
-                conIndexes[dex * 2 + 5] = indices[0];
 
-                dex += 3;
-            }
-            DeformableMesh3D m2 = new DeformableMesh3D(mesh.positions, conIndexes, triIndexes);
+            DeformableMesh3D m2 = model.createSubMesh(mesh, face.getOverlapArea(mesh));
             m2.setColor(track2.getColor());
             m2.create3DObject();
             m2.setShowSurface(true);
@@ -825,6 +754,12 @@ public class SegmentationController {
 
     }
 
+    /**
+     *
+     */
+    public void calculateInterfaceTimeScans(){
+        submit(model::calculateInterfaceLineScans);
+    }
     /**
      * TODO remove
      * @Deprecated

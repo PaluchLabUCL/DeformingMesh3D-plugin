@@ -182,7 +182,7 @@ public class CurvatureCalculator {
 
         return kappa;
     }
-    public double[] getNormalAndCurvature(Node3D node, List<Triangle3D> triangles){
+    static public double[] getNormalAndCurvature(Node3D node, List<Triangle3D> triangles){
         double[] kappa = calculateMeanCurvatureNormal(node, triangles);
         double[] normal = calculateMeanNormal(node, triangles);
         double dot = Vector3DOps.dot(kappa, normal);
@@ -414,5 +414,14 @@ public class CurvatureCalculator {
     }
 
 
+    public static double calculateAverageCurvature(DeformableMesh3D sharedFaces) {
+        double sum = 0;
+        for(Node3D node: sharedFaces.nodes){
+            double[] row = getNormalAndCurvature(node, sharedFaces.triangles);
+            sum += row[3];
+
+        }
+        return sum/sharedFaces.nodes.size();
+    }
 }
 

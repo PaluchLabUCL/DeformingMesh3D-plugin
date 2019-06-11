@@ -20,6 +20,7 @@ import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -47,7 +48,10 @@ public class MeshFrame3D {
     Axis3D axis;
     Map<Object, DataObject> observedObjects = new HashMap<>();
     List<DataObject> transientObjects = new ArrayList<>();
-
+    static class HudDisplay{
+        public void draw(Graphics2D g){}
+    }
+    HudDisplay hud = new HudDisplay();
     private SegmentationController segmentationController;
 
     List<DeformableMesh3D> showing = new ArrayList<>();
@@ -80,10 +84,8 @@ public class MeshFrame3D {
         canvas = new DataCanvas(gc, background){
             @Override
             public void postRender(){
-                System.out.println("working");
                 J3DGraphics2D g = getGraphics2D();
-                g.setColor(Color.WHITE);
-                g.drawString("Heads Up", 50, 50);
+                hud.draw(g);
                 g.flush(false);
             }
         };

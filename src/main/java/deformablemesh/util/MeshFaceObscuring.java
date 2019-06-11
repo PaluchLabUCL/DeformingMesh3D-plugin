@@ -2,17 +2,18 @@ package deformablemesh.util;
 
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
-import deformablemesh.geometry.DeformableMesh3D;
-import deformablemesh.geometry.InterceptingMesh3D;
-import deformablemesh.geometry.Intersection;
-import deformablemesh.geometry.Triangle3D;
+import deformablemesh.geometry.*;
+import deformablemesh.io.MeshWriter;
 import deformablemesh.track.Track;
+import lightgraph.DataSet;
+import lightgraph.Graph;
+import lightgraph.GraphPoints;
 import snakeprogram.util.TextWindow;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.awt.Color;
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -68,6 +69,8 @@ public class MeshFaceObscuring {
         return false;
     }
 
+
+
     static public void analyzeTracks(List<Track> tracks, MeshImageStack stack, int frame, double cutoff){
         List<DeformableMesh3D> meshes = tracks.stream().filter(
                                                 t->t.containsKey(frame)
@@ -103,10 +106,15 @@ public class MeshFaceObscuring {
         window.display();
     }
 
+    /**
+     * Analyzes the provided tracks.
+     * @param target
+     * @param others
+     * @param cutoff
+     * @return
+     */
     static public List<double[]> analyzeTracks(Track target, List<Track> others, double cutoff){
         List<double[]> overlaps = new ArrayList<>();
-
-
         for(Integer frame: target.getTrack().keySet()){
             MeshFaceObscuring finder =  new MeshFaceObscuring();
             finder.cutoff = cutoff;
@@ -137,6 +145,174 @@ public class MeshFaceObscuring {
 
         return overlaps;
     }
+    static class TrackData implements Iterable<double[]>{
+        List<double[]> values = new ArrayList<>();
+        String name;
+        Color c;
+        public TrackData(String name, Color c){
+            this.name = name;
+            this.c = c;
+        }
+        public void add(double[] data){
+            values.add(data);
+        }
+        public double[] get(int i ){
+            return values.get(i);
+        }
 
+        public int size(){
+            return values.size();
+        }
+
+        @Override
+        public Iterator<double[]> iterator() {
+            return values.iterator();
+        }
+    }
+
+    static void plot(List<TrackData> values, String title){
+        Graph vol = new Graph();
+        Graph a = new Graph();
+        vol.setTitle("volume vs time");
+        a.setTitle("Surface Area/ S_0");
+        for(TrackData plot: values){
+            double zero = 0;
+            for(double[] d: plot){
+                if(d[0]>zero){
+                    zero = d[0];
+                }
+            }
+
+            int n = plot.size();
+            double[] data = new double[n];
+            double[] time = new double[n];
+
+            for(int i = 0; i<n; i++){
+                double[] row = plot.get(i);
+                data[i] = row[1];
+                time[i] = row[0] - zero;
+            }
+
+            DataSet set = vol.addData(time, data);
+            set.setColor(plot.c);
+            set.setLabel(plot.name);
+
+            data = new double[n];
+            time = new double[n];
+            for(int i = 0; i<n; i++){
+                double[] row = plot.get(i);
+                double snot = Math.pow(6*row[1]/Math.PI, 2/3.0)*Math.PI;
+                data[i] = row[2]/snot;
+                time[i] = row[0] - zero;
+            }
+            set = a.addData(time, data);
+            set.setColor(plot.c);
+            set.setLabel(plot.name);
+
+
+        }
+
+        vol.show(true, title + " volume");
+        a.show(true, title + "area");
+
+
+    }
+    public static void analyzeTimeCourses(File meshFile) throws IOException {
+        List<Track> tracks =  MeshWriter.loadMeshes(meshFile);
+        analyzeTimeCourses(tracks, meshFile.getName());
+    }
+
+    public static void analyzeTimeCourses(List<Track> tracks, String meshFileName){
+
+        double CUTOFF= 0.0001;
+
+        List<TrackData> data = new ArrayList<>();
+
+        Graph overlapping = new Graph();
+        overlapping.setTitle("overlaping faces: " + meshFileName);
+        Map<String, GraphPoints> pointsMap = new HashMap<>();
+        int index = 0;
+        List<GraphPoints> gp = GraphPoints.getGraphPoints();
+        for(Track track: tracks){
+            pointsMap.put(track.getName(), gp.get(index));
+            index++;
+        }
+
+        for(int i = 0; i<tracks.size(); i++){
+            Track track = tracks.get(i);
+
+            List<Track> otherTracks = tracks.stream().filter(t->!t.equals(track)).collect(Collectors.toList());
+            List<double[]> values = MeshFaceObscuring.analyzeTracks(track, otherTracks, CUTOFF);
+            for(int j = 0; j<otherTracks.size(); j++){
+
+                double[] frames = new double[values.size()];
+                double[] lap = new double[values.size()];
+                boolean plotThis=false;
+
+
+                for(int k = 0; k<values.size(); k++){
+                    double[] row = values.get(k);
+                    frames[k] = row[0];
+                    lap[k] = row[2 + j];
+                    if(lap.length>i && lap[i]>0){
+                        plotThis = true;
+                    }
+                }
+                if(plotThis){
+                    Track other = otherTracks.get(j);
+                    String n1 = track.getName();
+                    String n2 = other.getName();
+                    Color c = track.getColor();
+                    GraphPoints points = pointsMap.get(n2);
+                    DataSet set = overlapping.addData(frames, lap);
+                    set.setLabel(n1 + "//" + n2);
+                    set.setColor(c);
+                    set.setPoints(points);
+                }
+
+            }
+
+
+
+
+            TrackData currentData = new TrackData(track.getName(), track.getColor());
+            List<Integer> frames = new ArrayList<>();
+            for(Integer frame: track.getTrack().keySet()){
+                DeformableMesh3D mesh = track.getMesh(frame);
+                double volume = mesh.calculateVolume();
+                double area = DeformableMesh3DTools.calculateSurfaceArea(mesh);
+                double[] dat = {
+                        frame, volume, area
+                };
+                currentData.add(dat);
+                frames.add(frame);
+            }
+
+            Graph curvs = new Graph();
+            int start = frames.size()-11;
+            if(start<0) start = 0;
+
+            for(int j = start; j<frames.size(); j++){
+                DeformableMesh3D mesh = track.getMesh(frames.get(j));
+                CurvatureCalculator cc = new CurvatureCalculator(mesh);
+                cc.setMinCurvature(-10);
+                cc.setMaxCurvature(10);
+
+                List<double[]> measured = cc.createCurvatureHistogram();
+                DataSet set = curvs.addData(measured.get(0), measured.get(1));
+
+                int a = frames.size() - j;
+                set.setColor(new Color(25*(11-a), 150, 150));
+                set.setLabel("" + frames.get(j));
+            }
+
+            curvs.show(false, track.getName());
+
+            data.add(currentData);
+
+        }
+        overlapping.show(true, "Overlap " + meshFileName);
+        plot(data, meshFileName);
+    }
 
 }

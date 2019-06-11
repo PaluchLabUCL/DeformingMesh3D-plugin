@@ -1,6 +1,7 @@
 package deformablemesh.util;
 
 import deformablemesh.MeshImageStack;
+import deformablemesh.geometry.Connection3D;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Node3D;
 import deformablemesh.geometry.RayCastMesh;
@@ -53,6 +54,56 @@ public class IntensitySurfacePlot extends SurfacePlot{
             }
         }
         return value/count;
+    }
+
+
+
+    public double sample(Connection3D connection){
+        double[] i_data = new double[3];
+        Node3D interpolated = new Node3D(i_data, 0);
+        double[] A = connection.A.getCoordinates();
+        double[] B = connection.B.getCoordinates();
+        double[] AB = Vector3DOps.difference(A, B);
+        double l = Vector3DOps.normalize(AB);
+        if(l==0){
+            return 0;
+        }
+        int n = (int)(l/delta);
+        if(n==0){
+            return 0.5*(sample(connection.A) + sample(connection.B));
+        } else{
+            double ds = l/(n+1);
+            double of = (l - ds*n)/2;
+            double sum = 0;
+            for(int i = 0; i<(n+1); i++){
+                double s = ds*i + of;
+                for(int j = 0; j<3; j++){
+                    i_data[j] = A[j] + AB[j]*s;
+                }
+                sum += sample(interpolated);
+            }
+            return sum/(n+1);
+        }
+
+    }
+
+    public double getAverageIntensityAtNodes(){
+        double sum = 0;
+        for(Node3D node: mesh.getConnectedNodes()){
+            sum += sample(node);
+        }
+
+        return sum/mesh.nodes.size();
+    }
+
+    public double getAverageIntensityAtBoundary(){
+        double sum = 0;
+        List<Connection3D> connections = mesh.getOutterBounds();
+        for(Connection3D con: connections){
+            sum += sample(con);
+        }
+
+        return sum/connections.size();
     }
 
 

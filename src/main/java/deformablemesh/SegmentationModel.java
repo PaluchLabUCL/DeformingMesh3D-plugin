@@ -1,11 +1,7 @@
 package deformablemesh;
 
 import deformablemesh.externalenergies.*;
-import deformablemesh.geometry.BinaryMomentsOfInertia;
-import deformablemesh.geometry.Box3D;
-import deformablemesh.geometry.DeformableMesh3D;
-import deformablemesh.geometry.Furrow3D;
-import deformablemesh.geometry.SnakeBox;
+import deformablemesh.geometry.*;
 import deformablemesh.gui.FrameListener;
 import deformablemesh.gui.GuiTools;
 import deformablemesh.gui.RingController;
@@ -14,11 +10,16 @@ import deformablemesh.io.MeshWriter;
 import deformablemesh.ringdetection.FurrowTransformer;
 import deformablemesh.track.MeshTracker;
 import deformablemesh.track.Track;
+import deformablemesh.util.IntensitySurfacePlot;
 import deformablemesh.util.MeshAnalysis;
+import deformablemesh.util.MeshFaceObscuring;
+import deformablemesh.util.Vector3DOps;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
+import lightgraph.DataSet;
+import lightgraph.Graph;
 import snakeprogram3d.MultipleSnakesStore;
 import snakeprogram3d.Snake;
 import snakeprogram3d.SnakeIO;
@@ -27,13 +28,7 @@ import java.awt.Color;
 import java.awt.Image;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Properties;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -821,6 +816,101 @@ public class SegmentationModel {
 
     public void setHardBoundaries(boolean hardBoundaries) {
         this.hardBoundaries = hardBoundaries;
+    }
+
+    public void calculateInterfaceLineScans() {
+
+        List<Track> tracks = getAllTracks();
+        for(int i = 0; i<tracks.size(); i++){
+            Track target = tracks.get(i);
+            Map<Integer, Map<Integer, double[]>> values = new TreeMap<>();
+
+            for(int j = 0; j<tracks.size(); j++){
+                values.put(j, new TreeMap<>());
+            }
+            for(Integer key: target.getTrack().keySet()){
+                DeformableMesh3D m1 = target.getMesh(key);
+                double s0 = DeformableMesh3DTools.calculateSurfaceArea(m1);
+                double v0 = DeformableMesh3DTools.calculateVolume(Vector3DOps.zhat, m1.positions, m1.triangles);
+                double c0 = CurvatureCalculator.calculateAverageCurvature(m1);
+
+                IntensitySurfacePlot isp = new IntensitySurfacePlot(m1, stack);
+                double i_ave = isp.getAverageIntensityAtNodes();
+                values.get(i).put(key, new double[]{key, s0, v0, c0, 0, i_ave});
+
+                for(int j = 0; j<tracks.size(); j++){
+                    if(i==j) continue;
+                    Track neighbor = tracks.get(j);
+
+
+                    if(neighbor.containsKey(key)){
+
+                        DeformableMesh3D m2 = neighbor.getMesh(key);
+                        MeshFaceObscuring mfo = new MeshFaceObscuring();
+                        mfo.setNeighbor(m2);
+                        Set<Triangle3D> triangles = mfo.getOverlapArea(m1);
+                        DeformableMesh3D sharedFaces = createSubMesh(m1, triangles);
+
+                        double c = CurvatureCalculator.calculateAverageCurvature(sharedFaces);
+                        double s1 = DeformableMesh3DTools.calculateSurfaceArea(sharedFaces);
+                        isp = new IntensitySurfacePlot(sharedFaces, stack);
+                        double i_edge = isp.getAverageIntensityAtBoundary();
+                        double i_all = isp.getAverageIntensityAtNodes();
+
+                        values.get(j).put(key, new double[]{key, s1, 0, c, i_edge, i_all});
+                    }
+                }
+            }
+            String[] labels = {"frame", "surface area", "volume", "curvature", "edge intensity", "average intensity"};
+            int nGraphs = labels.length-1;
+            String name= target.getName();
+            for(int j = 0; j<nGraphs; j++){
+                Graph g = new Graph();
+                for(Integer key: values.keySet()){
+                    Map<Integer, double[]> points = values.get(key);
+                    if(points.size()==0){
+                        continue;
+                    }
+                    double[] x = new double[points.size()];
+                    double[] y = new double[points.size()];
+                    int k = 0;
+                    for(Integer frame: points.keySet()){
+                        x[k] = points.get(frame)[0];
+                        y[k] = points.get(frame)[j+1];
+                        k++;
+                    }
+                    DataSet set = g.addData(x,y);
+                    set.setLabel(tracks.get(key).getName());
+
+                }
+                g.setTitle("Epoc vs " + labels[j+1] + " for track: " + target.getName());
+
+                g.show(false, "Epoc vs " + labels[j+1] + " for track: " + target.getName());
+            }
+
+        }
+    }
+
+    public DeformableMesh3D createSubMesh(DeformableMesh3D mesh, Set<Triangle3D> triangles){
+
+        int[] triIndexes = new int[triangles.size() * 3];
+        int[] conIndexes = new int[triangles.size() * 3 * 2];
+        int dex = 0;
+        for (Triangle3D tri : triangles) {
+            int[] indices = tri.getIndices();
+            triIndexes[dex] = indices[0];
+            triIndexes[dex + 1] = indices[1];
+            triIndexes[dex + 2] = indices[2];
+            conIndexes[dex * 2] = indices[0];
+            conIndexes[dex * 2 + 1] = indices[1];
+            conIndexes[dex * 2 + 2] = indices[1];
+            conIndexes[dex * 2 + 3] = indices[2];
+            conIndexes[dex * 2 + 4] = indices[2];
+            conIndexes[dex * 2 + 5] = indices[0];
+
+            dex += 3;
+        }
+        return new DeformableMesh3D(mesh.positions, conIndexes, triIndexes);
     }
 }
 

@@ -20,6 +20,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
+
 /**
  *
  * 3D mesh that will be used for segmenting cells in 3D. A collection of Nodes, triangles and connections that represent
@@ -143,7 +145,13 @@ public class DeformableMesh3D{
 
 
     }
+    public List<Node3D> getConnectedNodes(){
 
+        return nodes.stream().filter(n->
+            connections.stream().anyMatch(c->c.A.equals(n) || c.B.equals(n))
+        ).collect(Collectors.toList());
+
+    }
 
     static public DeformableMesh3D loadMesh(double[] positions, int[] connection_indices, int[] triangle_indices){
         return new DeformableMesh3D(positions, connection_indices, triangle_indices);
@@ -916,5 +924,27 @@ public class DeformableMesh3D{
 
     public void setSelected(boolean selected) {
         this.selected = selected;
+    }
+    public List<Connection3D> getOutterBounds(){
+        List<Connection3D> boundary = new ArrayList<>();
+        for(Connection3D connection: connections){
+            int count = 0;
+            for(Triangle3D tri: triangles){
+                if(tri.hasConnection(connection)){
+                    count += 1;
+                    if(count>1){
+                        break;
+                    }
+                }
+            }
+
+            if(count==1){
+                //edge
+                boundary.add(connection);
+            }
+        }
+
+        return boundary;
+
     }
 }
