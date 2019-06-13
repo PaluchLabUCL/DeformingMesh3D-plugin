@@ -229,7 +229,8 @@ public class SwingJSTerm {
 
 class TextBoxSelections{
     Popup lastPopUp;
-    JList<String> view;
+    JScrollPane view;
+    JList<String> listView;
     JTextArea input;
     ScriptEngine engine;
     TextBoxSelections(ScriptEngine engine){
@@ -264,8 +265,8 @@ class TextBoxSelections{
             @Override
             public void actionPerformed(ActionEvent e) {
                 if(lastPopUp!=null) {
-                    if(view.getSelectedValue()==null){
-                        view.setSelectedIndex(0);
+                    if(listView.getSelectedValue()==null){
+                        listView.setSelectedIndex(0);
                     }
                     insertSuggestion();                }
                 else{
@@ -282,9 +283,9 @@ class TextBoxSelections{
             @Override
             public void actionPerformed(ActionEvent e) {
                 if(lastPopUp!=null) {
-                    int i = view.getSelectedIndex();
+                    int i = listView.getSelectedIndex();
                     if(i>0){
-                        view.setSelectedIndex(i-1);
+                        listView.setSelectedIndex(i-1);
                     }
                 }
                 else{
@@ -296,9 +297,9 @@ class TextBoxSelections{
             @Override
             public void actionPerformed(ActionEvent e) {
                 if(lastPopUp!=null) {
-                    int i = view.getSelectedIndex();
-                    if(i<view.getModel().getSize()){
-                        view.setSelectedIndex(i+1);
+                    int i = listView.getSelectedIndex();
+                    if(i<listView.getModel().getSize()){
+                        listView.setSelectedIndex(i+1);
                     }
                 } else{
                     oldDown.actionPerformed(e);
@@ -312,8 +313,8 @@ class TextBoxSelections{
             public void actionPerformed(ActionEvent e) {
                 if(lastPopUp!=null){
                     //a second tab is assumed to mean take the presented option.
-                    if(view.getSelectedValue()==null){
-                        view.setSelectedIndex(0);
+                    if(listView.getSelectedValue()==null){
+                        listView.setSelectedIndex(0);
                     }
                     insertSuggestion();
                     return;
@@ -381,10 +382,15 @@ class TextBoxSelections{
 
                         Point pt2 = new Point(pt);
                         SwingUtilities.convertPointToScreen(pt2, input);
-                        Popup pop = PopupFactory.getSharedInstance().getPopup(input, list, pt2.x, pt2.y);
+
+                        view = new JScrollPane();
+                        view.setViewportView(list);
+
+                        Popup pop = PopupFactory.getSharedInstance().getPopup(input, view, pt2.x, pt2.y);
                         pop.show();
 
-                        view = list;
+
+                        listView = list;
                         lastPopUp = pop;
 
 
@@ -456,7 +462,7 @@ class TextBoxSelections{
     }
 
     void insertSuggestion(){
-        String rep = view.getSelectedValue();
+        String rep = listView.getSelectedValue();
 
         if(rep!=null) {
             Caret caret = input.getCaret();

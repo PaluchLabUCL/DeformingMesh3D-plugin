@@ -182,6 +182,68 @@ public class CurvatureCalculator {
 
         return kappa;
     }
+
+    static public double calculateMixedArea(Node3D node, List<Triangle3D> triangles){
+        double Amixed= 0;
+
+        for(Triangle3D triangle: triangles){
+            triangle.update();
+            Node3D[] nodes = {triangle.A, triangle.B, triangle.C};
+            int dex = 0;
+            for(int i = 0; i<3; i++){
+                if(nodes[i].index==node.index){
+                    dex = i;
+                }
+            }
+
+            double[] a = nodes[dex].getCoordinates();
+            double[] b = nodes[(dex+1)%3].getCoordinates();
+            double[] c = nodes[(dex+2)%3].getCoordinates();
+
+            double[] ab = new double[3];
+            double[] bc = new double[3];
+            double[] ca = new double[3];
+
+            double mab = 0;
+            double mbc = 0;
+            double mca = 0;
+
+            for(int i = 0;i<3; i++){
+                ab[i] = b[i] - a[i];
+                bc[i] = c[i] - b[i];
+                ca[i] = a[i] - c[i];
+
+                mab += ab[i]*ab[i];
+                mbc += bc[i]*bc[i];
+                mca += ca[i]*ca[i];
+            }
+
+            double[] abCrossBc = Vector3DOps.cross(ab, bc);
+            double abDotBc = Vector3DOps.dot(ab, bc);
+            double mx1 = Vector3DOps.mag(abCrossBc);
+            double cotB = - abDotBc / mx1;
+            double bcDotCa = Vector3DOps.dot(bc, ca);
+            double[] bcCrossCa = Vector3DOps.cross(bc, ca);
+            double mx2 = Vector3DOps.mag(bcCrossCa);
+            double cotC = - bcDotCa/mx2;
+
+            double v;
+            if(mbc>(mab + mca)){
+                v = triangle.area/2;
+            } else if (mca>(mab + mbc) || mab>(mbc + mca)){
+                v = triangle.area/4;
+            } else{
+                v = 0.125*(mab*cotB + mca*cotC);
+            }
+            Amixed += v;
+
+
+        }
+
+        return Amixed;
+
+
+    }
     static public double[] getNormalAndCurvature(Node3D node, List<Triangle3D> triangles){
         double[] kappa = calculateMeanCurvatureNormal(node, triangles);
         double[] normal = calculateMeanNormal(node, triangles);
@@ -416,12 +478,15 @@ public class CurvatureCalculator {
 
     public static double calculateAverageCurvature(DeformableMesh3D sharedFaces) {
         double sum = 0;
+        double area = 0;
         for(Node3D node: sharedFaces.nodes){
             double[] row = getNormalAndCurvature(node, sharedFaces.triangles);
-            sum += row[3];
+            double ai = calculateMixedArea(node, sharedFaces.triangles );
+            area += ai;
+            sum += row[3]*ai;
 
         }
-        return sum/sharedFaces.nodes.size();
+        return sum/sharedFaces.nodes.size()/area;
     }
 }
 

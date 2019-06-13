@@ -434,8 +434,8 @@ public class SegmentationController {
 
         CurvatureCalculator cc = new CurvatureCalculator(mesh);
 
-        cc.setMaxCurvature(5);
-        cc.setMinCurvature(-5);
+        //cc.setMaxCurvature(5);
+        //cc.setMinCurvature(-5);
 
         List<double[]> xy = cc.createCurvatureHistogram();
 
@@ -455,8 +455,8 @@ public class SegmentationController {
 
             cc = new CurvatureCalculator(m2);
 
-            cc.setMaxCurvature(5);
-            cc.setMinCurvature(-5);
+            //cc.setMaxCurvature(5);
+            //cc.setMinCurvature(-5);
 
             xy = cc.createCurvatureHistogram();
 
