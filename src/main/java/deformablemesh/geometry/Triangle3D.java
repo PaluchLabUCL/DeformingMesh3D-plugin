@@ -118,4 +118,10 @@ public class Triangle3D {
         }
         throw new RuntimeException("Negative node value is not valid! " + dex);
     }
+
+    public boolean containsNode(Node3D node) {
+
+        return (A.index==node.index) || (B.index==node.index) || (C.index==node.index);
+
+    }
 }

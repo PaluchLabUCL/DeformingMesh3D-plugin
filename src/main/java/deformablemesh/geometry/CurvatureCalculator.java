@@ -13,6 +13,7 @@ import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class CurvatureCalculator {
     DeformableMesh3D mesh;
@@ -115,7 +116,7 @@ public class CurvatureCalculator {
         for(Triangle3D triangle: triangles){
             triangle.update();
             Node3D[] nodes = {triangle.A, triangle.B, triangle.C};
-            int dex = 0;
+            int dex = -1;
             for(int i = 0; i<3; i++){
                 if(nodes[i].index==node.index){
                     dex = i;
@@ -153,6 +154,7 @@ public class CurvatureCalculator {
             double mx2 = Vector3DOps.mag(bcCrossCa);
             double cotC = - bcDotCa/mx2;
             for(int i = 0; i<3; i++){
+
                 kappa[i] += 0.5*cotC*(-ab[i]);
                 kappa[i] += 0.5*cotB*(ca[i]);
 
@@ -189,12 +191,14 @@ public class CurvatureCalculator {
         for(Triangle3D triangle: triangles){
             triangle.update();
             Node3D[] nodes = {triangle.A, triangle.B, triangle.C};
-            int dex = 0;
+            //The index is the starting point, if the node is not in this triangle error.
+            int dex = -1;
             for(int i = 0; i<3; i++){
                 if(nodes[i].index==node.index){
                     dex = i;
                 }
             }
+            //if(dex<0) continue; break or pass?
 
             double[] a = nodes[dex].getCoordinates();
             double[] b = nodes[(dex+1)%3].getCoordinates();
@@ -248,6 +252,7 @@ public class CurvatureCalculator {
         double[] kappa = calculateMeanCurvatureNormal(node, triangles);
         double[] normal = calculateMeanNormal(node, triangles);
         double dot = Vector3DOps.dot(kappa, normal);
+        //mean curvature kappaH is half of this value.
         return new double[]{normal[0], normal[1], normal[2], dot};
     }
 
@@ -475,18 +480,31 @@ public class CurvatureCalculator {
 
     }
 
-
+    /**
+     * Calculates the average kappaH value for the whole mesh. kappaH is 1/2 the value of kappa returned
+     * from get normal and curvature.
+     *
+     * @param sharedFaces
+     * @return
+     */
     public static double calculateAverageCurvature(DeformableMesh3D sharedFaces) {
         double sum = 0;
         double area = 0;
         for(Node3D node: sharedFaces.nodes){
-            double[] row = getNormalAndCurvature(node, sharedFaces.triangles);
-            double ai = calculateMixedArea(node, sharedFaces.triangles );
+            List<Triangle3D> firstNeighbors = sharedFaces.triangles.stream().filter(
+                    t->t.containsNode(node)
+            ).collect(Collectors.toList());
+            if(firstNeighbors.size()==0){
+                continue;
+            }
+            double[] row = getNormalAndCurvature(node, firstNeighbors);
+
+            double ai = calculateMixedArea(node, firstNeighbors );
             area += ai;
-            sum += row[3]*ai;
+            sum += row[3]*ai/2;
 
         }
-        return sum/sharedFaces.nodes.size()/area;
+        return sum/area;
     }
 }
 

@@ -1,10 +1,7 @@
 package deformablemesh.util;
 
 import deformablemesh.MeshImageStack;
-import deformablemesh.geometry.Connection3D;
-import deformablemesh.geometry.DeformableMesh3D;
-import deformablemesh.geometry.Node3D;
-import deformablemesh.geometry.RayCastMesh;
+import deformablemesh.geometry.*;
 import deformablemesh.gui.GuiTools;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.meshview.MeshFrame3D;
@@ -22,6 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 public class IntensitySurfacePlot extends SurfacePlot{
     MeshImageStack stack;
@@ -89,21 +87,42 @@ public class IntensitySurfacePlot extends SurfacePlot{
 
     public double getAverageIntensityAtNodes(){
         double sum = 0;
+        double area = 0;
         for(Node3D node: mesh.getConnectedNodes()){
-            sum += sample(node);
+            List<Triangle3D> neighbors = mesh.triangles.stream().filter(t->t.containsNode(node)).collect(Collectors.toList());
+            double Amix = CurvatureCalculator.calculateMixedArea(node, neighbors);
+            area += Amix;
+            sum += sample(node)*Amix;
+
         }
-
-        return sum/mesh.nodes.size();
+        if(area>0) {
+            return sum / area;
+        } else{
+            return 0;
+        }
     }
+    
+    double getLength(Connection3D conn){
+        double[] a = conn.A.getCoordinates();
+        double[] b = conn.B.getCoordinates();
 
+        return Vector3DOps.distance(a,b);
+    }
     public double getAverageIntensityAtBoundary(){
         double sum = 0;
         List<Connection3D> connections = mesh.getOutterBounds();
+        double length =0;
         for(Connection3D con: connections){
-            sum += sample(con);
+            double dl = getLength(con);
+            sum += sample(con)*dl;
+            length += dl;
         }
 
-        return sum/connections.size();
+        if(length==0){
+            return 0;
+        }
+
+        return sum/length;
     }
 
 

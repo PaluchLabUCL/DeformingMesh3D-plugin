@@ -755,11 +755,25 @@ public class SegmentationController {
     }
 
     /**
-     *
+     * Iterates over all of the messes and performs the calculation. (a bit intense.)
      */
-    public void calculateInterfaceTimeScans(){
+    public void calculateAllInterfaceTimeScans(){
         submit(model::calculateInterfaceLineScans);
     }
+
+    /**
+     * Calculates the time course for the selected mesh only.
+     *
+     */
+    public void calculateSelectedInterfaceTimeScans(){
+        Track track = model.getSelectedTrack();
+        if(track != null){
+            submit(()->{
+                model.calculateInterfaceLineScan(track);
+            });
+        }
+    }
+
     /**
      * TODO remove
      * @Deprecated
