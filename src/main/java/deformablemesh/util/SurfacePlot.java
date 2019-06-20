@@ -32,7 +32,7 @@ import java.util.Locale;
  */
 abstract public class SurfacePlot{
     Color high = new Color(255, 255, 0);
-    Color low = new Color(0, 0, 55);
+    Color low = new Color(0, 0, 255);
     int range = 10;
 
 

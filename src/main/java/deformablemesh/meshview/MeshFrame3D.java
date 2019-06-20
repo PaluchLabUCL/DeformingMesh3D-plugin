@@ -8,6 +8,7 @@ import deformablemesh.geometry.Furrow3D;
 import deformablemesh.geometry.SnakeBox;
 import deformablemesh.gui.RingController;
 import deformablemesh.track.Track;
+import deformablemesh.util.Vector3DOps;
 import org.scijava.java3d.*;
 import org.scijava.vecmath.*;
 import snakeprogram3d.display3d.CanvasView;
@@ -72,6 +73,37 @@ public class MeshFrame3D {
 
     public MeshFrame3D(){
 
+    }
+
+    /**
+     * Tries to look along the normal value provided. As in the normal provided would be pointed towards the user
+     * after this function has been called.
+     *
+     * The x,y,z components will be normalized before calculating.
+     *
+     * @param x component of normal
+     * @param y
+     * @param z
+     */
+    public void lookTowards(double x, double y, double z){
+        double m = Math.sqrt(x*x + y*y + z*z);
+        if(m==0) throw new RuntimeException("cannot lookTowards zero length vector");
+        double[] up = canvas.getUp();
+        double[] n = new double[]{x/m, y/m, z/m};
+        if(Math.abs(Vector3DOps.dot(up, n))<1e-3){
+            up = Vector3DOps.getPerpendicularNormalizedVector(n);
+        }
+        canvas.lookTowards(n , up);
+    }
+
+    /**
+     * Tries to look along the normal value provided, with the up axis used for up.
+     *
+     * @param normal normalized vector that to be looked along.
+     * @param up vector that will nearly 'up' when looking along.
+     */
+    public void lookTowards(double[] normal, double[] up){
+        canvas.lookTowards(normal , up);
     }
 
     public void showFrame(boolean exit_on_close){
