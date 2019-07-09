@@ -96,8 +96,8 @@ public class TwoDrops {
         }
 
         if(steric != 0){
-            a.addExternalEnergy(new StericMesh(b, steric));
-            b.addExternalEnergy(new StericMesh(a, steric));
+            a.addExternalEnergy(new StericMesh(a, b, steric));
+            b.addExternalEnergy(new StericMesh(b, a, steric));
         }
 
 

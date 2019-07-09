@@ -2,17 +2,37 @@ package deformablemesh.externalenergies;
 
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.InterceptingMesh3D;
+import deformablemesh.geometry.Triangle3D;
+import deformablemesh.util.Vector3DOps;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class StericMesh implements ExternalEnergy{
     InterceptingMesh3D mesh;
     final DeformableMesh3D deformableMesh;
     final double weight;
     boolean staticShape = true;
-    public StericMesh(DeformableMesh3D a, double weight){
+    Map<Integer, Set<Triangle3D>> map = new HashMap<>();
+
+    public StericMesh(DeformableMesh3D id, DeformableMesh3D neighbor, double weight){
         //mesh = new InterceptingMesh3D(a);
-        deformableMesh = a;
+        deformableMesh = neighbor;
         this.weight=weight;
+
+        for(Triangle3D t: id.triangles){
+            int[] dexs = t.getIndices();
+            for(Integer i: dexs){
+                if(!map.containsKey(i)){
+                    map.put(i, new HashSet<>());
+                }
+                map.get(i).add(t);
+            }
+        }
     }
+
 
     @Override
     public void updateForces(double[] positions, double[] fx, double[] fy, double[] fz) {
@@ -25,19 +45,51 @@ public class StericMesh implements ExternalEnergy{
             pt[0] = positions[3*i];
             pt[1] = positions[3*i + 1];
             pt[2] = positions[3*i + 2];
-
+            double[] normal = new double[3];
             if(mesh.contains(pt)){
                 double dx = pt[0] - center[0];
                 double dy = pt[1] - center[1];
                 double dz = pt[2] - center[2];
                 double l = Math.sqrt(dx*dx + dy*dy + dz*dz);
-                fx[i] += weight*dx/l;
-                fy[i] += weight*dy/l;
-                fz[i] += weight*dz/l;
+
+                double norm = getNormal(i, normal);
+                if(norm==0){
+                    continue;
+                }
+
+                fx[i] += -weight*dx/l*normal[0];
+                fy[i] += -weight*dy/l*normal[1];
+                fz[i] += -weight*dz/l*normal[2];
             }
 
 
         }
+    }
+
+    public double getNormal(Integer i, double[] result){
+        result[0] = 0;
+        result[1] = 0;
+        result[2] = 0;
+        Set<Triangle3D> triangles = map.get(i);
+        for(Triangle3D t: triangles){
+            result[0] += t.normal[0];
+            result[1] += t.normal[1];
+            result[2] += t.normal[2];
+        }
+        double n = 1.0/triangles.size();
+        result[0] *= n;
+        result[1] *= n;
+        result[2] *= n;
+        double norm = Vector3DOps.normalize(result);
+
+        if(norm==0){
+            result[0] = 0;
+            result[1] = 0;
+            result[2] = 0;
+        }
+
+        return norm;
+
     }
 
     @Override
