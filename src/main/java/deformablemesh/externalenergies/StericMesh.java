@@ -56,10 +56,12 @@ public class StericMesh implements ExternalEnergy{
                 if(norm==0){
                     continue;
                 }
+                double dot = dx*normal[0] + dy*normal[1] + dz*normal[2];
+                dot = dot<0?-1:1;
 
-                fx[i] += -weight*dx/l*normal[0];
-                fy[i] += -weight*dy/l*normal[1];
-                fz[i] += -weight*dz/l*normal[2];
+                fx[i] += dot*weight*normal[0];
+                fy[i] += dot*weight*normal[1];
+                fz[i] += dot*weight*normal[2];
             }
 
 
