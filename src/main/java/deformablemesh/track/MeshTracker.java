@@ -104,7 +104,7 @@ public class MeshTracker {
         }
     }
 
-    private void removeTrack(Track track){
+    public void removeTrack(Track track){
         tracks.remove(track);
         if(selectedTrack==track) {
             selectedTrack.setSelected(false);
@@ -115,6 +115,10 @@ public class MeshTracker {
                 selectedTrack=null;
             }
         }
+    }
+
+    public void addTrack(Track track){
+        tracks.add(track);
     }
 
     public void addMeshToTrack(int f, DeformableMesh3D mesh, Track track) {

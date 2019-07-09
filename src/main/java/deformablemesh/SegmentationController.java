@@ -515,6 +515,27 @@ public class SegmentationController {
         }
     }
 
+    public void removeMeshTrack(final Track track){
+        actionStack.postAction(new UndoableActions() {
+            @Override
+            public void perform() {
+                model.removeMeshTrack(track);
+            }
+
+            @Override
+            public void undo() {
+                model.addMeshTrack(track);
+            }
+
+            @Override
+            public void redo() {
+                model.removeMeshTrack(track);
+            }
+            public String getName(){return "remove " + track;}
+
+        });
+    }
+
     /**
      * Clears ALL of the current meshes.
      *

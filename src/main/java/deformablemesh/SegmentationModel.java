@@ -536,7 +536,7 @@ public class SegmentationModel {
         for(Track track: tracks){
             if(!track.containsMesh(sel) && track.containsKey(stack.CURRENT) ){
 
-                es.add(new StericMesh(track.getMesh(stack.CURRENT), stericNeighborWeight));
+                es.add(new StericMesh(sel, track.getMesh(stack.CURRENT), stericNeighborWeight));
 
             }
         }
@@ -922,6 +922,14 @@ public class SegmentationModel {
             dex += 3;
         }
         return new DeformableMesh3D(mesh.positions, conIndexes, triIndexes);
+    }
+
+    public void removeMeshTrack(Track track) {
+        tracker.removeTrack(track);
+    }
+
+    public void addMeshTrack(Track track){
+        tracker.addTrack(track);
     }
 }
 
