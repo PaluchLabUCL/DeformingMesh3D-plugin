@@ -54,11 +54,11 @@ abstract public class SurfacePlot{
         return high;
     }
 
-    public Color getLow() {
+    public Color getLowColor() {
         return low;
     }
 
-    public void setLow(Color low) {
+    public void setLowColor(Color low) {
         this.low = low;
     }
 
@@ -81,7 +81,8 @@ abstract public class SurfacePlot{
 
 
     /**
-     * Calculates all of the local intensities at each node.
+     * Calculates all of the local values at each node. Sets the min and max values. These can be changed before showing
+     * the plots.
      */
     public void process(){
         values = new double[mesh.nodes.size()];

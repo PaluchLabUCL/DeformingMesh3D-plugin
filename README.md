@@ -1,7 +1,27 @@
 # DeformingMesh3D
 ThreeD image segmentation algorithm, for roundish cells.
 
+## installation
+
+The easiest way to install this plugin is through the [Fiji](https://fiji.sc/) update site.
+
+Run Fiji, choose the menu "help", select "update..." after updating there will be a dialog that has "Manage Update Sites".
+
+https://sites.imagej.net/Odinsbane
+
+Once the site has been added, updating fiji should cause it to download and install the deforming mesh plugin
+which can be found in "plugins"->"PL_Mesh3D"->"Deforming Mesh 3D", and JFilament will also be installed.
+
+## Documentation
+
+Original Documentation can be found at, [LMCB UCL](https://www.ucl.ac.uk/lmcb/meshplugin) website.
+
+
 # Javascript console examples
+
+The best feature of the javascript console is that it has auto complete. Start by typing a command, especially by
+using the 'controls' object, and press tab and a selection of options will be shown.
+
 
 ## Changing the color scheme (>=0.36)
 
@@ -15,6 +35,31 @@ set it back.
 mf.setBackgroundColor(Color.WHITE);
 controls.setVolumeColor(Color.GREEN);
 ```
+
+## Surface Plots
+
+There are two surface plots available. Intensity or Curvature.
+
+```javascript
+
+sp = controls.intensitySurfacePlot();
+sp.processAndShow();
+
+```
+
+We can set a clipping range, and change the colors used. We also can access the MeshFrame and  set the background color.
+
+```javascript
+
+  cp = controls.curvatureSurfacePlot();
+  cp.process();
+  cp.setMax(cp.getMax()*0.8);
+  cp.setHighColor(Color.YELLOW);
+  cp.setLow(Color.BLUE);
+  cp.show();
+```
+
+The surface plots have quite a few controls.
 
 ## Iterating through all of the frames and deforming each existing mesh 100 steps.
 
@@ -35,6 +80,8 @@ for(var i = 0; i<n; i++){
     }
 }
 ```
+
+Creates a movie by taking a snapshot and rotating the viewing platform each frame.
 
 ```javascript
 ImageStack = Java.type("ij.ImageStack");
@@ -67,6 +114,10 @@ controls.submit( function(){
 0.36
 
 - javascript available actions improved.
+- surface plots available through javascript interface.
+- steric forces improved.
+- clear mesh from current frame.
+- transformations to look at plane.
 
 
 0.35
@@ -81,7 +132,7 @@ controls.submit( function(){
 - BUG FIX: load meshes now finishes when canceled.
 - BUG FIX: restart meshes, undoable.
 - load/save parameters
-- Initialization sliders are finer controleld.
+- Initialization sliders are finer controlled.
 - Can now switch image by selecting open image.
 
 0.34
@@ -94,3 +145,11 @@ controls.submit( function(){
 - exports to ply file.
 - Mesh track manager for tracking arranging meshes through time.
 - user preferences are saved
+
+# Reference
+
+[Chapter 19 - An active contour ImageJ plugin to monitor daughter cell size in 3D during cytokinesis](https://www.sciencedirect.com/science/article/pii/S0091679X16300607?via%3Dihub)
+
+MB Smith, A Chaigne, EK Paluch
+
+https://doi.org/10.1016/bs.mcb.2016.05.003
