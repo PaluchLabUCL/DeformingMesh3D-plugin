@@ -352,6 +352,15 @@ public class SegmentationModel {
         MeshWriter.saveStlMesh(f, tracker.getAllMeshTracks(), stack.offsets, stack.SCALE, getCurrentFrame());
     }
 
+    public void exportAsWireframeStl(File f) throws IOException {
+        if(f==null){
+            return;
+        }
+
+        MeshWriter.exportToStlWireframe(f, tracker.getAllMeshTracks(), stack.offsets, stack.SCALE, getCurrentFrame());
+
+    }
+
     public DeformableMesh3D getSelectedMesh(int frame){
         return tracker.getSelectedMesh(frame);
     }
@@ -931,6 +940,8 @@ public class SegmentationModel {
     public void addMeshTrack(Track track){
         tracker.addTrack(track);
     }
+
+
 }
 
 

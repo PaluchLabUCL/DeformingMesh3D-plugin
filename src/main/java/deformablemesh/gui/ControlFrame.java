@@ -714,6 +714,22 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             finished();
         });
 
+        JMenuItem wireframeSave = new JMenuItem("Export as Wireframe Stl");
+        mesh.add(wireframeSave);
+        wireframeSave.addActionListener((evt)->{
+            setReady(false);
+            FileDialog fd = new FileDialog(frame,"File for Export");
+            fd.setMode(FileDialog.SAVE);
+            fd.setFile(segmentationController.getShortImageName() + "-wf.stl");
+            fd.setVisible(true);
+            if(fd.getFile()==null || fd.getDirectory()==null){
+                return;
+            }
+            File f = new File(fd.getDirectory(),fd.getFile());
+            segmentationController.exportAsWireframeStl(f);
+            finished();
+        });
+
         JMenuItem plySave = new JMenuItem("Export as PLY");
         mesh.add(plySave);
         plySave.addActionListener((evt)->{

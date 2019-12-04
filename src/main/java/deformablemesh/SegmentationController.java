@@ -1324,6 +1324,15 @@ public class SegmentationController {
     }
 
     /**
+     * Export as wire-frame mesh stl file.
+     *
+     * @param f
+     */
+    public void exportAsWireframeStl(File f){
+        submit(()->model.exportAsWireframeStl(f));
+    }
+
+    /**
      * Loads furrows, 3D plane 1 per frame.
      *
      * @param f

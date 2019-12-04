@@ -36,15 +36,15 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 /**
- * User: msmith
- * Date: 8/1/13
- * Time: 3:27 PM
- * To change this template use File | Settings | File Templates.
+ * Collection of static methods for creating meshes. Creating binary/mosaic images. Performing some basic operations.
+ *
+ *
  */
 public class DeformableMesh3DTools {
 
     /**
-     * makes a rectangular prism mesh with triangular elements.
+     * Makes a rectangular prism mesh with triangular elements.
+     *
      * @param width size in x direction
      * @param height size in y direction
      * @param depth size in z direction
@@ -1013,56 +1013,101 @@ public class DeformableMesh3DTools {
 
     }
 
+    /**
+     * Creates a 2x2x2 test block.
+     *
+     * @see DeformableMesh3DTools#createTestBlock(double, double, double)
+     *
+     * @return
+     */
     public static DeformableMesh3D createTestBlock(){
+        return createTestBlock(2, 2, 2);
+    }
+
+    /**
+     *                          -w/2,-h/2, d/2
+     *                          0------------------1
+     *                         /                  /|
+     *                        /                  / |
+     *                       /  |               /  |
+     *                      3------------------2   |
+     *                      |   4-  -   -   -  |  -5
+     *                      |  /               |  /
+     *                      |                  | /
+     *                      |                  |/
+     *                      7------------------6
+     *                                          w/2,h/2, -d/2
+     *
+     * @param w
+     * @param h
+     * @param depth
+     * @return
+     */
+    public static DeformableMesh3D createTestBlock(double w, double h, double depth){
         ArrayList<double[]> pts = new ArrayList<double[]>();
         ArrayList<int[]> connections = new ArrayList<int[]>();
         ArrayList<int[]> triangles = new ArrayList<int[]>();
 
-        pts.add(new double[]{-1, -1, 1});
-        pts.add(new double[]{-1, 1, 1});
-        pts.add(new double[]{1, 1, 1});
-        pts.add(new double[]{1, -1, 1});
+        pts.add(new double[]{-w/2, -h/2, depth/2});
+        pts.add(new double[]{-w/2, h/2, depth/2});
+        pts.add(new double[]{w/2, h/2, depth/2});
+        pts.add(new double[]{w/2, -h/2, depth/2});
 
-        pts.add(new double[]{-1, -1, -1});
-        pts.add(new double[]{-1, 1, -1});
-        pts.add(new double[]{1, 1, -1});
-        pts.add(new double[]{1, -1, -1});
+        pts.add(new double[]{-w/2, -h/2, -depth/2});
+        pts.add(new double[]{-w/2, h/2, -depth/2});
+        pts.add(new double[]{w/2, h/2, -depth/2});
+        pts.add(new double[]{w/2, -h/2, -depth/2});
 
+        //back face
         connections.add(new int[]{0, 4});
         connections.add(new int[]{0, 1});
         connections.add(new int[]{1, 5});
-        connections.add(new int[]{1, 2});
-        connections.add(new int[]{2, 6});
-        connections.add(new int[]{2, 3});
+        connections.add(new int[]{5, 4});
+
+        //front face
         connections.add(new int[]{3, 7});
-        connections.add(new int[]{3, 0});
-        connections.add(new int[]{4, 5});
-        connections.add(new int[]{5, 6});
+        connections.add(new int[]{2, 3});
+        connections.add(new int[]{2, 6});
         connections.add(new int[]{6, 7});
+
+        //front-back connections.
+        connections.add(new int[]{3, 0});
+        connections.add(new int[]{1, 2});
+        connections.add(new int[]{5, 6});
         connections.add(new int[]{7, 4});
 
+        //top
         triangles.add(new int[]{0, 2, 1});
         triangles.add(new int[]{0,3,2});
+        //top-diagonal
+        connections.add(new int[]{0, 2});
 
+        //back
         triangles.add(new int[]{0, 1, 5});
         triangles.add(new int[]{0,5,4});
+        connections.add(new int[]{0, 5});
 
+        //right
         triangles.add(new int[]{1,2,5});
         triangles.add(new int[]{5,2,6});
+        connections.add(new int[]{5, 2});
 
+        //front
         triangles.add(new int[]{2,3,6});
         triangles.add(new int[]{6,3,7});
+        connections.add(new int[]{3, 6});
 
+        //left
         triangles.add(new int[]{3,0,4});
         triangles.add(new int[]{3,4,7});
+        connections.add(new int[]{3, 4});
 
+        //bottom
         triangles.add(new int[]{4,5,6});
         triangles.add(new int[]{4,6,7});
+        connections.add(new int[]{4, 6});
+        return new DeformableMesh3D(pts, connections, triangles);
 
-        final DeformableMesh3D mesh = new DeformableMesh3D(pts, connections, triangles);
-        mesh.create3DObject();
-
-        return mesh;
     }
 
     /**
@@ -1470,6 +1515,16 @@ public class DeformableMesh3DTools {
 
     }
 
+    /**
+     * Each mesh is constructed of 3 essential data values: positions, triangles, connections.
+     *
+     *   positions : double[] of length 3*vertex.
+     *   trianges : int[] of length triangles.
+     *   connection_index : int[] of length 2*connections
+     *
+     * @param meshes
+     * @return
+     */
     public static DeformableMesh3D mergeMeshes(List<DeformableMesh3D> meshes){
         int posCount = 0;
         int triCount = 0;
@@ -1486,6 +1541,7 @@ public class DeformableMesh3DTools {
         int offset = 0;
         int toff = 0;
         int coff = 0;
+
         for(DeformableMesh3D mesh: meshes){
             System.arraycopy(mesh.positions, 0, points, offset, mesh.positions.length);
             for(int i = 0; i<mesh.triangle_index.length; i++){

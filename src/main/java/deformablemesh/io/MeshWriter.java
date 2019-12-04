@@ -2,6 +2,7 @@ package deformablemesh.io;
 
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Triangle3D;
+import deformablemesh.geometry.WireframeMesh;
 import deformablemesh.track.MeshTracker;
 import deformablemesh.track.Track;
 
@@ -23,11 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 /**
  * For writing meshes incrementally. Opens file writes a mesh and then closes it.
@@ -380,7 +377,20 @@ public class MeshWriter {
 
     }
 
+    public static void exportToStlWireframe(File output, List<Track> tracks, double[] offset, double SCALE, Integer frame) throws IOException {
+        List<Track> wireFrameTracks = new ArrayList<>();
 
+        for(Track track: tracks){
+            if(track.containsKey(frame)){
+                DeformableMesh3D wireframe = new WireframeMesh(track.getMesh(frame)).getWireFrameMesh();
+                Track t = new Track("wire-" + track.getName(), track.getColor());
+                t.addMesh(frame, wireframe);
+                wireFrameTracks.add(t);
+            }
 
+        }
 
+        saveStlMesh(output, wireFrameTracks, offset, SCALE, frame);
+
+    }
 }

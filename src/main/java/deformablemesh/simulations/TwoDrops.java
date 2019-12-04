@@ -2,6 +2,7 @@ package deformablemesh.simulations;
 
 import deformablemesh.externalenergies.ExternalEnergy;
 import deformablemesh.externalenergies.StericMesh;
+import deformablemesh.externalenergies.TriangleAreaDistributor;
 import deformablemesh.externalenergies.VolumeConservation;
 import deformablemesh.geometry.*;
 import deformablemesh.meshview.MeshFrame3D;
@@ -16,29 +17,31 @@ import java.util.*;
 public class TwoDrops {
     DeformableMesh3D a;
     DeformableMesh3D b;
-    double gravityMagnitude = 0.00001;
-    double surfaceFactor = 0.0002;
-    double volumeConservation = 0.01;
-    double steric = 0.0;
-    double sticky = 0.01;
+    double gravityMagnitude = 0.001;
+    double surfaceFactor = 1.0;
+    double volumeConservation = 0.5;
+    double steric = 0.01;
+    double sticky = 1;
+    double normalize = 0.0;
     List<StickyVertex> links = new ArrayList<>();
+    List<StericMesh> colliders = new ArrayList<>();
     public TwoDrops(){
-        Sphere sA = new Sphere(new double[]{-0.1, 0, 0.5}, 0.1);
-        //a = new NewtonMesh3D(RayCastMesh.rayCastMesh(sA, sA.getCenter(), 2));
-        a = RayCastMesh.rayCastMesh(sA, sA.getCenter(), 2);
-        a.GAMMA = 1;
-        a.ALPHA = 0.01;
-        a.BETA = 0.0;
+        Sphere sA = new Sphere(new double[]{-0.075, 0, 0.2}, 0.1);
+        a = new NewtonMesh3D(RayCastMesh.rayCastMesh(sA, sA.getCenter(), 1));
+        //a = RayCastMesh.rayCastMesh(sA, sA.getCenter(), 1);
+        a.GAMMA = 100;
+        a.ALPHA = 0.1;
+        a.BETA = 0.01;
         a.reshape();
         a.setShowSurface(true);
         a.setColor(Color.RED);
-        Sphere sB = new Sphere(new double[]{0.1, 0, 0.5}, 0.1);
-        //b = new NewtonMesh3D(RayCastMesh.rayCastMesh(sB, sB.getCenter(), 2));
-        b = RayCastMesh.rayCastMesh(sB, sB.getCenter(), 2);
+        Sphere sB = new Sphere(new double[]{0.075, 0, 0.2}, 0.1);
+        b = new NewtonMesh3D(RayCastMesh.rayCastMesh(sB, sB.getCenter(), 1));
+        //b = RayCastMesh.rayCastMesh(sB, sB.getCenter(), 1);
 
-        b.ALPHA = 0.01;
-        b.BETA = 0.001;
-        b.GAMMA = 1;
+        b.ALPHA = 0.1;
+        b.BETA = 0.01;
+        b.GAMMA = 100;
         b.reshape();
         b.setColor(Color.BLUE);
         b.setShowSurface(true);
@@ -59,6 +62,10 @@ public class TwoDrops {
                 return pos[2];
             }
         };
+        if(normalize!=0) {
+            a.addExternalEnergy(new TriangleAreaDistributor(null, a, normalize));
+            b.addExternalEnergy(new TriangleAreaDistributor(null, b, normalize));
+        }
 
         ExternalEnergy hardSurface = new ExternalEnergy(){
 
@@ -67,7 +74,7 @@ public class TwoDrops {
                 for(int i = 0; i<fx.length; i++){
                     double z = positions[i*3 + 2];
                     if(z<0){
-                        fz[i] += gravityMagnitude + surfaceFactor;
+                        fz[i] += -z*(-gravityMagnitude + surfaceFactor);
                     }
                 }
             }
@@ -96,8 +103,13 @@ public class TwoDrops {
         }
 
         if(steric != 0){
-            a.addExternalEnergy(new StericMesh(a, b, steric));
-            b.addExternalEnergy(new StericMesh(b, a, steric));
+            StericMesh asm = new StericMesh(a, b, steric);
+            StericMesh bsm = new StericMesh(b, a, steric);
+
+            a.addExternalEnergy(asm);
+            b.addExternalEnergy(bsm);
+            colliders.add(asm);
+            colliders.add(bsm);
         }
 
 
@@ -218,7 +230,9 @@ public class TwoDrops {
 
     public void createDisplay(){
         MeshFrame3D frame = new MeshFrame3D();
+
         frame.showFrame(true);
+        frame.setBackgroundColor(new Color(0, 60, 0));
         frame.addLights();
         a.create3DObject();
         b.create3DObject();
@@ -238,6 +252,7 @@ public class TwoDrops {
                 System.out.println("stuck!");
             }
         }
+        colliders.forEach(StericMesh::update);
     }
     public static void main(String[] args){
         TwoDrops sim = new TwoDrops();

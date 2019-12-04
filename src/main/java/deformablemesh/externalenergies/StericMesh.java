@@ -32,7 +32,11 @@ public class StericMesh implements ExternalEnergy{
             }
         }
     }
+    public void update(){
 
+        mesh = new InterceptingMesh3D(deformableMesh);
+
+    }
 
     @Override
     public void updateForces(double[] positions, double[] fx, double[] fy, double[] fz) {
