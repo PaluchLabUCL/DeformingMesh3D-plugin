@@ -23,6 +23,16 @@ public class CurvatureCalculator {
 
     public CurvatureCalculator(DeformableMesh3D mesh){
         this.mesh = mesh;
+        prepareMap();
+    }
+
+    public void prepareMap(){
+        for(Triangle3D tri: mesh.triangles){
+            tri.update();
+            addNode(tri.A, tri, node_to_triangle);
+            addNode(tri.B, tri, node_to_triangle);
+            addNode(tri.C, tri, node_to_triangle);
+        }
     }
 
     private void addNode(Node3D n, Triangle3D t, Map<Node3D, List<Triangle3D>> map){
@@ -99,6 +109,15 @@ public class CurvatureCalculator {
 
     }
 
+    /**
+     * Calculates the normal based on the
+     * @param index
+     * @return
+     */
+    public double[] getNormal(int index){
+        Node3D node = mesh.nodes.get(index);
+        return calculateMeanNormal(node, node_to_triangle.get(node));
+    }
 
 
     /**
@@ -259,15 +278,6 @@ public class CurvatureCalculator {
     public List<double[]> calculateCurvature(){
         List<double[]> values = new ArrayList<>();
 
-
-        for(Triangle3D tri: mesh.triangles){
-            tri.update();
-            addNode(tri.A, tri, node_to_triangle);
-            addNode(tri.B, tri, node_to_triangle);
-            addNode(tri.C, tri, node_to_triangle);
-        }
-
-        System.out.println("nodes: " + mesh.nodes.size());
 
         for(Node3D node: mesh.nodes){
             List<Triangle3D> t_angles = node_to_triangle.get(node);
