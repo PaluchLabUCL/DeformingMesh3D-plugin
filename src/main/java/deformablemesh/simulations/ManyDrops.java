@@ -17,11 +17,11 @@ import java.util.List;
 public class ManyDrops {
 
     List<DeformableMesh3D> meshes = new ArrayList<>();
-
+    List<StericMesh> stericMeshes = new ArrayList<>();
     public void start(){
 
-        for(int i = 0; i<10; i++){
-            for(int j = 0; j<10; j++){
+        for(int i = 0; i<3; i++){
+            for(int j = 0; j<3; j++){
                 Sphere sphere = new Sphere(new double[]{i*0.1 - 0.4, j*0.1 - 0.4, 0.2}, 0.05);
                 DeformableMesh3D mesh = new NewtonMesh3D(RayCastMesh.rayCastMesh(sphere, sphere.getCenter(), 1));
                 mesh.setShowSurface(true);
@@ -53,8 +53,9 @@ public class ManyDrops {
 
     }
     double gravityMagnitude = 0.01;
-    double surfaceFactor = 100.1;
+    double surfaceFactor = 10.;
     double volumeConservation = 1;
+    double steric = 0.1;
     public void prepareEnergies(DeformableMesh3D mesh){
         ExternalEnergy gravity = new ExternalEnergy(){
 
@@ -103,6 +104,26 @@ public class ManyDrops {
             mesh.addExternalEnergy(new VolumeConservation(mesh, volumeConservation));
         }
 
+        if(steric != 0){
+
+            for(int i = 0; i<meshes.size(); i++){
+                DeformableMesh3D a = meshes.get(i);
+                for(int j = i+1; j<meshes.size(); j++){
+                    DeformableMesh3D b = meshes.get(j);
+                    StericMesh asm = new StericMesh(a, b, steric);
+                    StericMesh bsm = new StericMesh(b, a, steric);
+
+                    a.addExternalEnergy(asm);
+                    b.addExternalEnergy(bsm);
+
+                    stericMeshes.add(asm);
+                    stericMeshes.add(bsm);
+
+                }
+            }
+
+        }
+
 
     }
 
@@ -111,6 +132,7 @@ public class ManyDrops {
         for(DeformableMesh3D mesh: meshes){
             mesh.update();
         }
+        stericMeshes.forEach(StericMesh::update);
 
     }
 
@@ -122,6 +144,8 @@ public class ManyDrops {
             step();
         }
     }
+
+
 
     public static void main(String[] args){
 

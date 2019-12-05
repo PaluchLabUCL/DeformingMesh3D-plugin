@@ -16,7 +16,7 @@ public class InterceptingMesh3D implements Interceptable{
     final DeformableMesh3D mesh;
     List<InterceptingTriangle3D> triangles;
     double[] center;
-
+    Box3D bounds;
     public InterceptingMesh3D(DeformableMesh3D mesh){
         mesh.triangles.forEach(Triangle3D::update);
         this.mesh = mesh;
@@ -24,6 +24,7 @@ public class InterceptingMesh3D implements Interceptable{
         center= new double[3];
         double[] a;
         double sum = 0;
+        bounds = mesh.getBoundingBox();
         for(Triangle3D triangle: mesh.triangles){
             double area = triangle.area;
             if(area<=0){
@@ -65,6 +66,9 @@ public class InterceptingMesh3D implements Interceptable{
 
     @Override
     public boolean contains(double[] pt) {
+        if(!bounds.contains(pt)){
+            return false;
+        }
         List<Intersection> ints = getIntersections(pt, Vector3DOps.zhat);
         ints.sort((a,b)->Double.compare(a.location[2], b.location[2]));
 

@@ -13,6 +13,7 @@ import java.util.Set;
 public class StericMesh implements ExternalEnergy{
     InterceptingMesh3D mesh;
     final DeformableMesh3D deformableMesh;
+    final DeformableMesh3D id;
     final double weight;
     boolean staticShape = true;
     Map<Integer, Set<Triangle3D>> map = new HashMap<>();
@@ -20,6 +21,7 @@ public class StericMesh implements ExternalEnergy{
     public StericMesh(DeformableMesh3D id, DeformableMesh3D neighbor, double weight){
         //mesh = new InterceptingMesh3D(a);
         deformableMesh = neighbor;
+        this.id = id;
         this.weight=weight;
 
         for(Triangle3D t: id.triangles){
@@ -33,9 +35,7 @@ public class StericMesh implements ExternalEnergy{
         }
     }
     public void update(){
-
         mesh = new InterceptingMesh3D(deformableMesh);
-
     }
 
     @Override
@@ -43,6 +43,8 @@ public class StericMesh implements ExternalEnergy{
         if(!staticShape || mesh==null) {
             mesh = new InterceptingMesh3D(deformableMesh);
         }
+
+
         double[] pt = new double[3];
         double[] center = mesh.getCenter();
         for(int i = 0; i<fx.length; i++){

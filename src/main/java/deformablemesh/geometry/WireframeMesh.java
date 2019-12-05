@@ -108,7 +108,7 @@ public class WireframeMesh {
         wfMesh.GAMMA = mesh.GAMMA;
         wfMesh.BETA = mesh.BETA;
         wfMesh.ALPHA = mesh.ALPHA;
-        
+
         wfMesh.create3DObject();
         frame.addDataObject(wfMesh.data_object);
         wfMesh.setColor(Color.BLUE);
