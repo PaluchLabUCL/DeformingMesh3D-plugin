@@ -23,6 +23,7 @@ public class VolumeDataObject implements DataObject {
     Sizeable3DSurface surface;
     double[][][] texture_data;
     double scale;
+    /*size of the backing texture block, (w, h, d), essentially pixels.*/
     int[] sizes;
     double[] offsets;
     double[] lengths;
@@ -36,7 +37,7 @@ public class VolumeDataObject implements DataObject {
     }
 
     /**
-     * Sets the position of the lowest corner.
+     * Sets the position of the lowest corner. .
      * @param x
      * @param y
      * @param z
@@ -56,6 +57,11 @@ public class VolumeDataObject implements DataObject {
         }
     }
 
+    /**
+     * For creating a volume representing the all of the pixes of the provided mesh image stack.
+     *
+     * @param stack
+     */
     public void setTextureData(MeshImageStack stack){
         int lowx = 0;
         int highx = stack.getWidthPx() - 1;
@@ -72,23 +78,27 @@ public class VolumeDataObject implements DataObject {
         if(texture_data==null||d!=texture_data[0][0].length||h!=texture_data[0].length||w!=texture_data.length){
             texture_data = new double[w][h][d];
         }
+
         sizes = new int[]{w, h, d};
 
         for(int z = 0; z<d; z++){
             for(int y = 0; y<h; y++){
                 for(int x = 0; x<w; x++){
-
-                    texture_data[x][y][z] = stack.getValue(x, y, z);
-
+                    texture_data[x][h - y - 1][z] = stack.getValue(x, y, z);
                 }
             }
         }
-
+        setPosition(0, 0, -stack.offsets[2]);
         updateVolume(stack);
     }
 
 
-
+    /**
+     * For creating a volume that shows part of an image stack.
+     *
+     * @param stack
+     * @param pts
+     */
     public void setTextureData(MeshImageStack stack, List<int[]> pts){
         int lowx = Integer.MAX_VALUE;
         int highx = -lowx;
@@ -134,13 +144,18 @@ public class VolumeDataObject implements DataObject {
         Color volumeColor = color;
         int min = 0;
         int max = 1;
+        //size of the texture backing data.
         double[] unit = {sizes[0], sizes[1], sizes[2]};
+
+        //size of the texture backing data in normalized units.
         lengths = original.scaleToNormalizedLength(unit);
+
         VolumeTexture volume = new VolumeTexture(texture_data, min, max, new Color3f(volumeColor));
         if(surface==null){
             /*
              * The surface is positioned such that the origin corner is at -lengths[0]/2, -lengths[1]/2, 0
              */
+            System.out.println("offsets: " + Arrays.toString(offsets));
             surface = new Sizeable3DSurface(volume, sizes, lengths);
 
             tg = new TransformGroup();
@@ -162,23 +177,7 @@ public class VolumeDataObject implements DataObject {
         } else{
             surface.setTexture(volume);
         }
-        /**
-         * public void updateVolume(){
-         *         if(!showingVolume) return;
-         *
-         *         Color volumeColor = segmentationController.getVolumeColor();
-         *         VolumeTexture volume = new VolumeTexture(texture_data, min, max, new Color3f(volumeColor));
-         *         if(surface==null){
-         *             double scale = segmentationController.getZToYScale();
-         *             int[] sizes = segmentationController.getOriginalStackDimensions();
-         *             surface = new ThreeDSurface(volume, sizes[0], sizes[1], sizes[2], scale);
-         *             double[] offsets = segmentationController.getSurfaceOffsets();
-         *             addDataObject(surface, offsets[0], offsets[1], offsets[2]);
-         *         } else{
-         *             surface.setTexture(volume);
-         *         }
-         *     }
-         */
+
     }
 
     @Override

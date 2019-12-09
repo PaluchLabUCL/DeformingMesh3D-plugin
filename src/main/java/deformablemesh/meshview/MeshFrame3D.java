@@ -398,6 +398,7 @@ public class MeshFrame3D {
         int h = stack.data[0].length;
         int w = stack.data[0][0].length;
 
+
         //create a new one if there isn't one, or if the dimensions do not match.
         if(texture_data==null||d!=texture_data[0][0].length||h!=texture_data[0].length||w!=texture_data.length){
             texture_data = new double[w][h][d];

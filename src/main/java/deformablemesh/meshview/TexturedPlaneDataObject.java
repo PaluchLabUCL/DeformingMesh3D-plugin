@@ -31,7 +31,11 @@ public class TexturedPlaneDataObject implements DataObject {
     double[] offsets;
     VolumeTexture volume;
     public TexturedPlaneDataObject(DeformableMesh3D mesh, MeshImageStack stack){
-
+        /*for(int i = 0; i<mesh.positions.length/3; i++){
+            mesh.positions[3*i] += 0.5*stack.offsets[0];
+            mesh.positions[3*i + 1] += 0.5*stack.offsets[1];
+            mesh.positions[3*i + 1] += 0.5*stack.offsets[2];
+        }*/
         surfaces = new IndexedTriangleArray(mesh.nodes.size(), GeometryArray.COORDINATES|GeometryArray.NORMALS, 3*mesh.triangles.size());
         surfaces.setCoordinates(0, mesh.positions);
         surfaces.setCoordinateIndices(0, mesh.triangle_index);
@@ -56,9 +60,9 @@ public class TexturedPlaneDataObject implements DataObject {
 
     public void setTextureData(MeshImageStack stack){
         this.stack = stack;
-        int w = stack.data.length;
-        int h = stack.data[0].length;
-        int d = stack.data[0][0].length;
+        int w = stack.getWidthPx();
+        int h = stack.getHeightPx();
+        int d = stack.getNSlices();
 
         int lowx = 0;
         int highx = w;
@@ -80,7 +84,7 @@ public class TexturedPlaneDataObject implements DataObject {
         for(int z = 0; z<d; z++){
             for(int y = 0; y<h; y++){
                 for(int x = 0; x<w; x++){
-                    texture_data[x][y][z] = stack.data[x][y][z];
+                    texture_data[x][y][z] = stack.getValue(x, y, z);
                 }
             }
         }
@@ -107,12 +111,19 @@ public class TexturedPlaneDataObject implements DataObject {
 
         TexCoordGeneration texCGen = new TexCoordGeneration();
         texCGen.setFormat(TexCoordGeneration.TEXTURE_COORDINATE_3);
+        double xf = stack.getWidthPx()*stack.pixel_dimensions[0];
+        double yf = stack.getHeightPx()*stack.pixel_dimensions[1];
+        double zf = stack.getNSlices()*stack.pixel_dimensions[2];
+        double longest = xf > yf ?
+                zf > xf ? zf : xf :
+                zf > yf ? zf : yf;
+        xf = longest/xf;
+        yf = longest/yf;
+        zf = longest/zf;
 
-        double[] pd = stack.offsets;
-        System.out.println(Arrays.toString(pd));
-        Vector4f xPlane = new Vector4f(1/(float)pd[0], 0, 0, 0);
-        Vector4f yPlane = new Vector4f(0, 1/(float)pd[1], 0, 0);
-        Vector4f zPlane = new Vector4f(0, 0, 1/(float)pd[2], 0);
+        Vector4f xPlane = new Vector4f((float)xf, 0, 0, 0);
+        Vector4f yPlane = new Vector4f(0, (float)yf, 0, 0);
+        Vector4f zPlane = new Vector4f(0, 0, (float)zf, 0);
         texCGen.setPlaneS(xPlane);
         texCGen.setPlaneT(yPlane);
         texCGen.setPlaneR(zPlane);
