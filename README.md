@@ -110,6 +110,36 @@ controls.submit( function(){
 
 });
 ```
+
+Create a movie of the current mesh deforming. Frames determines how many frames will be in the resulting movie.
+and steps is how many steps of deformation between frames. *Warning, this will effectively erase your undo history.*
+
+```javascript
+
+ImageStack = Java.type("ij.ImageStack");
+ColorProcessor = Java.type("ij.process.ColorProcessor");
+ImageStack = Java.type("ij.ImageStack");
+frames = 100;
+steps = 3;
+controls.submit( function(){
+    mf3d = controls.getMeshFrame3D();
+    stack = 0;
+    for(var i = 0; i<frames; i++){
+        controls.deformMesh(steps);
+        img = mf3d.snapShot();
+        proc = new ColorProcessor(img);
+        if(stack==0){
+            stack = new ImageStack(proc.getWidth(), proc.getHeight());
+        }
+        stack.addSlice(proc);
+    }
+    plus = new ImagePlus();
+    plus.setStack(stack);
+    plus.show();
+
+});
+
+```
 # Changes
 0.36
 

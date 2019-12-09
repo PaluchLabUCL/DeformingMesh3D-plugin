@@ -57,21 +57,37 @@ public class VolumeDataObject implements DataObject {
     }
 
     public void setTextureData(MeshImageStack stack){
+        int lowx = 0;
+        int highx = stack.getWidthPx() - 1;
+        int lowy = 0;
+        int highy = stack.getHeightPx() - 1;
+        int lowz = 0;
+        int highz = stack.getNSlices() - 1;
 
-        int w = stack.data.length;
-        int h = stack.data[0].length;
-        int d = stack.data[0][0].length;
-        List<int[]> points = new ArrayList<>();
+        int d = highz - lowz + 1;
+        int h = highy - lowy + 1;
+        int w = highx - lowx + 1;
+
+        //create a new one if there isn't one, or if the dimensions do not match.
+        if(texture_data==null||d!=texture_data[0][0].length||h!=texture_data[0].length||w!=texture_data.length){
+            texture_data = new double[w][h][d];
+        }
+        sizes = new int[]{w, h, d};
+
         for(int z = 0; z<d; z++){
             for(int y = 0; y<h; y++){
                 for(int x = 0; x<w; x++){
-                    points.add(new int[]{x,y,z});
+
+                    texture_data[x][y][z] = stack.getValue(x, y, z);
+
                 }
             }
         }
 
-       setTextureData(stack, points);
+        updateVolume(stack);
     }
+
+
 
     public void setTextureData(MeshImageStack stack, List<int[]> pts){
         int lowx = Integer.MAX_VALUE;
@@ -135,7 +151,6 @@ public class VolumeDataObject implements DataObject {
             tg.getTransform(tt);
 
             Vector3d n = new Vector3d(offsets[0], offsets[1], offsets[2]);
-
             tt.setTranslation(n);
 
             tg.setTransform(tt);
@@ -147,6 +162,23 @@ public class VolumeDataObject implements DataObject {
         } else{
             surface.setTexture(volume);
         }
+        /**
+         * public void updateVolume(){
+         *         if(!showingVolume) return;
+         *
+         *         Color volumeColor = segmentationController.getVolumeColor();
+         *         VolumeTexture volume = new VolumeTexture(texture_data, min, max, new Color3f(volumeColor));
+         *         if(surface==null){
+         *             double scale = segmentationController.getZToYScale();
+         *             int[] sizes = segmentationController.getOriginalStackDimensions();
+         *             surface = new ThreeDSurface(volume, sizes[0], sizes[1], sizes[2], scale);
+         *             double[] offsets = segmentationController.getSurfaceOffsets();
+         *             addDataObject(surface, offsets[0], offsets[1], offsets[2]);
+         *         } else{
+         *             surface.setTexture(volume);
+         *         }
+         *     }
+         */
     }
 
     @Override
