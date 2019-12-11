@@ -6,10 +6,7 @@ import deformablemesh.gui.FrameListener;
 import deformablemesh.gui.PropertySaver;
 import deformablemesh.gui.RingController;
 import deformablemesh.io.MeshWriter;
-import deformablemesh.meshview.MeshFrame3D;
-import deformablemesh.meshview.PickSelector;
-import deformablemesh.meshview.PlotSurface;
-import deformablemesh.meshview.VolumeDataObject;
+import deformablemesh.meshview.*;
 import deformablemesh.ringdetection.FurrowTransformer;
 import deformablemesh.track.Track;
 import deformablemesh.util.*;
@@ -877,6 +874,16 @@ public class SegmentationController {
         if(model.hasSelectedMesh()) {
             deformMesh(-1);
         }
+    }
+
+    public void showTexturedMeshSurface(){
+        submit(()->{
+
+            DeformableMesh3D mesh = getSelectedMesh();
+            TexturedPlaneDataObject tpdo = new TexturedPlaneDataObject(mesh, model.stack);
+            meshFrame3D.addTransientObject(tpdo);
+
+        });
     }
 
     /**

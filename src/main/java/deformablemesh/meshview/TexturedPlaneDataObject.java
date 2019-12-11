@@ -30,14 +30,15 @@ public class TexturedPlaneDataObject implements DataObject {
     double[] lengths;
     double[] offsets;
     VolumeTexture volume;
+    float min = 0;
+    float max = 1;
     public TexturedPlaneDataObject(DeformableMesh3D mesh, MeshImageStack stack){
-        /*for(int i = 0; i<mesh.positions.length/3; i++){
-            mesh.positions[3*i] += 0.5*stack.offsets[0];
-            mesh.positions[3*i + 1] += 0.5*stack.offsets[1];
-            mesh.positions[3*i + 1] += 0.5*stack.offsets[2];
-        }*/
+        double[] positions = mesh.positions;
+
+        offsets = new double[]{ stack.offsets[0], stack.offsets[1], stack.offsets[2]};
+
         surfaces = new IndexedTriangleArray(mesh.nodes.size(), GeometryArray.COORDINATES|GeometryArray.NORMALS, 3*mesh.triangles.size());
-        surfaces.setCoordinates(0, mesh.positions);
+        surfaces.setCoordinates(0, positions);
         surfaces.setCoordinateIndices(0, mesh.triangle_index);
         surfaces.setNormals(0, generateNormals(mesh.positions, mesh.triangle_index));
         surfaces.setNormalIndices(0, mesh.triangle_index);
@@ -105,29 +106,32 @@ public class TexturedPlaneDataObject implements DataObject {
 
 
     private Appearance createTexturedSurface(){
-        int min = 0;
-        int max = 1;
         VolumeTexture texture = new VolumeTexture(texture_data, min, max, new Color3f(Color.WHITE));
 
         TexCoordGeneration texCGen = new TexCoordGeneration();
         texCGen.setFormat(TexCoordGeneration.TEXTURE_COORDINATE_3);
+
         double xf = stack.getWidthPx()*stack.pixel_dimensions[0];
         double yf = stack.getHeightPx()*stack.pixel_dimensions[1];
         double zf = stack.getNSlices()*stack.pixel_dimensions[2];
         double longest = xf > yf ?
                 zf > xf ? zf : xf :
                 zf > yf ? zf : yf;
+        System.out.println(xf + ", " + yf + ", " + zf);
+
         xf = longest/xf;
         yf = longest/yf;
         zf = longest/zf;
+        System.out.println( "scaled " + xf + ", " + yf + ", " + zf);
+        System.out.println( "offset: " + (offsets[0]*xf) + ", " + (offsets[1]*yf) + ", " + (offsets[2]*zf));
+        Vector4f xPlane = new Vector4f((float)xf, 0, 0, (float)(offsets[0]*xf));
+        Vector4f yPlane = new Vector4f(0, -(float)yf, 0, (float)(offsets[1]*yf));
+        Vector4f zPlane = new Vector4f(0, 0, (float) zf, (float)(offsets[2]*zf));
 
-        Vector4f xPlane = new Vector4f((float)xf, 0, 0, 0);
-        Vector4f yPlane = new Vector4f(0, (float)yf, 0, 0);
-        Vector4f zPlane = new Vector4f(0, 0, (float)zf, 0);
         texCGen.setPlaneS(xPlane);
         texCGen.setPlaneT(yPlane);
         texCGen.setPlaneR(zPlane);
-
+        texCGen.setPlaneQ(new Vector4f(0, 0, 1, 0));
 
         Appearance appear = new Appearance();
 
@@ -151,12 +155,6 @@ public class TexturedPlaneDataObject implements DataObject {
 
 
     public void updateVolume(){
-
-
-        int min = 0;
-        int max = 1;
-        double[] unit = {sizes[0], sizes[1], sizes[2]};
-        lengths = stack.scaleToNormalizedLength(unit);
         volume = new VolumeTexture(texture_data, min, max, new Color3f(volumeColor));
 
     }
@@ -165,7 +163,6 @@ public class TexturedPlaneDataObject implements DataObject {
     float[] generateNormals(double[] positions, int[] triangleIndexes){
         float[] normals = new float[positions.length];
         int t = triangleIndexes.length/3;
-
 
         for(int i = 0; i<t; i++){
             int dex = i*3;
@@ -246,6 +243,7 @@ public class TexturedPlaneDataObject implements DataObject {
         } else{
             surface_object.setAppearance(hiddenSurface());
         }
+
         this.showSurface = showSurface;
     }
 

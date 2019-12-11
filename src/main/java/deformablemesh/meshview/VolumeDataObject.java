@@ -30,7 +30,8 @@ public class VolumeDataObject implements DataObject {
 
     BranchGroup branchGroup;
     TransformGroup tg;
-
+    double min  = 0;
+    double max = 1;
     public VolumeDataObject(Color c) {
         color = c;
         offsets = new double[]{0,0,0};
@@ -80,7 +81,9 @@ public class VolumeDataObject implements DataObject {
         }
 
         sizes = new int[]{w, h, d};
-
+        double[] unit = {sizes[0], sizes[1], sizes[2]};
+        //size of the texture backing data in normalized units.
+        lengths = stack.scaleToNormalizedLength(new double[]{sizes[0], sizes[1], sizes[2]});
         for(int z = 0; z<d; z++){
             for(int y = 0; y<h; y++){
                 for(int x = 0; x<w; x++){
@@ -89,7 +92,7 @@ public class VolumeDataObject implements DataObject {
             }
         }
         setPosition(0, 0, -stack.offsets[2]);
-        updateVolume(stack);
+        updateVolume();
     }
 
 
@@ -130,32 +133,30 @@ public class VolumeDataObject implements DataObject {
         for(int[] pt: pts){
             texture_data[pt[0]-lowx][h - pt[1] + lowy - 1][pt[2]-lowz] = 255;
         }
-        updateVolume(stack);
+        updateVolume();
 
+    }
+
+    public void setMinMaxRange(double min, double max){
+        this.min = min;
+        this.max = max;
+        updateVolume();
     }
 
     /**
      * Creates the 3D representation of the data in "texture_data"
      *
      */
-    public void updateVolume(MeshImageStack original){
-
-
+    public void updateVolume(){
         Color volumeColor = color;
-        int min = 0;
-        int max = 1;
         //size of the texture backing data.
-        double[] unit = {sizes[0], sizes[1], sizes[2]};
 
-        //size of the texture backing data in normalized units.
-        lengths = original.scaleToNormalizedLength(unit);
 
         VolumeTexture volume = new VolumeTexture(texture_data, min, max, new Color3f(volumeColor));
         if(surface==null){
             /*
              * The surface is positioned such that the origin corner is at -lengths[0]/2, -lengths[1]/2, 0
              */
-            System.out.println("offsets: " + Arrays.toString(offsets));
             surface = new Sizeable3DSurface(volume, sizes, lengths);
 
             tg = new TransformGroup();
