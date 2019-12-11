@@ -20,8 +20,8 @@ public class ConnectionRemesher {
 
     MeshFrame3D frame;
 
-    double minLength = 0.075;
-    double maxLength = 0.2;
+    double minLength = 0.03;
+    double maxLength = 0.05;
 
     Map<Node3D, List<Triangle3D>> nodeToTriangle = new HashMap<>();
     Map<Node3D, List<Connection3D>> nodeToConnection = new HashMap<>();
@@ -80,6 +80,21 @@ public class ConnectionRemesher {
 
 
     }
+
+    public Connection3D getShortestConnection(){
+        double min = Double.MAX_VALUE;
+        Connection3D s = null;
+        for(Connection3D c: connections){
+            c.update();
+            double l = c.length;
+            if(l<min){
+                s = c;
+                min = l;
+            }
+        }
+        return s;
+    }
+
     public DeformableMesh3D remesh(DeformableMesh3D original){
         prepareWorkSpace(original);
         double ml = 0;
@@ -136,20 +151,6 @@ public class ConnectionRemesher {
 
         }
 
-        int[] triangle_indexes = new int[3*triangles.size()];
-        int[] connection_indexes = new int[2*connections.size()];
-        int dex = 0;
-        for(Triangle3D t: triangles){
-            triangle_indexes[dex++] = t.A.index;
-            triangle_indexes[dex++] = t.B.index;
-            triangle_indexes[dex++] = t.C.index;
-        }
-
-        dex = 0;
-        for(Connection3D c: connections){
-            connection_indexes[dex++] = c.A.index;
-            connection_indexes[dex++] = c.B.index;
-        }
         System.out.println("after: " + triangles.size() + " triangles. " + connections.size() + " connections");
 
         List<Connection3D> shorties = new ArrayList<>();
@@ -166,16 +167,48 @@ public class ConnectionRemesher {
 
 
         }
-        System.out.println(longOnes.size() + " too long. " + shorties.size() + " too short");
-        List<Connection3D> removed = new ArrayList<>();
-        for(Connection3D tooShort: shorties){
 
-            if(removeShortConnection(tooShort)){
-                removed.add(tooShort);
+
+
+        System.out.println(longOnes.size() + " too long. " + shorties.size() + " too short");
+
+        Connection3D ss = getShortestConnection();
+        while(ss.length<minLength){
+            if(removeShortConnection(ss)){
+                ss = getShortestConnection();
+            } else{
+                break;
             }
+        }
+
+        nodes.sort(Comparator.comparingInt(n->n.index));
+        Map<Integer, Integer> map = new HashMap<>();
+
+        positions = new double[3*nodes.size()];
+        for(int i = 0; i<nodes.size(); i++){
+
+            double[] pt = nodes.get(i).getCoordinates();
+            positions[3*i] = pt[0];
+            positions[3*i+1] = pt[1];
+            positions[3*i+2] = pt[2];
+            map.put(nodes.get(i).index, i);
 
         }
 
+        int[] triangle_indexes = new int[3*triangles.size()];
+        int[] connection_indexes = new int[2*connections.size()];
+        int dex = 0;
+        for(Triangle3D t: triangles){
+            triangle_indexes[dex++] = map.get(t.A.index);
+            triangle_indexes[dex++] = map.get(t.B.index);
+            triangle_indexes[dex++] = map.get(t.C.index);
+        }
+
+        dex = 0;
+        for(Connection3D c: connections){
+            connection_indexes[dex++] = map.get(c.A.index);
+            connection_indexes[dex++] = map.get(c.B.index);
+        }
 
         return new DeformableMesh3D(positions, connection_indexes, triangle_indexes);
 
@@ -432,42 +465,46 @@ public class ConnectionRemesher {
             removeTriangle(t3d);
 
         }
-
+        //go through each connection at the node.
         for(Connection3D toMap: mappingConnections){
             if(toMap == con){
                 continue;
             }
-
-            Connection3D reMapped = remapConnection(toMap, con.B, con.A);
-            addConnection(reMapped);
             List<Triangle3D> tri = adjacentTriangles.get(toMap);
-            for(Triangle3D t: tri){
-                if(triangles.contains(t)){
-                    //get the opposite edge and connect.
 
-                } else{
-                    adjacentTriangles.get(reMapped).add(t);
+            boolean cleanSwap = true;
+            Connection3D crossEdge = null;
+            for(Triangle3D t: tri){
+                if(triangles.contains(t)) {
+                    //get the opposite edge and connect.
+                    cleanSwap = false;
+                    crossEdge = getOppositeEdge(t, con, toMap);
                 }
             }
 
+            if(cleanSwap){
+                Connection3D reMapped = remapConnection(toMap, con.B, con.A);
+                addConnection(reMapped);
+                adjacentTriangles.get(reMapped).addAll(tri);
+                for(Triangle3D t: tri){
+                    triangleEdges.get(t).add(reMapped);
+                }
+            } else{
+                for(Triangle3D t: tri){
+                    if(!triangles.contains(t)) {
+                        adjacentTriangles.get(crossEdge).add(t);
+                        triangleEdges.get(t).add(crossEdge);
+                    }
+                }
 
-            for(Triangle3D t3d: tri){
-                triangleEdges.get(t3d).add(reMapped);
             }
 
             removeConnection(toMap);
         }
 
-        //Everything should be ok except for the triangles on opposite sides of the removing triangles. They
-        //need to be linked via the adjacency map.
-
-
-
-        List<Connection3D> toRemap = nodeToConnection.get(con.B);
-
-
-
-
+        removeConnection(con);
+        triangles.forEach(this::removeTriangle);
+        nodes.remove(con.B);
         return true;
     }
 
@@ -531,12 +568,12 @@ public class ConnectionRemesher {
         DeformableMeshDataObject d = mesh.data_object;
         d.setWireColor(Color.BLACK);
 
-        //rem.frame.addDataObject(mesh.data_object);
+        rem.frame.addDataObject(mesh.data_object);
 
         DeformableMesh3D rmesh = rem.remesh(mesh);
-
+        rmesh = new ConnectionRemesher().remesh(rmesh);
         rmesh.create3DObject();
-        //rmesh.setShowSurface(true);
+        rmesh.setShowSurface(true);
         rem.frame.addDataObject(rmesh.data_object);
     }
 

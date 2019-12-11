@@ -354,6 +354,15 @@ public class SegmentationController {
         });
     }
 
+    public void reMeshConnections(){
+        main.submit(()->{
+            int f = model.getCurrentFrame();
+            ConnectionRemesher remesher =  new ConnectionRemesher();
+            DeformableMesh3D newMesh = remesher.remesh(getSelectedMesh());
+            addMesh(f, newMesh);
+        });
+    }
+
     /**
      * Experimental mesh generation. This will convert the mesh to a binary stack, then put rectangular meshes around
      * each voxel.
