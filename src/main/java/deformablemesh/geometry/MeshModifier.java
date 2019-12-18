@@ -11,8 +11,10 @@ import org.scijava.java3d.BranchGroup;
 import org.scijava.java3d.utils.geometry.Text2D;
 import org.scijava.java3d.utils.picking.PickIntersection;
 import org.scijava.java3d.utils.picking.PickResult;
+import org.scijava.java3d.PickConeRay;
 import org.scijava.vecmath.Color3f;
 import org.scijava.vecmath.Point3d;
+import org.scijava.vecmath.Vector3d;
 import snakeprogram3d.display3d.CanvasView;
 import snakeprogram3d.display3d.DataObject;
 import snakeprogram3d.display3d.MoveableSphere;
@@ -146,7 +148,20 @@ public class MeshModifier {
     class PointPicking implements CanvasView {
         @Override
         public void updatePick(PickResult[] results, MouseEvent evt, boolean clicked) {
-            if(clicked) {
+            if(evt.isControlDown()){
+                frame.setCanvasControllerEnabled(false);
+                System.out.println("changing furrow to be looking at." + evt);
+                System.out.println(results[0].getPickShape());
+                PickConeRay ray = (PickConeRay)results[0].getPickShape();
+                Vector3d dir = new Vector3d();
+                Point3d origin = new Point3d();
+                ray.getDirection(dir);
+                ray.getOrigin(origin);
+                System.out.println(dir + " :: " + origin);
+                furrow.setDirection(new double[]{dir.x, dir.y, dir.z});
+                evt.consume();
+            } else if(clicked) {
+                    frame.setCanvasControllerEnabled(true);
                     PickResult result = results[0];
                     PickIntersection pick = result.getIntersection(0);
                     Point3d pt = pick.getClosestVertexCoordinates();

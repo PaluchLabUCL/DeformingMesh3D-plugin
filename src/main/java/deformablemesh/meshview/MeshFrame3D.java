@@ -44,6 +44,8 @@ import java.util.stream.Collectors;
  */
 public class MeshFrame3D {
     DataCanvas canvas;
+    KeyListener canvasContoller;
+
     JFrame frame;
     Axis3D axis;
     Map<Object, DataObject> observedObjects = new HashMap<>();
@@ -281,6 +283,19 @@ public class MeshFrame3D {
     public void addKeyListener(KeyListener kl) {
         canvas.addKeyListener(kl);
     }
+
+    public void removeKeyListener(KeyListener kl){
+        canvas.removeKeyListener(kl);
+    }
+
+    /**
+     * For enabling and disabling the default controller.
+     * @param v
+     */
+    public void setCanvasControllerEnabled(boolean v){
+        canvas.setDefaultControllerEnabled(v);
+    }
+
 
     public void toggleAxis() {
         if(axis==null){
