@@ -1,23 +1,20 @@
 package deformablemesh.meshview;
 
+import deformablemesh.MeshImageStack;
+import deformablemesh.geometry.Box3D;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.RayCastMesh;
+import deformablemesh.gui.IntensityRanges;
+import ij.ImagePlus;
 
-import javax.swing.BoxLayout;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JColorChooser;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Container;
-import java.awt.Graphics2D;
-import java.awt.GridBagLayout;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * For loading and viewing meshes.
@@ -25,28 +22,171 @@ import java.awt.image.BufferedImage;
  * Created by msmith on 6/16/16.
  */
 public class MeshViewer {
+    MeshFrame3D meshFrame;
+    public MeshViewer(){
 
-
-    public static void main(String[] args){
         MeshFrame3D viewer = new MeshFrame3D();
         viewer.showFrame(true);
+        viewer.addLights();
+        meshFrame = viewer;
+    }
+
+    public void addDeformableMesh(DeformableMesh3D mesh){
+        meshFrame.addDataObject(mesh.data_object);
+    }
+
+    public static void main(String[] args){
+        MeshViewer viewer = new MeshViewer();
 
         DeformableMesh3D mesh = RayCastMesh.sphereRayCastMesh(0);
-
         mesh.create3DObject();
 
 
-        viewer.addLights();
 
-
-
-        viewer.addDataObject(mesh.data_object);
+        viewer.addDeformableMesh(mesh);
         ConfigMesh config = new ConfigMesh(mesh);
         config.buildGui();
 
+        ImagePlus vol = new ImagePlus(Paths.get(args[0]).toAbsolutePath().toString());
+        VolumeDataObject vdo = new VolumeDataObject(Color.GREEN);
+        MeshImageStack stack = new MeshImageStack(vol);
+        vdo.setTextureData(stack);
+        viewer.meshFrame.addDataObject(vdo);
+
+        viewer.meshFrame.addKeyListener(new KeyListener() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                if(e.getKeyChar()=='v'){
+
+                    VolumeContrastSetter sets = new VolumeContrastSetter(stack);
+                    sets.setPreviewBackgroundColor(viewer.meshFrame.getBackgroundColor());
+                    sets.setVolumeColor(vdo.color);
+                    sets.showDialog(viewer.meshFrame.frame);
+
+                }
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+
+            }
+        });
 
     }
 
+    public void buildMenu(){
+        JMenuBar bar = new JMenuBar();
+        JMenu file = new JMenu("file");
+        bar.add(bar);
+
+        meshFrame.frame.setJMenuBar(bar);
+
+    }
+
+
+
+}
+
+
+class VolumeContrastSetter{
+    VolumeSamplerPanel preview;
+    IntensityRanges range;
+    MeshImageStack mis;
+    JDialog dialog;
+    Color previewBackgroundColor = Color.BLACK;
+    Color volumeColor = Color.WHITE;
+
+    public VolumeContrastSetter(MeshImageStack mis){
+        this.mis = mis;
+    }
+
+    public void setVolumeColor(Color c){
+        volumeColor = c;
+        if(preview != null) {
+            preview.vdo.setColor(c);
+        }
+    }
+
+    public void setPreviewBackgroundColor(Color c){
+        previewBackgroundColor = c;
+        if(preview != null){
+            preview.mf3d.setBackgroundColor(previewBackgroundColor);
+        }
+    }
+
+    public void showDialog(Frame parent){
+        JDialog dialog = new JDialog(parent, "adjust volume contrast");
+        dialog.setModal(true);
+
+        range = new IntensityRanges(mis.getIntensityValues());
+
+        dialog.add(range.getPanel(), BorderLayout.NORTH);
+        dialog.add(create3DPreviewer(dialog), BorderLayout.CENTER);
+        dialog.add(createButtons(), BorderLayout.SOUTH);
+        preview.showSubSample(mis);
+        range.addContrastableListener(preview::setMinMaxClipping);
+
+        dialog.pack();
+        dialog.setVisible(true);
+    }
+
+    public JPanel createButtons(){
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
+        JButton accept = new JButton("accept");
+        JButton cancel = new JButton("cancel");
+        panel.add(Box.createHorizontalGlue());
+        panel.add(accept);
+        panel.add(cancel);
+
+        return panel;
+    }
+
+    public Component create3DPreviewer(Window frame) {
+
+        preview = new VolumeSamplerPanel(frame);
+        preview.showSubSample(mis);
+        return preview.panel;
+    }
+
+    class VolumeSamplerPanel{
+        MeshFrame3D mf3d;
+        Component panel;
+        VolumeDataObject vdo;
+        public VolumeSamplerPanel(Window parent){
+            mf3d = new MeshFrame3D();
+
+            panel = mf3d.asJPanel(parent);
+            System.out.println(previewBackgroundColor);
+            mf3d.setBackgroundColor(previewBackgroundColor);
+            mf3d.showAxis();
+        }
+
+        void showSubSample(MeshImageStack stack){
+            vdo = new VolumeDataObject(volumeColor);
+            double[] l = stack.scaleToNormalizedLength(new double[]{64, 0, 0});
+
+            vdo.setTextureData(
+
+                    stack.createSubStack(
+                            new Box3D(new double[]{0, 0, 0}, l[0], l[0], l[0] )
+                    )
+
+            );
+
+            mf3d.addDataObject(vdo);
+        }
+
+        void setMinMaxClipping(double min, double max){
+            vdo.setMinMaxRange(min/255, max/255);
+        }
+
+    }
 
 }
 

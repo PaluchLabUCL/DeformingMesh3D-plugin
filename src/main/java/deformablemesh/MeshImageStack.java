@@ -403,5 +403,18 @@ public class MeshImageStack {
 
         return sample;
     }
+
+    public double[] getIntensityValues() {
+        double[] n = new double[data.length*data[0].length*data[0][0].length];
+        final int row = data[0][0].length;
+        final int frame = data[0].length*row;
+
+        for(int slice = 0; slice<data.length; slice++){
+            for(int line = 0; line<data[0].length; line++){
+                System.arraycopy(data[slice][line], 0, n,slice*frame + line*row,  row);
+            }
+        }
+        return n;
+    }
 }
 

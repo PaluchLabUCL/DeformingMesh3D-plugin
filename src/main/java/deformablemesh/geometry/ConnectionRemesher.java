@@ -20,7 +20,7 @@ public class ConnectionRemesher {
 
     MeshFrame3D frame;
 
-    double minLength = 0.03;
+    double minLength = 0.04;
     double maxLength = 0.05;
 
     Map<Node3D, List<Triangle3D>> nodeToTriangle = new HashMap<>();
@@ -571,7 +571,7 @@ public class ConnectionRemesher {
         rem.frame.addDataObject(mesh.data_object);
 
         DeformableMesh3D rmesh = rem.remesh(mesh);
-        rmesh = new ConnectionRemesher().remesh(rmesh);
+        //rmesh = new ConnectionRemesher().remesh(rmesh);
         rmesh.create3DObject();
         rmesh.setShowSurface(true);
         rem.frame.addDataObject(rmesh.data_object);

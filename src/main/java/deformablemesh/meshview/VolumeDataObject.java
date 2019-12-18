@@ -37,6 +37,10 @@ public class VolumeDataObject implements DataObject {
         offsets = new double[]{0,0,0};
     }
 
+    public void setColor(Color c){
+        color = c;
+    }
+
     /**
      * Sets the position of the lowest corner. .
      * @param x

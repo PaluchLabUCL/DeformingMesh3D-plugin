@@ -18,11 +18,10 @@ import snakeprogram3d.display3d.ThreeDSurface;
 import snakeprogram3d.display3d.VolumeTexture;
 
 import javax.imageio.ImageIO;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.GraphicsConfiguration;
+import javax.swing.JPanel;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
@@ -49,6 +48,11 @@ public class MeshFrame3D {
     Axis3D axis;
     Map<Object, DataObject> observedObjects = new HashMap<>();
     List<DataObject> transientObjects = new ArrayList<>();
+
+    public Color getBackgroundColor() {
+        return canvas.getBackground();
+    }
+
     static class HudDisplay{
         public void draw(Graphics2D g){}
     }
@@ -126,6 +130,26 @@ public class MeshFrame3D {
         showAxis();
 
 
+    }
+
+    public Component asJPanel(Window parent){
+        GraphicsConfiguration gc = DataCanvas.getBestConfigurationOnSameDevice(parent);
+        Color3f background = new Color3f(1.0f,0.0f,1.0f);
+        canvas = new DataCanvas(gc, background){
+            @Override
+            public void postRender(){
+                J3DGraphics2D g = getGraphics2D();
+                hud.draw(g);
+                g.flush(false);
+            }
+            @Override
+            public Dimension getPreferredSize(){
+                return new Dimension(480, 480);
+            }
+
+        };
+
+        return canvas;
     }
     public void removeLights(){
         removeDataObject(lights);

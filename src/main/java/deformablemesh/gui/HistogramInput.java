@@ -89,33 +89,33 @@ class HistogramInput {
 }
 
 class Histogram{
-    double min,max;
+    double minValue, maxValue;
     final int[] bins = new int[255];
     final double[] values = new double[255];
     public Histogram(){}
     public Histogram(ImageProcessor proc){
 
-        min = Double.MAX_VALUE;
-        max = -Double.MAX_VALUE;
+        minValue = Double.MAX_VALUE;
+        maxValue = -Double.MAX_VALUE;
         final int w = proc.getWidth();
         final int h = proc.getHeight();
         for(int i = 0; i<w*h; i++){
             float v = proc.getf(i);
-            if(v<min) min = v;
-            if(v>max) max = v;
+            if(v<minValue) minValue = v;
+            if(v> maxValue) maxValue = v;
 
         }
 
         for(int i = 0; i<bins.length; i++){
             bins[i] = 0;
-            values[i] = min + (i + 0.5)*(max-min)/bins.length;
+            values[i] = minValue + (i + 0.5)*(maxValue -minValue)/bins.length;
         }
 
-        double range = 255/(max - min);
+        double range = 255/(maxValue - minValue);
         int maxBin = 0;
         for(int i = 0; i<w*h; i++){
             float v = proc.getf(i);
-            int dex = (int)((v - min)*range);
+            int dex = (int)((v - minValue)*range);
             dex = dex>254?254:dex;
             bins[dex]++;
             if(bins[dex]>maxBin){
@@ -126,6 +126,9 @@ class Histogram{
     }
     public double getValue(int index){
         return values[index];
+    }
+    public static void main(String[] args){
+
     }
 }
 
