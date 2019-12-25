@@ -65,6 +65,42 @@ public class VolumeDataObject implements DataObject {
     /**
      * For creating a volume representing the all of the pixes of the provided mesh image stack.
      *
+     */
+    public void setTextureData(VolumeDataObject vdo, int[] low, int[] high){
+        int lowx = low[0];
+        int highx = high[0] - 1;
+        int lowy = low[1];
+        int highy = high[1] - 1;
+        int lowz = low[2];
+        int highz = high[2] - 1;
+
+        int d = highz - lowz + 1;
+        int h = highy - lowy + 1;
+        int w = highx - lowx + 1;
+
+        //create a new one if there isn't one, or if the dimensions do not match.
+        if(texture_data==null||d!=texture_data[0][0].length||h!=texture_data[0].length||w!=texture_data.length){
+            texture_data = new double[w][h][d];
+        }
+
+        sizes = new int[]{w, h, d};
+        double[] unit = {sizes[0], sizes[1], sizes[2]};
+        //size of the texture backing data in normalized units.
+        lengths = vdo.lengths;
+        for(int z = 0; z<d; z++){
+            for(int y = 0; y<h; y++){
+                for(int x = 0; x<w; x++){
+                    texture_data[x][y][z] = vdo.texture_data[low[0] +  x][low[1] + y][low[2] + z];
+                }
+            }
+        }
+        offsets = vdo.offsets;
+        updateVolume();
+    }
+
+    /**
+     * For creating a volume representing the all of the pixes of the provided mesh image stack.
+     *
      * @param stack
      */
     public void setTextureData(MeshImageStack stack){

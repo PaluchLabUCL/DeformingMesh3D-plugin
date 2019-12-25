@@ -52,7 +52,7 @@ public class MeshFrame3D {
     List<DataObject> transientObjects = new ArrayList<>();
 
     public Color getBackgroundColor() {
-        return canvas.getBackground();
+        return canvas.getCanvasBackgroundColor();
     }
 
     static class HudDisplay{
