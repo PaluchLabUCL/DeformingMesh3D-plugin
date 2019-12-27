@@ -54,7 +54,7 @@ public class VolumeDataObject implements DataObject {
             Transform3D tt = new Transform3D();
             tg.getTransform(tt);
 
-            Vector3d n = new Vector3d(x + lengths[0]/2,y + lengths[1]/2,z);
+            Vector3d n = new Vector3d(x, y, z);
 
             tt.setTranslation(n);
 
@@ -224,5 +224,9 @@ public class VolumeDataObject implements DataObject {
     @Override
     public BranchGroup getBranchGroup() {
         return branchGroup;
+    }
+
+    public double[] getMinMax() {
+        return new double[]{min ,max};
     }
 }

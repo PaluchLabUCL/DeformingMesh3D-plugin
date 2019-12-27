@@ -62,13 +62,9 @@ public class MeshFrame3D {
     private SegmentationController segmentationController;
 
     List<DeformableMesh3D> showing = new ArrayList<>();
-    ThreeDSurface surface;
 
-    double[][][] texture_data;
     boolean showingVolume = false;
-    double min = 0;
-    double max = 1;
-
+    VolumeDataObject vdo;
 
     SnakeBox snakeBox;
     RingController ringController;
@@ -426,44 +422,36 @@ public class MeshFrame3D {
      * @param stack
      */
     public void showVolume(MeshImageStack stack){
-        showingVolume=true;
-        setTextureData(stack);
-        updateVolume();
-
-    }
-
-    public void setTextureData(MeshImageStack stack){
-        int d = stack.data.length;
-        int h = stack.data[0].length;
-        int w = stack.data[0][0].length;
-
-
-        //create a new one if there isn't one, or if the dimensions do not match.
-        if(texture_data==null||d!=texture_data[0][0].length||h!=texture_data[0].length||w!=texture_data.length){
-            texture_data = new double[w][h][d];
+        if(stack.getWidthPx()==0 || stack.getHeightPx()==0 || stack.getNSlices()==0){
+            //no volume data ignore request.
+            return;
         }
-        for(int i = 0; i<d; i++){
-            for(int j = 0; j<h; j++){
-                for(int k = 0; k<w; k++){
 
-                    double v = stack.data[i][j][k];
-                    texture_data[k][h-j-1][i] = v;
-
-
-                }
+        if(showingVolume==false){
+            showingVolume=true;
+            if(vdo==null){
+                vdo = new VolumeDataObject(segmentationController.getVolumeColor());
             }
+            vdo.setTextureData(stack);
+            addDataObject(vdo);
+        } else{
+            vdo.setTextureData(stack);
         }
+
+
     }
+
+
 
     public void showEnergy(MeshImageStack stack, ExternalEnergy erg) {
         showingVolume = true;
-        int d = stack.data.length;
-        int h = stack.data[0].length;
-        int w = stack.data[0][0].length;
+        int d = stack.getNSlices();
+        int h = stack.getHeightPx();
+        int w = stack.getWidthPx();
 
-        //create a new one if there isn't one, or if the dimensions do not match.
-        if(texture_data==null||d!=texture_data[0][0].length||h!=texture_data[0].length||w!=texture_data.length){
-            texture_data = new double[w][h][d];
+        if(vdo==null){
+            vdo = new VolumeDataObject(segmentationController.getVolumeColor());
+            vdo.setTextureData(stack);
         }
 
         for(int i = 0; i<d; i++){
@@ -472,51 +460,35 @@ public class MeshFrame3D {
 
                     //double v = stack.data[i][j][k];
                     double v = erg.getEnergy(stack.getNormalizedCoordinate(new double[]{k,j,i}));
-                    texture_data[k][h-j-1][i] = v;
+                    vdo.texture_data[k][h-j-1][i] = v;
 
 
                 }
             }
         }
 
-        updateVolume();
+        vdo.updateVolume();
 
     }
 
-    /**
-     * Creates the 3D representation of the data in "texture_data"
-     *
-     */
-    public void updateVolume(){
-        if(!showingVolume) return;
-
-        Color volumeColor = segmentationController.getVolumeColor();
-        VolumeTexture volume = new VolumeTexture(texture_data, min, max, new Color3f(volumeColor));
-        if(surface==null){
-            double scale = segmentationController.getZToYScale();
-            int[] sizes = segmentationController.getOriginalStackDimensions();
-            surface = new ThreeDSurface(volume, sizes[0], sizes[1], sizes[2], scale);
-            double[] offsets = segmentationController.getSurfaceOffsets();
-            addDataObject(surface, offsets[0], offsets[1], offsets[2]);
-        } else{
-            surface.setTexture(volume);
-        }
-    }
 
     public JFrame getJFrame() {
         return frame;
     }
 
     public void changeVolumeClipping(int minDelta, int maxDelta) {
-        min += minDelta*0.05;
-        max += maxDelta*0.05;
-        updateVolume();
+        if(vdo!=null){
+            double[] mnMx = vdo.getMinMax();
+            double min = mnMx[0] + minDelta*0.05;
+            double max = mnMx[1] + maxDelta*0.05;
+            vdo.setMinMaxRange(min, max);
+        }
     }
 
     public void hideVolume() {
-        if(surface!=null){
-            removeDataObject(surface);
-            surface=null;
+        if(vdo!=null){
+            removeDataObject(vdo);
+            vdo = null;
         }
         showingVolume=false;
     }

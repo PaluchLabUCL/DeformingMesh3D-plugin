@@ -110,10 +110,16 @@ public class MeshImageStack {
     }
 
     public int getWidthPx(){
+        if(original==null){
+            return 0;
+        }
         return original.getWidth();
     }
 
     public int getHeightPx(){
+        if(original==null){
+            return 0;
+        }
         return original.getHeight();
     }
 
