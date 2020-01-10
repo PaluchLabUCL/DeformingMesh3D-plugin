@@ -778,6 +778,11 @@ public class DeformableMesh3D{
         return connections;
     }
 
+    public void resetPositions(){
+        if(data_object!=null){
+            data_object.updateGeometry(positions);
+        }
+    }
 
     public void setPositions(double[] positions) {
         if(positions.length==this.positions.length){
