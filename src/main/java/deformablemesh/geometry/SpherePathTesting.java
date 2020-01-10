@@ -150,33 +150,29 @@ public class SpherePathTesting {
     }
     class PointPicking implements CanvasView {
         Node3D first;
+
         @Override
-        public void updatePick(PickResult[] results, MouseEvent evt, boolean clicked) {
-            if(clicked) {
+        public void updatePressed(PickResult[] results, MouseEvent evt) {
 
-                if (first == null) {
-                    PickResult result = results[0];
-                    PickIntersection pick = result.getIntersection(0);
-                    Point3d pt = pick.getClosestVertexCoordinates();
-                    result.getClosestIntersection(pt);
-                    first = getClosesNode(pt.x, pt.y, pt.z);
-                    final Node3D n = first;
-                    post(() -> setStartPoint(n));
-                } else {
-                    final Node3D a = first;
-                    for (PickResult result : results) {
-                        PickIntersection pick = result.getIntersection(0);
-                        Point3d pt = pick.getClosestVertexCoordinates();
-                        result.getClosestIntersection(pt);
-                        post(()->{
-                            trackClosest(pt);
-                        });
-                    }
+        }
 
-                    first = null;
+        @Override
+        public void updateReleased(PickResult[] results, MouseEvent evt) {
 
-                }
-            } else if(first != null){
+        }
+
+        @Override
+        public void updateClicked(PickResult[] results, MouseEvent evt) {
+            if (first == null) {
+                PickResult result = results[0];
+                PickIntersection pick = result.getIntersection(0);
+                Point3d pt = pick.getClosestVertexCoordinates();
+                result.getClosestIntersection(pt);
+                first = getClosesNode(pt.x, pt.y, pt.z);
+                final Node3D n = first;
+                post(() -> setStartPoint(n));
+            } else {
+                final Node3D a = first;
                 for (PickResult result : results) {
                     PickIntersection pick = result.getIntersection(0);
                     Point3d pt = pick.getClosestVertexCoordinates();
@@ -184,9 +180,29 @@ public class SpherePathTesting {
                     post(()->{
                         trackClosest(pt);
                     });
-                    return;
                 }
+
+                first = null;
+
             }
+        }
+
+        @Override
+        public void updateMoved(PickResult[] results, MouseEvent evt) {
+            for (PickResult result : results) {
+                PickIntersection pick = result.getIntersection(0);
+                Point3d pt = pick.getClosestVertexCoordinates();
+                result.getClosestIntersection(pt);
+                post(()->{
+                    trackClosest(pt);
+                });
+                return;
+            }
+        }
+
+        @Override
+        public void updateDragged(PickResult[] results, MouseEvent evt) {
+
         }
     }
 

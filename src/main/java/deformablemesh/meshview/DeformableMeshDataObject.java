@@ -60,6 +60,7 @@ public class DeformableMeshDataObject implements DataObject {
 
         branch_group = new BranchGroup();
         branch_group.setCapability(BranchGroup.ALLOW_DETACH);
+        branch_group.setCapability(BranchGroup.ALLOW_PICKABLE_WRITE);
         branch_group.addChild(mesh_object);
         branch_group.addChild(surface_object);
     }

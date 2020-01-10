@@ -76,7 +76,8 @@ public class FurrowPlaneDataObject implements DataObject {
 
         branchGroup = new BranchGroup();
         branchGroup.setCapability(BranchGroup.ALLOW_DETACH);
-
+        branchGroup.setCapability(BranchGroup.ALLOW_PICKABLE_READ);
+        branchGroup.setCapability(BranchGroup.ALLOW_PICKABLE_WRITE);
         transformGroup = new TransformGroup();
         transformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
         transformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
