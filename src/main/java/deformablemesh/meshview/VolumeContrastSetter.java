@@ -6,6 +6,14 @@ import deformablemesh.gui.IntensityRanges;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+import java.awt.event.WindowStateListener;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class VolumeContrastSetter{
     VolumeSamplerPanel preview;
@@ -64,6 +72,23 @@ public class VolumeContrastSetter{
         cancel.addActionListener(evt->{
             dialog.dispose();
         });
+
+        JCheckBox oscillateView = new JCheckBox("oscillate preview");
+        oscillateView.setBackground(Color.BLACK);
+        oscillateView.setForeground(Color.WHITE);
+        oscillateView.setSelected(true);
+
+        oscillateView.addActionListener(evt->{
+            if(preview != null){
+                if(oscillateView.isSelected()){
+                    preview.oscillate();
+                } else{
+                    preview.stopOscillation();
+                }
+            }
+        });
+
+        panel.add(oscillateView);
         panel.add(Box.createHorizontalGlue());
         panel.add(accept);
         panel.add(cancel);
@@ -72,7 +97,7 @@ public class VolumeContrastSetter{
     }
 
     public Component create3DPreviewer(Window frame) {
-
+        System.out.println("to here!");
         preview = new VolumeSamplerPanel(frame);
         preview.showSubSample(vdo);
         return preview.panel;
@@ -81,13 +106,49 @@ public class VolumeContrastSetter{
     class VolumeSamplerPanel{
         MeshFrame3D mf3d;
         Component panel;
-        VolumeDataObject vdo;
+        VolumeDataObject previewVdo;
+        int preview_time = 0;
+        ScheduledFuture<?> future;
+        ScheduledExecutorService ses = new ScheduledThreadPoolExecutor(1);
         public VolumeSamplerPanel(Window parent){
             mf3d = new MeshFrame3D();
 
             panel = mf3d.asJPanel(parent);
             mf3d.setBackgroundColor(previewBackgroundColor);
             mf3d.showAxis();
+
+            WindowListener l = new WindowAdapter() {
+                @Override
+                public void windowClosed(WindowEvent evt){
+                    ses.shutdown();
+                }
+
+                @Override
+                public void windowOpened(WindowEvent e) {
+                    oscillate();
+                }
+            };
+            parent.addWindowListener(l);
+
+        }
+
+
+
+        public void oscillate(){
+            if(future != null){
+                future.cancel(false);
+                future = null;
+            }
+            future = ses.scheduleAtFixedRate(()->{
+                double t = Math.sin(preview_time*3.14/100);
+                mf3d.rotateView((int)(10*t), 0);
+                preview_time++;
+            }, 0, 20, TimeUnit.MILLISECONDS);
+        }
+
+        public void stopOscillation(){
+            future.cancel(false);
+            future = null;
         }
         int[] getShape(double[][][] arr){
 
@@ -95,7 +156,7 @@ public class VolumeContrastSetter{
 
         }
         void showSubSample(VolumeDataObject full){
-            vdo = new VolumeDataObject(volumeColor);
+            previewVdo = new VolumeDataObject(volumeColor);
             int[] whd = {64, 64, 64};
             int[] shape = getShape(full.texture_data);
 
@@ -114,10 +175,10 @@ public class VolumeContrastSetter{
                 high[i] = low[i] + whd[i];
 
             }
-            vdo.setColor(full.color);
-            vdo.setTextureData(full, low, high);
-
-            mf3d.addDataObject(vdo);
+            previewVdo.setColor(full.color);
+            previewVdo.setTextureData(full, low, high);
+            previewVdo.setMinMaxRange(full.min, full.max);
+            mf3d.addDataObject(previewVdo);
         }
 
 
@@ -137,7 +198,7 @@ public class VolumeContrastSetter{
         }
 
         void setMinMaxClipping(double min, double max){
-            vdo.setMinMaxRange(min, max);
+            previewVdo.setMinMaxRange(min, max);
         }
 
     }
