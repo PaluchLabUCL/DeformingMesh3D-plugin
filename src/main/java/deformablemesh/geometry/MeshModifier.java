@@ -5,13 +5,15 @@ import deformablemesh.io.MeshWriter;
 import deformablemesh.meshview.LineDataObject;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.meshview.SphereDataObject;
+import deformablemesh.ringdetection.FurrowTransformer;
 import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;
-import org.scijava.java3d.BranchGroup;
+import deformablemesh.util.actions.ActionStack;
+import deformablemesh.util.actions.UndoableActions;
+import org.scijava.java3d.*;
 import org.scijava.java3d.utils.geometry.Text2D;
 import org.scijava.java3d.utils.picking.PickIntersection;
 import org.scijava.java3d.utils.picking.PickResult;
-import org.scijava.java3d.PickConeRay;
 import org.scijava.vecmath.Color3f;
 import org.scijava.vecmath.Point3d;
 import org.scijava.vecmath.Vector3d;
@@ -19,19 +21,22 @@ import snakeprogram3d.display3d.CanvasView;
 import snakeprogram3d.display3d.DataObject;
 import snakeprogram3d.display3d.MoveableSphere;
 
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
+import javax.swing.*;
 import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.FileDialog;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.stream.Collectors;
 
 /**
  * Created by msmith on 21.09.17.
@@ -46,6 +51,61 @@ public class MeshModifier {
     List<MoveableSphere> markers = new ArrayList<>();
     LineDataObject obj;
     Furrow3D furrow;
+    StateManager manager = new StateManager();
+    ActionStack stack = new ActionStack();
+    private class StateManager{
+        JRadioButtonMenuItem viewMode, dragMode, sculptMode;
+        MeshFrame3D managed;
+        StateManager(){
+            managed = frame;
+        }
+
+        public void buildDisplay(){
+            JPanel content = new JPanel();
+            ButtonGroup modeSelector = new ButtonGroup();
+            viewMode = new JRadioButtonMenuItem("view");
+
+            dragMode = new JRadioButtonMenuItem("drag");
+            sculptMode = new JRadioButtonMenuItem("sculpt");
+            content.setLayout(new BoxLayout(content, BoxLayout.PAGE_AXIS));
+            content.add(viewMode);
+            content.add(dragMode);
+            content.add(sculptMode);
+
+            modeSelector.add(viewMode);
+            modeSelector.add(dragMode);
+            modeSelector.add(sculptMode);
+            ActionListener patience = new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    System.out.println("actioned" + e.getActionCommand() + e.getSource());
+                }
+            };
+            modeSelector.setSelected(viewMode.getModel(), true);
+            viewMode.addActionListener(patience);
+            dragMode.addActionListener(patience);
+            sculptMode.addActionListener(patience);
+
+            JFrame frame = new JFrame("mode selector");
+            frame.setContentPane(content);
+            frame.pack();
+            frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+            frame.setVisible(true);
+        }
+
+        public void selectViewMode(){
+            viewMode.setSelected(true);
+            frame.setCanvasControllerEnabled(true);
+        }
+
+        public void selectDragMode(){
+            dragMode.setSelected(true);
+            frame.setCanvasControllerEnabled(false);
+        }
+
+
+
+    }
 
     public void start(){
         frame = new MeshFrame3D();
@@ -93,6 +153,7 @@ public class MeshModifier {
         furrow = new Furrow3D(new double[]{0,0,0}, new double[]{0, -1, 0});
         furrow.create3DObject();
         frame.addDataObject(furrow.getDataObject());
+        manager.buildDisplay();
     }
 
     public static void main(String[] args){
@@ -101,13 +162,14 @@ public class MeshModifier {
             MeshModifier mod = new MeshModifier();
             mod.start();
             List<Track> tracks = null;
-            try {
-                tracks = MeshWriter.loadMeshes(new File("sample.bmf"));
-                DeformableMesh3D mesh = tracks.get(0).getMesh(tracks.get(0).getFirstFrame());
-                mod.setMesh(mesh);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+//            try {
+//
+//                tracks = MeshWriter.loadMeshes(new File("sample.bmf"));
+//                DeformableMesh3D mesh = tracks.get(0).getMesh(tracks.get(0).getFirstFrame());
+//                mod.setMesh(mesh);
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
         });
 
 
@@ -146,30 +208,101 @@ public class MeshModifier {
         System.exit(0);
     }
     class PointPicking implements CanvasView {
+        Point3d dragging, delta;
+
         @Override
-        public void updatePick(PickResult[] results, MouseEvent evt, boolean clicked) {
+        public void updatePressed(PickResult[] results, MouseEvent evt) {
             if(evt.isControlDown()){
-                frame.setCanvasControllerEnabled(false);
-                System.out.println("changing furrow to be looking at." + evt);
-                System.out.println(results[0].getPickShape());
-                PickConeRay ray = (PickConeRay)results[0].getPickShape();
-                Vector3d dir = new Vector3d();
-                Point3d origin = new Point3d();
-                ray.getDirection(dir);
-                ray.getOrigin(origin);
-                System.out.println(dir + " :: " + origin);
-                furrow.setDirection(new double[]{dir.x, dir.y, dir.z});
-                evt.consume();
-            } else if(clicked) {
-                    frame.setCanvasControllerEnabled(true);
-                    PickResult result = results[0];
+                //entering drag mode.
+                manager.selectDragMode();
+                furrow.getDataObject().getBranchGroup().setPickable(true);
+                mesh.data_object.getBranchGroup().setPickable(false);
+                for(PickResult result: results) {
+                    PickConeRay ray = (PickConeRay)result.getPickShape();
+                    Vector3d dir = new Vector3d();
+                    Point3d origin = new Point3d();
+                    ray.getDirection(dir);
+                    ray.getOrigin(origin);
+                    furrow.setDirection(new double[]{dir.x, dir.y, dir.z});
+
+                    return;
+                }
+
+            }
+        }
+
+        @Override
+        public void updateReleased(PickResult[] results, MouseEvent evt) {
+            manager.selectViewMode();
+            furrow.getDataObject().getBranchGroup().setPickable(false);
+            mesh.data_object.getBranchGroup().setPickable(true);
+            System.out.println(dragging + " , " + delta);
+            if(dragging!=null && delta !=null){
+
+                if(selected.size()==0){
+                    System.out.println("no nodes selected");
+
+                }
+                double[] displacement = new double[3];
+                delta.get(displacement);
+                List<double[]> displacements = selected.stream().map(s->displacement).collect(Collectors.toList());
+
+
+                stack.postAction(new DisplaceNodesAction(mesh, selected, displacements));
+                System.out.println(stack.hasUndo());
+            }
+            dragging = null;
+            delta = null;
+        }
+
+        @Override
+        public void updateClicked(PickResult[] results, MouseEvent evt) {
+            for(PickResult result: results){
+                Node node = result.getObject();
+                if( mesh.data_object.getBranchGroup().indexOfChild(node) > -1 ){
                     PickIntersection pick = result.getIntersection(0);
                     Point3d pt = pick.getClosestVertexCoordinates();
                     result.getClosestIntersection(pt);
                     final Node3D n = getClosesNode(pt.x, pt.y, pt.z);
                     post(() -> toggleSelectNode(n));
+                    return;
+                }
+
+
             }
-            //System.out.println(evt);
+        }
+
+        @Override
+        public void updateMoved(PickResult[] results, MouseEvent evt) {
+
+        }
+
+        @Override
+        public void updateDragged(PickResult[] results, MouseEvent evt) {
+            BranchGroup bg = furrow.getDataObject().getBranchGroup();
+            TransformGroup tg = (TransformGroup)bg.getChild(0);
+            Transform3D t = new Transform3D();
+            tg.getTransform(t);
+            for(PickResult result: results){
+                if(tg.indexOfChild(result.getObject())>-1){
+                    //drug on furrow.
+                    PickIntersection pick = result.getIntersection(0);
+
+                    Point3d pt = pick.getPointCoordinates();
+                    t.transform(pt);
+                    if( dragging == null ){
+                        dragging = pt;
+                    } else{
+                        delta = new Point3d(
+                                pt.x - dragging.x,
+                                pt.y - dragging.y,
+                                pt.z - dragging.z
+                        );
+                    }
+                }
+            }
+
+
         }
     }
 
@@ -213,5 +346,51 @@ public class MeshModifier {
 
         return closest;
 
+    }
+}
+
+class DisplaceNodesAction implements UndoableActions{
+    List<double[]> originals;
+    List<double[]> updated;
+    List<Node3D> nodes;
+    DeformableMesh3D mesh;
+    public DisplaceNodesAction(DeformableMesh3D mesh, List<Node3D> nodes, List<double[]> displacements){
+        this.nodes = new ArrayList<>(nodes);
+        originals = nodes.stream().map(Node3D::getCoordinates).collect(Collectors.toList());
+        this.updated = new ArrayList<>();
+        for(int i = 0; i<displacements.size(); i++){
+            double[] a = originals.get(i);
+            double[] r = displacements.get(i);
+            updated.add(new double[]{
+                    a[0] + r[0],
+                    a[1] + r[1],
+                    a[2] + r[2]
+            });
+        }
+        this.mesh = mesh;
+    }
+
+    @Override
+    public void perform() {
+        for(int i = 0; i<nodes.size(); i++){
+            nodes.get(i).setPosition(updated.get(i));
+        }
+        mesh.resetPositions();
+    }
+
+    @Override
+    public void undo() {
+        for(int i = 0; i<nodes.size(); i++){
+            nodes.get(i).setPosition(originals.get(i));
+        }
+        mesh.resetPositions();
+    }
+
+    @Override
+    public void redo() {
+        for(int i = 0; i<nodes.size(); i++){
+            nodes.get(i).setPosition(updated.get(i));
+        }
+        mesh.resetPositions();
     }
 }
