@@ -874,6 +874,15 @@ public class SegmentationController {
         submit(()->meshFrame3D.changeVolumeClipping(minDelta, maxDelta));
     }
 
+    public void showVolumeClippingDialog(){
+        VolumeDataObject vdo = meshFrame3D.getVolumeDataObject();
+        if(vdo!=null){
+            VolumeContrastSetter setter = new VolumeContrastSetter(vdo);
+            setter.setPreviewBackgroundColor(meshFrame3D.getBackgroundColor());
+            setter.showDialog(meshFrame3D.getJFrame());
+        }
+    }
+
     /**
      * Deforms mesh until stopped.
      *

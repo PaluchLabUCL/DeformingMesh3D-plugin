@@ -120,7 +120,8 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         createButtonShowMeshVolume(buttonPanel);
         createButtonHideVolume(buttonPanel);
 
-        buttonPanel.add(new JLabel("contrast: "));
+        createButtonAdjustVolumeContrast(buttonPanel);
+
         createButtonAdjustMinimum(buttonPanel);
         createButtonAdjustMaximum(buttonPanel);
 
@@ -161,6 +162,15 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         }
 
         return content;
+    }
+
+    private void createButtonAdjustVolumeContrast(JPanel buttonPanel) {
+
+        JButton vc = new JButton("v contrast:");
+        vc.addActionListener(evt->{
+            segmentationController.showVolumeClippingDialog();
+        });
+        buttonPanel.add(vc);
     }
 
     private void createRigidBoundaryCheckbox(JPanel buttonPanel) {
@@ -295,57 +305,13 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         });
     }
 
-    public void createButtonIntensty(JPanel buttonPanel){
-        JButton intensity = new JButton("intensity");
-        buttons.add(intensity);
-        buttonPanel.add(intensity);
-        intensity.addActionListener(event -> {
-            setReady(false);
-            segmentationController.calculateActinIntensity();
-            finished();
-        });
-    }
-
-    public void createButtonLineScan(JPanel buttonPanel){
-        JButton line_scan = new JButton("line scan");
-        buttons.add(line_scan);
-        buttonPanel.add(line_scan);
-        line_scan.addActionListener(e -> {
-            setReady(false);
-            segmentationController.calculateLineScans();
-            finished();
-        });
-    }
-
-    public void createButtonShowStress(JPanel buttonPanel){
-        JButton show_stress = new JButton("show stress");
-        buttons.add(show_stress);
-        buttonPanel.add(show_stress);
-        show_stress.addActionListener(e -> {
-            setReady(false);
-            segmentationController.showStress();
-            finished();
-        });
-    }
-
-    public void createButtonShowCurvature(JPanel buttonPanel){
-        JButton show_curvature = new JButton("show curvature");
-        buttons.add(show_curvature);
-        buttonPanel.add(show_curvature);
-        show_curvature.addActionListener(e -> {
-            setReady(false);
-            segmentationController.showCurvature();
-            finished();
-        });
-    }
-
     public void createButtonClearTransients(JPanel buttonPanel){
-        JButton clearTransients = new JButton("clear transients");
+        JButton clearTransients = new JButton("clear transient objects");
         buttons.add(clearTransients);
         buttonPanel.add(clearTransients);
         clearTransients.addActionListener((evt)->{
             setReady(false);
-            segmentationController.notifyMeshListeners();
+            segmentationController.clearTransientObjects();;
             finished();
         });
     }
@@ -357,17 +323,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         show_volume.addActionListener(e -> {
             setReady(false);
             segmentationController.showVolume();
-            finished();
-        });
-    }
-
-    public void createButtonShowEnergy(JPanel buttonPanel){
-        JButton show_energy = new JButton("show energy");
-        buttons.add(show_energy);
-        buttonPanel.add(show_energy);
-        show_energy.addActionListener(e->{
-            setReady(false);
-            segmentationController.showEnergy();
             finished();
         });
     }
@@ -430,7 +385,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             finished();
         });
     }
-
 
     public void createButtonAdjustMinimum(JPanel buttonPanel){
         Insets margin = new Insets(5, 0, 5, 0);
