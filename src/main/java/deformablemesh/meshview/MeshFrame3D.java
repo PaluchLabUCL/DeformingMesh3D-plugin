@@ -55,6 +55,10 @@ public class MeshFrame3D {
         return canvas.getCanvasBackgroundColor();
     }
 
+    public VolumeDataObject getVolumeDataObject() {
+        return vdo;
+    }
+
     static class HudDisplay{
         public void draw(Graphics2D g){}
     }
@@ -106,6 +110,17 @@ public class MeshFrame3D {
      */
     public void lookTowards(double[] normal, double[] up){
         canvas.lookTowards(normal , up);
+    }
+
+    /**
+     * rotates the data canvas view.
+     * @see DataCanvas#rotateView(int, int)
+     *
+     * @param dx rotation about veritical view.
+     * @param dy rotation about horizontal view.
+     */
+    public void rotateView(int dx, int dy){
+        canvas.rotateView(dx, dy);
     }
 
     public void showFrame(boolean exit_on_close){
