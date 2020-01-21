@@ -17,15 +17,14 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.text.JTextComponent;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.FileDialog;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -233,5 +232,35 @@ public class GuiTools {
         }
 
 
+    }
+
+    private static Image icon;
+
+    public static Image getIcon(){
+        if(icon==null){
+            icon = new BufferedImage(64, 64, BufferedImage.TYPE_4BYTE_ABGR);
+
+            Graphics2D g = (Graphics2D)icon.getGraphics();
+            g.setPaint(Color.GRAY);
+            //g.fillRect(0, 0, 64, 64);
+
+            g.setPaint(Color.BLACK);
+            g.fillRoundRect(3, 3, 58, 58, 16, 16);
+            Color transparentWhite = new Color(255, 255, 255, 0);
+            g.setPaint(
+                    new GradientPaint(48, 16, Color.WHITE, 32, 32, transparentWhite)
+            );
+            g.fillOval(-64, 0, 128, 128);
+
+            g.setPaint(
+                    new GradientPaint(16, 48, Color.WHITE, 32, 32, transparentWhite)
+            );
+            g.fillOval(0, -64, 128, 128);
+
+
+
+        }
+
+        return icon;
     }
 }

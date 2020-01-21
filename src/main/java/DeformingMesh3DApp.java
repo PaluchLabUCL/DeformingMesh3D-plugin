@@ -8,7 +8,11 @@ import ij.ImageJ;
 import ij.ImagePlus;
 import jogamp.nativewindow.jawt.JAWTUtil;
 
+import java.awt.Color;
 import java.awt.EventQueue;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.image.BufferedImage;
 import java.io.File;
 
 /**
@@ -21,6 +25,8 @@ import java.io.File;
  */
 public class DeformingMesh3DApp{
     static File input;
+
+
     public static SegmentationController createDeformingMeshApplication(){
         JAWTUtil.getJAWT(true);
         MeshFrame3D mf3d = new MeshFrame3D();

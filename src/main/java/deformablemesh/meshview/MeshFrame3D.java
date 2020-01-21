@@ -6,6 +6,7 @@ import deformablemesh.externalenergies.ExternalEnergy;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Furrow3D;
 import deformablemesh.geometry.SnakeBox;
+import deformablemesh.gui.GuiTools;
 import deformablemesh.gui.RingController;
 import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;
@@ -138,6 +139,8 @@ public class MeshFrame3D {
                 g.flush(false);
             }
         };
+        frame.setTitle("DM3D: 3d canvas");
+        frame.setIconImage(GuiTools.getIcon());
         frame.add(canvas);
         frame.setVisible(true);
         showAxis();

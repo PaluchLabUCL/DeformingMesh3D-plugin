@@ -9,6 +9,7 @@ import deformablemesh.geometry.NewtonMesh3D;
 import deformablemesh.geometry.RayCastMesh;
 import deformablemesh.geometry.Sphere;
 import deformablemesh.meshview.MeshFrame3D;
+import deformablemesh.util.Vector3DOps;
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -20,15 +21,15 @@ public class ManyDrops {
     List<StericMesh> stericMeshes = new ArrayList<>();
     public void start(){
 
-        for(int i = 0; i<3; i++){
-            for(int j = 0; j<3; j++){
+        for(int i = 0; i<1; i++){
+            for(int j = 0; j<1; j++){
                 Sphere sphere = new Sphere(new double[]{i*0.1 - 0.4, j*0.1 - 0.4, 0.2}, 0.05);
                 DeformableMesh3D mesh = new NewtonMesh3D(RayCastMesh.rayCastMesh(sphere, sphere.getCenter(), 1));
                 mesh.setShowSurface(true);
 
-                mesh.GAMMA = 100;
-                mesh.ALPHA = 0.1;
-                mesh.BETA = 0.01;
+                mesh.GAMMA = 1000;
+                mesh.ALPHA = 1;
+                mesh.BETA = 0.5;
                 mesh.reshape();
                 prepareEnergies(mesh);
                 meshes.add(mesh);
@@ -52,10 +53,10 @@ public class ManyDrops {
 
 
     }
-    double gravityMagnitude = 0.01;
+    double gravityMagnitude = 0.1;
     double surfaceFactor = 10.;
     double volumeConservation = 1;
-    double steric = 0.1;
+    double steric = 0.0;
     public void prepareEnergies(DeformableMesh3D mesh){
         ExternalEnergy gravity = new ExternalEnergy(){
 
@@ -89,7 +90,7 @@ public class ManyDrops {
                 return 0;
             }
         };
-
+        HeightMapSurface hms = generateSurface();
 
         if(gravityMagnitude != 0) {
             mesh.addExternalEnergy(gravity);
@@ -97,7 +98,7 @@ public class ManyDrops {
         }
 
         if(surfaceFactor != 0){
-            mesh.addExternalEnergy(hardSurface);
+            mesh.addExternalEnergy(hms);
         }
 
         if(volumeConservation != 0) {
@@ -144,7 +145,22 @@ public class ManyDrops {
             step();
         }
     }
+    HeightMapSurface generateSurface(){
+        int N = 100;
+        double d = 2.0/(N-1);
+        double[][] pitted = new double[N][N];
+        for(int i = 0; i<N; i++){
+            for(int j = 0; j<N; j++){
+                double x = d*i - 1;
+                double y = d*j - 1;
+                double s = Math.sin(x*Math.PI);
+                double c = Math.cos(y*Math.PI/2);
+                pitted[j][i] =  -0.1*s*s*c*c;
+            }
+        }
 
+        return new HeightMapSurface(pitted, surfaceFactor);
+    }
 
 
     public static void main(String[] args){
@@ -154,3 +170,4 @@ public class ManyDrops {
 
     }
 }
+
