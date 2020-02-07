@@ -241,21 +241,19 @@ public class GuiTools {
             icon = new BufferedImage(64, 64, BufferedImage.TYPE_4BYTE_ABGR);
 
             Graphics2D g = (Graphics2D)icon.getGraphics();
-            g.setPaint(Color.GRAY);
-            //g.fillRect(0, 0, 64, 64);
 
             g.setPaint(Color.BLACK);
             g.fillRoundRect(3, 3, 58, 58, 16, 16);
-            Color transparentWhite = new Color(255, 255, 255, 0);
-            g.setPaint(
-                    new GradientPaint(48, 16, Color.WHITE, 32, 32, transparentWhite)
-            );
-            g.fillOval(-64, 0, 128, 128);
 
-            g.setPaint(
-                    new GradientPaint(16, 48, Color.WHITE, 32, 32, transparentWhite)
-            );
-            g.fillOval(0, -64, 128, 128);
+            g.setColor(Color.LIGHT_GRAY);
+            g.setStroke(new BasicStroke(3));
+            g.drawLine(32, 3, 32, 32);
+            g.drawLine(32, 32, 3, 61);
+            g.drawLine(32, 32, 58, 32);
+
+            g.setColor(Color.WHITE);
+            g.fillOval(26, 24, 22, 22);
+
 
 
 

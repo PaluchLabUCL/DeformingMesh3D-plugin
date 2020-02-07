@@ -20,7 +20,6 @@ import lightgraph.DataSet;
 import lightgraph.Graph;
 import snakeprogram3d.display3d.DataObject;
 
-import javax.swing.JLabel;
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.image.BufferedImage;

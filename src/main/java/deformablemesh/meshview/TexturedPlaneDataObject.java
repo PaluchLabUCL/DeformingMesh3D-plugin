@@ -17,10 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class TexturedPlaneDataObject implements DataObject {
-    IndexedTriangleArray surfaces;
-    Shape3D surface_object;
-    BranchGroup branch_group;
+public class TexturedPlaneDataObject extends DeformableMeshDataObject {
     private boolean showSurface = false;
     private Color volumeColor = Color.WHITE;
     Appearance texturedAppearance;
@@ -33,30 +30,12 @@ public class TexturedPlaneDataObject implements DataObject {
     float min = 0;
     float max = 1;
     public TexturedPlaneDataObject(DeformableMesh3D mesh, MeshImageStack stack){
-        double[] positions = mesh.positions;
-
+        super(mesh.nodes, mesh.connections, mesh.triangles, mesh.positions, mesh.connection_index, mesh.triangle_index);
         offsets = new double[]{ stack.offsets[0], stack.offsets[1], stack.offsets[2]};
 
-        surfaces = new IndexedTriangleArray(mesh.nodes.size(), GeometryArray.COORDINATES|GeometryArray.NORMALS, 3*mesh.triangles.size());
-        surfaces.setCoordinates(0, positions);
-        surfaces.setCoordinateIndices(0, mesh.triangle_index);
-        surfaces.setNormals(0, generateNormals(mesh.positions, mesh.triangle_index));
-        surfaces.setNormalIndices(0, mesh.triangle_index);
-
-        surfaces.setCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
-        surfaces.setCapability(GeometryArray.ALLOW_NORMAL_WRITE);
-
-        surface_object = new Shape3D(surfaces);
-        surface_object.setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
-
         setTextureData(stack);
-
         surface_object.setAppearance(createTexturedSurface());
-
-
-        branch_group = new BranchGroup();
-        branch_group.setCapability(BranchGroup.ALLOW_DETACH);
-        branch_group.addChild(surface_object);
+        branch_group.removeChild(mesh_object);
     }
 
     public void setTextureData(MeshImageStack stack){
@@ -93,10 +72,6 @@ public class TexturedPlaneDataObject implements DataObject {
         updateVolume();
 
     }
-
-
-
-
 
     private Appearance hiddenSurface() {
         Appearance a = new Appearance();
@@ -157,78 +132,6 @@ public class TexturedPlaneDataObject implements DataObject {
     public void updateVolume(){
         volume = new VolumeTexture(texture_data, min, max, new Color3f(volumeColor));
 
-    }
-
-
-    float[] generateNormals(double[] positions, int[] triangleIndexes){
-        float[] normals = new float[positions.length];
-        int t = triangleIndexes.length/3;
-
-        for(int i = 0; i<t; i++){
-            int dex = i*3;
-            int a = triangleIndexes[dex];
-            int b = triangleIndexes[dex+1];
-            int c = triangleIndexes[dex+2];
-            double ax = positions[3*a];
-            double ay = positions[3*a + 1];
-            double az = positions[3*a + 2];
-            double bx = positions[3*b];
-            double by = positions[3*b + 1];
-            double bz = positions[3*b + 2];
-            double cx = positions[3*c];
-            double cy = positions[3*c + 1];
-            double cz = positions[3*c + 2];
-
-            double rbx = bx -ax;
-            double rby = by - ay;
-            double rbz = bz - az;
-            double rcx = cx -ax;
-            double rcy = cy -ay;
-            double rcz = cz - az;
-
-            double nx = rby*rcz - rbz*rcy;
-            double ny = rbz*rcx - rbx*rcz;
-            double nz = rbx*rcy - rby*rcx;
-
-            double mag = Math.sqrt(nx*nx + ny*ny + nz*nz);
-            if(mag>0){
-                nx = nx/mag;
-                ny = ny/mag;
-                nz = nz/mag;
-            }
-            normals[3*a] += nx;
-            normals[3*a + 1] += ny;
-            normals[3*a + 2] += nz;
-
-            normals[3*b] += nx;
-            normals[3*b + 1] += ny;
-            normals[3*b + 2] += nz;
-
-            normals[3*c] += nx;
-            normals[3*c + 1] += ny;
-            normals[3*c + 2] += nz;
-
-
-
-        }
-
-        for(int i = 0; i<normals.length/3; i++){
-            double nx = normals[i*3];
-            double ny = normals[i*3+1];
-            double nz = normals[i+3+2];
-
-            double mag = Math.sqrt(nx*nx + ny*ny + nz*nz);
-            if(mag==0){
-                continue;
-            }
-            normals[i*3]/=mag;
-            normals[i*3+1] /= mag;
-            normals[i*3 + 2] /= mag;
-
-
-        }
-
-        return normals;
     }
 
     @Override

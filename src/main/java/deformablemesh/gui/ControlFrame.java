@@ -55,6 +55,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
     }
     public void showFrame(){
         frame = new JFrame("Deformable Mesh Control Panel");
+        frame.setIconImage(GuiTools.getIcon());
         JPanel contentPanel = new JPanel();
         contentPanel.setLayout(new BorderLayout());
         tabbedPane = new JTabbedPane(JTabbedPane.TOP, JTabbedPane.WRAP_TAB_LAYOUT);
