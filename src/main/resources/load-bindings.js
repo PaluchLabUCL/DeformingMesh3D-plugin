@@ -10,6 +10,7 @@ var Color = Java.type("java.awt.Color");
 var ArrayList = Java.type("java.util.ArrayList");
 var Track = Java.type("deformablemesh.track.Track");
 
+var Graph = Java.type("lightgraph.Graph");
 var ImageStack = Java.type("ij.ImageStack");
 var ColorProcessor = Java.type("ij.process.ColorProcessor");
 var ImageStack = Java.type("ij.ImageStack");
