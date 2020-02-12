@@ -25,6 +25,7 @@ public class Arrow implements DataObject {
     float width = length/3f;
 
     BranchGroup b = new BranchGroup();
+
     double[] position = {0, 0, 0};
     double[] direction = {0, 1, 0};
     double scale = 1.0;
@@ -96,6 +97,7 @@ public class Arrow implements DataObject {
         mainTransform.addChild(tg);
         mainTransform.addChild(tg2);
         b.addChild(mainTransform);
+        b.setCapability(BranchGroup.ALLOW_DETACH);
     }
 
     public Appearance createTailAppearance(){
@@ -158,7 +160,8 @@ public class Arrow implements DataObject {
         axis.cross(forward, p);
         double l = axis.length();
         if(l*l<tol){
-            looking = new AxisAngle4d(forward, 0);
+            //small cross product could make axis non-normalizable.
+            axis = new Vector3d(0, 0, 1);
         }
         axis.normalize();
         double dot = p.dot(forward);

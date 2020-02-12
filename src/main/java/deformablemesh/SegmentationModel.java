@@ -515,10 +515,10 @@ public class SegmentationModel {
         selectedMesh.clearEnergies();
 
         //mesh.PRESSURE = pressure;
-
-        ExternalEnergy erg = generateImageEnergy();
-        selectedMesh.addExternalEnergy(erg);
-
+        if(image_weight!=0) {
+            ExternalEnergy erg = generateImageEnergy();
+            selectedMesh.addExternalEnergy(erg);
+        }
         if(pressure!=0){
             selectedMesh.addExternalEnergy(new PressureForce(selectedMesh, pressure));
         }
@@ -536,6 +536,36 @@ public class SegmentationModel {
 
         snakeBox.addRingEnergy(stack.CURRENT, selectedMesh);
 
+    }
+
+    /**
+     * returns a list of all the external energies, except 'ring energy' affecting the currently selected mesh.
+     *
+     * @return
+     */
+    public List<ExternalEnergy> getExternalEnergies(){
+        DeformableMesh3D selectedMesh = getSelectedMesh(getCurrentFrame());
+
+        List<ExternalEnergy> energies = new ArrayList<>();
+        //mesh.PRESSURE = pressure;
+        if(image_weight!=0) {
+            ExternalEnergy erg = generateImageEnergy();
+            energies.add(erg);
+        }
+        if(pressure!=0){
+            energies.add(new PressureForce(selectedMesh, pressure));
+        }
+
+        if(normalize!=0){
+            energies.add(new TriangleAreaDistributor(stack, selectedMesh, normalize));
+        }
+
+        if(stericNeighborWeight!=0){
+            List<ExternalEnergy> segs = generateStericEnergies();
+            energies.addAll(segs);
+        }
+
+        return energies;
     }
 
     private List<ExternalEnergy> generateStericEnergies() {
