@@ -1,5 +1,6 @@
 package deformablemesh.meshview;
 
+import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.util.Vector3DOps;
 import org.scijava.java3d.Appearance;
 import org.scijava.java3d.BranchGroup;
@@ -31,9 +32,47 @@ public class Arrow implements DataObject {
     AxisAngle4d looking = new AxisAngle4d(0, 1, 0, 0);
     final static Vector3d forward = new Vector3d(0, 1, 0);
     double tol = 1e-6;
-    public Arrow(double[] position, double[] direction) {
-        float tip = 0.5f;
-        float fraction = 0.4f;
+
+    /**
+     * Constructs an Arrow with default length of 1, width of 1/3, tip is 0.5 and tail_fraction is 0.4.
+     */
+    public Arrow(){
+        this(1.0, 1.0/3.0);
+    }
+
+    /**
+     * Uses default values for tip: 0.5 of length and tail_width: 0.4 of width
+     * @param length length of arrow along pointing axis from tail to tip.
+     * @param width width of cone for arrowhead.
+     */
+    public Arrow(double length, double width){
+        this(length, width, 0.5);
+    }
+
+    /**
+     * Uses default tip tail_width of 0.4 cone width.
+     *
+     * @param length length of arrow along pointing axis from tail to tip.
+     * @param width width of cone for arrowhead.
+     * @param tip fraction of length for cone section.
+     */
+    public Arrow(double length, double width, double tip){
+        this(length, width, tip, 0.4);
+    }
+
+    /**
+     * Construct an arrow with the supplied geometry
+     *
+     * @param length
+     * @param width
+     * @param tip
+     * @param tail_width
+     */
+    public Arrow(double length, double width, double tip, double tail_width){
+        this((float)length, (float)width, (float)tip, (float)tail_width);
+    }
+
+    private Arrow(float length, float width, float tip, float fraction) {
         Cone cone = new Cone(width, tip * length, createTipAppearance());
 
         Cylinder cylinder = new Cylinder(fraction * width, (1 - tip) * length, createTailAppearance());
@@ -138,7 +177,7 @@ public class Arrow implements DataObject {
         frame.showFrame(true);
         frame.setBackgroundColor(Color.BLACK);
         frame.addLights();
-        Arrow obj = new Arrow(new double[]{0, 0, 0}, new double[]{0, 0, 1});
+        Arrow obj = new Arrow();
         frame.addDataObject(obj);
         frame.addKeyListener(new KeyListener() {
             double radius = 1;
@@ -200,10 +239,18 @@ public class Arrow implements DataObject {
                     double x = Math.sin(phi)*Math.sin(theta);
                     obj.pointAlong(new double[]{x, y, z});
                     Thread.sleep(60);
+                    phi += 2*Math.PI/144;
                 }
             }
 
         }
 
     }
+
+    public void setColor(Color r){
+
+
+    }
+
+
 }

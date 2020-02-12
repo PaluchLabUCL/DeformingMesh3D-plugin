@@ -893,6 +893,16 @@ public class SegmentationController {
         }
     }
 
+    public void createForceVectorArray(){
+        DeformableMesh3D mesh = getSelectedMesh();
+        if(mesh==null){
+            return;
+        }
+
+
+
+    }
+
     public void showTexturedMeshSurface(){
         submit(()->{
 
