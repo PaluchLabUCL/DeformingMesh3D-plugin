@@ -203,7 +203,12 @@ public class CurvatureCalculator {
 
         return kappa;
     }
+    public double calculateMixedArea(Node3D node){
 
+        List<Triangle3D> triangles = node_to_triangle.get(node);
+        return calculateMixedArea(node, triangles);
+
+    }
     static public double calculateMixedArea(Node3D node, List<Triangle3D> triangles){
         double Amixed= 0;
 

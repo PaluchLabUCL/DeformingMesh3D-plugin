@@ -354,6 +354,11 @@ public class SegmentationController {
         });
     }
 
+    public MeshImageStack getMeshImageStack(){
+        return model.stack;
+    }
+
+
     public void reMeshConnections(){
         main.submit(()->{
             int f = model.getCurrentFrame();
@@ -1879,7 +1884,9 @@ public class SegmentationController {
         model.addFrameListener(listener);
     }
 
-
+    public void removeFrameListener(FrameListener listener){
+        model.removeFrameListener(listener);
+    }
 }
 
 /**

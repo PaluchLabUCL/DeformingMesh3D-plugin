@@ -1,9 +1,11 @@
 package deformablemesh.util;
 
 import java.awt.Color;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 /**
  * Created by msmith on 6/21/16.
@@ -100,12 +102,10 @@ public class ColorSuggestions {
      * @return
      */
     public static Color getSuggestion(List<Color> existing){
-        if(existing.size()<colors.size()) {
-            Color c;
-            do {
-                c = colors.get(next++);
-                next = next % colors.size();
-            } while (existing.contains(c));
+        List<Color> possible = colors.stream().filter(c->!existing.contains(c)).collect(Collectors.toList());
+
+        if(possible.size()>0) {
+            Color c = possible.get(0);
             return c;
         } else {
             Color c;

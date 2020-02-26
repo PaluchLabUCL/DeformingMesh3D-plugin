@@ -65,7 +65,7 @@ public class FillingBinaryImage {
             }
             count++;
         }
-        System.out.println("meshed");
+        System.out.println("special meshed");
         return mesh;
 
 

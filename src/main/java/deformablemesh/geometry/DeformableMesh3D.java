@@ -952,4 +952,8 @@ public class DeformableMesh3D{
         return boundary;
 
     }
+
+    public List<ExternalEnergy> getExternalEnergies() {
+        return new ArrayList<>(energies);
+    }
 }

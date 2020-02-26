@@ -972,6 +972,9 @@ public class SegmentationModel {
     }
 
 
+    public void removeFrameListener(FrameListener listener) {
+        frameListeners.remove(listener);
+    }
 }
 
 

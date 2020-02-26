@@ -6,6 +6,7 @@ import deformablemesh.externalenergies.TriangleAreaDistributor;
 import deformablemesh.externalenergies.VolumeConservation;
 import deformablemesh.geometry.*;
 import deformablemesh.meshview.MeshFrame3D;
+import deformablemesh.util.Vector3DOps;
 import lightgraph.Graph;
 
 import java.awt.Color;
@@ -25,6 +26,7 @@ public class TwoDrops {
     double normalize = 0.0;
     List<StickyVertex> links = new ArrayList<>();
     List<StericMesh> colliders = new ArrayList<>();
+
     public TwoDrops(){
         Sphere sA = new Sphere(new double[]{-0.075, 0, 0.2}, 0.1);
         a = new NewtonMesh3D(RayCastMesh.rayCastMesh(sA, sA.getCenter(), 1));
@@ -267,6 +269,32 @@ public class TwoDrops {
 
 }
 
+class Paired{
+    final int A, B;
+    final double distance;
+    public Paired(Node3D a, Node3D b){
+        A = a.index;
+        B = b.index;
+        distance = Vector3DOps.distance(a.getCoordinates(), b.getCoordinates());
+
+    }
+
+    @Override
+    public boolean equals(Object o){
+        if( this == o){
+            return true;
+        } else if(o instanceof Paired){
+            Paired p = (Paired)o;
+            return A == p.A && B == p.B;
+        }
+        return false;
+    }
+    @Override
+    public int hashCode(){
+        return A + B;
+    }
+}
+
 class StickyVertex implements ExternalEnergy{
     int affected;
     Node3D other;
@@ -295,5 +323,21 @@ class StickyVertex implements ExternalEnergy{
     @Override
     public double getEnergy(double[] pos) {
         return potential_energy;
+    }
+}
+
+class MeanCurvatureStericRadius extends StericMesh{
+
+
+    public MeanCurvatureStericRadius(DeformableMesh3D id, DeformableMesh3D neighbor, double weight) {
+        super(id, neighbor, weight);
+    }
+
+    @Override
+    public void updateForces(double[] positions, double[] fx, double[] fy, double[] fz){
+        double cx = 0;
+        double cy = 0;
+        double cz = 0;
+
     }
 }

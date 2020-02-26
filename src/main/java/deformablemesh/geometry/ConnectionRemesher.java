@@ -20,8 +20,8 @@ public class ConnectionRemesher {
 
     MeshFrame3D frame;
 
-    double minLength = 0.04;
-    double maxLength = 0.05;
+    double minLength = 0.02;
+    double maxLength = 0.04;
 
     Map<Node3D, List<Triangle3D>> nodeToTriangle = new HashMap<>();
     Map<Node3D, List<Connection3D>> nodeToConnection = new HashMap<>();

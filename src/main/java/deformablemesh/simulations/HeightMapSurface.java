@@ -1,7 +1,10 @@
 package deformablemesh.simulations;
 
 import deformablemesh.externalenergies.ExternalEnergy;
+import deformablemesh.geometry.DeformableMesh3D;
+import deformablemesh.meshview.TexturedPlaneDataObject;
 import deformablemesh.util.Vector3DOps;
+import ij.process.ImageProcessor;
 
 import java.util.Arrays;
 
@@ -17,6 +20,7 @@ public class HeightMapSurface implements ExternalEnergy {
     double yfactor = 0.5;
     double pixel;
     double mag;
+    DeformableMesh3D surfaceGeometry;
 
     public HeightMapSurface(double[][] heights, double mag){
         this.heightMap = heights;
@@ -56,6 +60,15 @@ public class HeightMapSurface implements ExternalEnergy {
         }
     }
 
+    /**
+     * Gets the force in normalized coordinates for a point at x,y,z
+     *
+     * @param x
+     * @param y
+     * @param z
+     * @param target destination for force.
+     * @return target.
+     */
     double[] getForce(double x, double y, double z, double[] target){
 
         //dx = 1
@@ -66,8 +79,8 @@ public class HeightMapSurface implements ExternalEnergy {
         double hy0 = getHeight(x, y - 0.5*pixel);
         double hy1 = getHeight(x, y + 0.5*pixel);
 
-        double[] du = {1, 0, hx1 - hx0};
-        double[] dv = {0, 1, hy1 - hy0};
+        double[] du = {1*pixel, 0, hx1 - hx0};
+        double[] dv = {0, 1*pixel, hy1 - hy0};
 
         double h = 0.25*(hx0 + hx1 + hy0 + hy1);
 
@@ -88,6 +101,13 @@ public class HeightMapSurface implements ExternalEnergy {
         return target;
     }
 
+    /**
+     * Gets the height for the x,y position on the map.
+     *
+     * @param x
+     * @param y
+     * @return actual value from height map.
+     */
     double getHeight(double x, double y){
         double u = (x - minx)*xfactor;
         double v = (y - miny)*yfactor;
@@ -148,6 +168,75 @@ public class HeightMapSurface implements ExternalEnergy {
         }
         return 0;
     }
+
+    public void createHeighMapDataObject() {
+        int nPoints = 50;
+
+        double dx = width/nPoints;
+        double dy = height/nPoints;
+
+        int xsteps = (int) (width / dx);
+        int ysteps = (int) (height / dy);
+
+        dx = width * 1.0 / (xsteps);
+        dy = height * 1.0 / (ysteps);
+
+        double[] points = new double[3 * xsteps * ysteps];
+
+        for (int j = 0; j < xsteps; j++) {
+            for (int k = 0; k < ysteps; k++) {
+
+                double x = j * dx * pixel + minx;
+                double y = k * dy * pixel + miny;
+                double z = getHeight(x, y);
+
+                points[3 * (j + k * xsteps)] = x;
+                points[3 * (j + k * xsteps) + 1] = y;
+                points[3 * (j + k * xsteps) + 2] = z;
+
+            }
+        }
+
+        int boxes = (xsteps - 1) * (ysteps - 1);
+        int triangles = 2 * boxes * 3;
+        int connections = 3 * boxes * 2;
+        int[] triangle_indexes = new int[triangles];
+        int[] connection_indexes = new int[connections];
+
+        int t = 0;
+        int c = 0;
+        for (int j = 0; j < xsteps - 1; j++) {
+            for (int k = 0; k < ysteps - 1; k++) {
+                int n = j + k * xsteps;
+                int right = j + 1 + k * xsteps;
+                int down = j + (k + 1) * xsteps;
+                int diag = j + 1 + (k + 1) * xsteps;
+                triangle_indexes[t++] = diag;
+                triangle_indexes[t++] = n;
+                triangle_indexes[t++] = right;
+
+                triangle_indexes[t++] = n;
+                triangle_indexes[t++] = diag;
+                triangle_indexes[t++] = down;
+
+                connection_indexes[c++] = n;
+                connection_indexes[c++] = right;
+
+                connection_indexes[c++] = n;
+                connection_indexes[c++] = diag;
+
+                connection_indexes[c++] = n;
+                connection_indexes[c++] = down;
+
+            }
+        }
+
+        surfaceGeometry = new DeformableMesh3D(points, connection_indexes, triangle_indexes);
+        surfaceGeometry.create3DObject();
+
+    }
+
+
 
     public static void main(String[] args){
         double[][] points = {
