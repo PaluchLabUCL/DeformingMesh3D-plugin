@@ -56,13 +56,13 @@ public class FillingBinaryImage {
 
         while(count<400){
             mesh.update();
-            if(count==300){
+            /*if(count==300){
                 mesh.clearEnergies();
                 RayCastMesh.subDivideMesh(mesh);
                 mesh.reshape();
                 mesh.addExternalEnergy(new FillingForce(mesh, pressure, stack));
 
-            }
+            }*/
             count++;
         }
         System.out.println("special meshed");
