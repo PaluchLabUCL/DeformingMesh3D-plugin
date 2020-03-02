@@ -50,6 +50,15 @@ public class InterceptingMesh3D implements Interceptable{
         center[2] *=f;
     }
 
+    /**
+     * Checks if pt is contained in this meshes bounds.
+     *
+     * @param pt
+     * @return
+     */
+    public boolean boundsContains(double[] pt){
+        return bounds.contains(pt);
+    }
     @Override
     public List<Intersection> getIntersections(double[] origin, double[] direction) {
         List<Intersection> sections = new ArrayList<>();

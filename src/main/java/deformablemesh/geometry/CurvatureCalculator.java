@@ -15,6 +15,13 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * A class used for calculating curvatures based on
+ *
+ * "Discrete Differential-Geometry Operators for Triangled 2-Manifolds
+ *  Mark Meyer, Mathieu Desbrun, Peter Schroeder, and Alan H. Barr
+ *
+ */
 public class CurvatureCalculator {
     DeformableMesh3D mesh;
     Map<Node3D, List<Triangle3D>> node_to_triangle = new HashMap<>();
@@ -110,9 +117,10 @@ public class CurvatureCalculator {
     }
 
     /**
-     * Calculates the normal based on the
-     * @param index
-     * @return
+     * Calculates the normal based on the mean normal.
+     *
+     * @param index of node to find normal at
+     * @return normalized vector representing the mean normal at the node.
      */
     public double[] getNormal(int index){
         Node3D node = mesh.nodes.get(index);

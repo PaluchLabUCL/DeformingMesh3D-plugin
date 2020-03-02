@@ -30,6 +30,13 @@ public class VolumeConservation implements ExternalEnergy{
 
 
     }
+    public double getVolume(){
+        return volume;
+    }
+
+    public void setVolume(double v){
+        this.volume = v;
+    }
 
     @Override
     public void updateForces(double[] positions, double[] fx, double[] fy, double[] fz) {

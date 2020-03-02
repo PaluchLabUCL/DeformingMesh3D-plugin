@@ -1,6 +1,8 @@
 package deformablemesh.simulations;
 
+import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.externalenergies.ExternalEnergy;
+import deformablemesh.externalenergies.SofterStericMesh;
 import deformablemesh.externalenergies.StericMesh;
 import deformablemesh.externalenergies.TriangleAreaDistributor;
 import deformablemesh.externalenergies.VolumeConservation;
@@ -52,17 +54,18 @@ public class ManyDrops {
 
     public void start(){
         int cdex = 0;
-        for(int i = 0; i<4; i++){
-            for(int j = 0; j<4; j++){
+        for(int i = 0; i<3; i++){
+            for(int j = 0; j<3; j++){
                 //if(i != j || i!=4) continue;
-                Sphere sphere = new Sphere(new double[]{i*0.125, j*0.125 , 0.06}, 0.05);
-                //DeformableMesh3D mesh = new NewtonMesh3D(RayCastMesh.rayCastMesh(sphere, sphere.getCenter(), 2));
-                DeformableMesh3D mesh = RayCastMesh.rayCastMesh(sphere, sphere.getCenter(), 2);
-                mesh.setShowSurface(true);
+                Sphere sphere = new Sphere(new double[]{i*0.125 - 0.25, j*0.125 - 0.25 , -0.0}, 0.05);
 
-                mesh.GAMMA = 1500;
+                DeformableMesh3D mesh = RayCastMesh.rayCastMesh(sphere, sphere.getCenter(), 2);
+                //mesh = new NewtonMesh3D(mesh);
+                mesh.setShowSurface(true);
+                System.out.println(mesh.nodes.size());
+                mesh.GAMMA = 100;
                 mesh.ALPHA = 1.0;
-                mesh.BETA = 0.5;
+                mesh.BETA = 0.0;
                 mesh.reshape();
                 meshes.add(mesh);
             }
@@ -80,7 +83,8 @@ public class ManyDrops {
         surface.createHeighMapDataObject();
         surface.surfaceGeometry.setShowSurface(true);
         surface.surfaceGeometry.data_object.setWireColor(Color.BLUE);
-
+        VectorField field = new VectorField(meshes.get(meshes.size()/2));
+        forces.add(field);
     }
 
     public void createDisplay(){
@@ -106,9 +110,9 @@ public class ManyDrops {
 
             }
     double gravityMagnitude = 0.0015625;
-    double surfaceFactor = 10.;
+    double surfaceFactor = 5.;
     double volumeConservation = 10;
-    double steric = 2.0;
+    double steric = 0.5;
     public void prepareEnergies(DeformableMesh3D mesh){
         ExternalEnergy gravity = new ExternalEnergy(){
 
@@ -159,7 +163,7 @@ public class ManyDrops {
 
         if(steric != 0){
             addSurfaceStericMeshEnergy(mesh);
-
+            addMeanFieldStericEnergy(mesh);
         }
     }
 
@@ -170,7 +174,7 @@ public class ManyDrops {
             if(b==mesh){
                 continue;
             }
-            StericMesh sm = new StericMesh(b, mesh, steric);
+            StericMesh sm = new SofterStericMesh(b, mesh, steric);
             b.addExternalEnergy(sm);
 
             stericMeshes.add(sm);
@@ -179,7 +183,8 @@ public class ManyDrops {
     }
 
     void addMeanFieldStericEnergy(DeformableMesh3D mesh){
-        MeanFieldStericEnergy mse = new MeanFieldStericEnergy(mesh, steric);
+        MeanFieldStericEnergy mse = new MeanFieldStericEnergy(mesh, 5000*steric);
+        mse.update();
         for(int i = 0; i<meshes.size(); i++){
             DeformableMesh3D b = meshes.get(i);
             if(b!=mesh) {
@@ -200,7 +205,7 @@ public class ManyDrops {
 
 
         stericMeshes.forEach(sm -> sm.update());
-
+        quasiStericMeshes.forEach(MeanFieldStericEnergy::update);
     }
 
 
@@ -213,7 +218,7 @@ public class ManyDrops {
         ImagePlus plus = null;
         while(true){
             pacer.step();
-            if(pacer.taken%15000 == 1){
+            if(pacer.taken%9000 == 1){
 
                 BufferedImage img = frame.snapShot();
                 ImageProcessor p = new ColorProcessor(img);
@@ -246,8 +251,8 @@ public class ManyDrops {
             for(int j = 0; j<N; j++){
                 double x = d*i - 1;
                 double y = d*j - 1;
-                double s = Math.sin(x*Math.PI);
-                double c = Math.cos(y*Math.PI/2);
+                double s = Math.cos(x*Math.PI*3/2);
+                double c = Math.cos(y*Math.PI*3/2);
                 pitted[j][i] =  -0.5*s*s*c*c;
             }
         }
@@ -303,32 +308,51 @@ class MeanFieldStericEnergy implements ExternalEnergy{
         cx = cx / Atot;
         cy = cy / Atot;
         cz = cz / Atot;
+        //double a = DeformableMesh3DTools.calculateSurfaceArea(source);
+        //double[] c = DeformableMesh3DTools.centerAndRadius(source.nodes);
+
 
         cx2 = cx2 / Atot;
         cy2 = cy2 / Atot;
         cz2 = cz2 / Atot;
-        r_cutoff = 1.2*Math.sqrt( cx2 + cy2 + cz2 - (cx*cx + cy*cy + cz*cz));
+        r_cutoff = 0.8*Math.sqrt( cx2 + cy2 + cz2 - (cx*cx + cy*cy + cz*cz));
+
+        //System.out.println("legacy: " + a + "\t" + c[0] + ", " + c[1] + ", " + c[2] + "\t" + c[3]);
+        //System.out.println("modify: " + Atot + "\t" + cx + ", " + cy + ", " + cz + "\t" + r_cutoff/0.8);
     }
 
     @Override
     public void updateForces(double[] positions, double[] fx, double[] fy, double[] fz) {
-        for(int i = 0; i<fx.length; i++){
-            double x = positions[i*3];
-            double y = positions[i*3 + 1];
-            double z = positions[i*3 + 2];
+        double sx = 0;
+        double sy = 0;
+        double sz = 0;
 
-            double[] dr = {
-                    x - cx,
-                    y - cy,
-                    z - cz
-            };
-            double m = Vector3DOps.mag(dr);
-            if(m>r_cutoff){
-                continue;
-            }
-            double p = 2*( r_cutoff - m )/r_cutoff;
+        for(int i = 0; i<fx.length; i++) {
+            sx += positions[i * 3];
+            sy += positions[i * 3 + 1];
+            sz += positions[i * 3 + 2];
+        }
 
-            double f = k*p*p*p;
+        sx = sx/fx.length;
+        sy = sy/fx.length;
+        sz = sz/fx.length;
+        double[] dr = {
+                sx - cx,
+                sy - cy,
+                sz - cz
+        };
+        double m = Vector3DOps.mag(dr);
+
+        if(m>2*r_cutoff){
+            return;
+        }
+
+        double p = 2*( r_cutoff - m/2 )/r_cutoff;
+        double f = k*p*p*p;
+
+        for(int i = 0; i<fx.length; i++) {
+
+
             fx[i] += f*dr[0]/m;
             fy[i] += f*dr[1]/m;
             fz[i] += f*dr[2]/m;

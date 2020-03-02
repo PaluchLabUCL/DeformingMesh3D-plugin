@@ -1,15 +1,21 @@
 package deformablemesh.externalenergies;
 
+import deformablemesh.geometry.CurvatureCalculator;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.InterceptingMesh3D;
+import deformablemesh.geometry.Intersection;
 import deformablemesh.geometry.Triangle3D;
 import deformablemesh.util.Vector3DOps;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Class used for calculating steric forces between meshes.
+ */
 public class StericMesh implements ExternalEnergy{
     InterceptingMesh3D mesh;
     final DeformableMesh3D deformableMesh;
@@ -17,7 +23,6 @@ public class StericMesh implements ExternalEnergy{
     final double weight;
     boolean staticShape = true;
     Map<Integer, Set<Triangle3D>> map = new HashMap<>();
-
     public StericMesh(DeformableMesh3D id, DeformableMesh3D neighbor, double weight){
         //mesh = new InterceptingMesh3D(a);
         deformableMesh = neighbor;
@@ -38,6 +43,7 @@ public class StericMesh implements ExternalEnergy{
         mesh = new InterceptingMesh3D(deformableMesh);
     }
 
+
     @Override
     public void updateForces(double[] positions, double[] fx, double[] fy, double[] fz) {
         if(!staticShape || mesh==null) {
@@ -52,6 +58,7 @@ public class StericMesh implements ExternalEnergy{
             pt[1] = positions[3*i + 1];
             pt[2] = positions[3*i + 2];
             double[] normal = new double[3];
+
             if(mesh.contains(pt)){
                 double dx = pt[0] - center[0];
                 double dy = pt[1] - center[1];
@@ -74,6 +81,13 @@ public class StericMesh implements ExternalEnergy{
         }
     }
 
+    /**
+     * Calculates the normal by averaging the normals of the connecting triangles.
+     *
+     * @param i node index
+     * @param result where the normal will be recorded.
+     * @return the magnitude of the summed normal.
+     */
     public double getNormal(Integer i, double[] result){
         result[0] = 0;
         result[1] = 0;
@@ -99,6 +113,8 @@ public class StericMesh implements ExternalEnergy{
         return norm;
 
     }
+
+
 
     @Override
     public double getEnergy(double[] pos) {
