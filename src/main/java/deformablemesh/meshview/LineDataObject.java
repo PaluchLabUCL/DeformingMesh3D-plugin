@@ -22,7 +22,11 @@ import java.util.List;
  * Created by msmith on 10/30/15.
  */
 public class LineDataObject implements DataObject {
-
+    /*
+     * TODO: Updated such that there is a single double array backing the data.
+     *  During update, check if the number of points changes, if not just update the positions.
+     *
+     */
 
     final float LINEWIDTH;
 
@@ -44,12 +48,15 @@ public class LineDataObject implements DataObject {
 
         }
         line3d = new Shape3D(line);
+        line3d.setCapability(Shape3D.ALLOW_GEOMETRY_WRITE);
         LINEWIDTH=width;
 
         line3d.setAppearance(createAppearance());
 
+    }
 
-
+    public void dispose(){
+        line3d.removeAllGeometries();
     }
 
 
@@ -89,7 +96,15 @@ public class LineDataObject implements DataObject {
     /**
      * updates the geometry of snakes, not safe if there are zero points.
      */
-    public void updateGeometry(){
+    public void updateGeometry(List<double[]> positions){
+
+        LineArray line = new LineArray(2*(positions.size()-1), GeometryArray.COORDINATES);
+        for(int i=0; i<positions.size()-1; i++){
+            line.setCoordinate(2*i,new Point3d(positions.get(i)));
+            line.setCoordinate(2*i+1,new Point3d(positions.get(i+1)));
+
+        }
+        line3d.setGeometry(line);
 
     }
     public Node getNode(){

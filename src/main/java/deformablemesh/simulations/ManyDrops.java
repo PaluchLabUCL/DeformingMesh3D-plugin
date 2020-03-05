@@ -54,10 +54,10 @@ public class ManyDrops {
 
     public void start(){
         int cdex = 0;
-        for(int i = 0; i<3; i++){
-            for(int j = 0; j<3; j++){
+        for(int i = 0; i<9; i++){
+            for(int j = 0; j<9; j++){
                 //if(i != j || i!=4) continue;
-                Sphere sphere = new Sphere(new double[]{i*0.125 - 0.25, j*0.125 - 0.25 , -0.0}, 0.05);
+                Sphere sphere = new Sphere(new double[]{i*0.125 - 0.5, j*0.125 - 0.5 , -0.0}, 0.05);
 
                 DeformableMesh3D mesh = RayCastMesh.rayCastMesh(sphere, sphere.getCenter(), 2);
                 //mesh = new NewtonMesh3D(mesh);
@@ -218,7 +218,7 @@ public class ManyDrops {
         ImagePlus plus = null;
         while(true){
             pacer.step();
-            if(pacer.taken%9000 == 1){
+            if(pacer.taken%3500 == 1){
 
                 BufferedImage img = frame.snapShot();
                 ImageProcessor p = new ColorProcessor(img);
@@ -253,7 +253,7 @@ public class ManyDrops {
                 double y = d*j - 1;
                 double s = Math.cos(x*Math.PI*3/2);
                 double c = Math.cos(y*Math.PI*3/2);
-                pitted[j][i] =  -0.5*s*s*c*c;
+                pitted[j][i] =  -0.2*s*s*c*c;
             }
         }
 

@@ -61,7 +61,7 @@ public class Node3D {
     public boolean equals(Object o){
         if(o==null)return false;
         if(o instanceof Node3D){
-            return ((Node3D)o).index==index;
+            return ((Node3D)o).positions==positions && ((Node3D)o).index==index;
         }
         return false;
     }

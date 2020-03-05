@@ -14,6 +14,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 public class DeformableLine3D {
 
@@ -146,7 +147,7 @@ public class DeformableLine3D {
         }
 
         if(data_object!=null){
-            data_object.updateGeometry();
+            data_object.updateGeometry(nodes.stream().map(Node3D::getCoordinates).collect(Collectors.toList()));
         }
     }
 
@@ -155,5 +156,9 @@ public class DeformableLine3D {
     }
     public DataObject getDataObject(){
         return data_object;
+    }
+
+    public void clearEnergies() {
+        energies.clear();
     }
 }

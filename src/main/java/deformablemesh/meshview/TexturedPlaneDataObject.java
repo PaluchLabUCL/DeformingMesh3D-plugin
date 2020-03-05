@@ -17,6 +17,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * A volume
+ */
 public class TexturedPlaneDataObject extends DeformableMeshDataObject {
     private boolean showSurface = false;
     private Color volumeColor = Color.WHITE;
@@ -124,14 +127,23 @@ public class TexturedPlaneDataObject extends DeformableMeshDataObject {
         material.setLightingEnable(false);
         appear.setMaterial(material);
         appear.setPolygonAttributes(p);
+        //appear.setTransparencyAttributes(
+        //        new TransparencyAttributes(TransparencyAttributes.NICEST, 1.0f)
+        //);
 
         return appear;
     }
 
+    public void setMinMaxRange(double min, double max){
+        this.min = (float)min;
+        this.max = (float)max;
+        updateVolume();
+    }
 
     public void updateVolume(){
         volume = new VolumeTexture(texture_data, min, max, new Color3f(volumeColor));
-
+        texturedAppearance = createTexturedSurface();
+        surface_object.setAppearance(texturedAppearance);
     }
 
     @Override
