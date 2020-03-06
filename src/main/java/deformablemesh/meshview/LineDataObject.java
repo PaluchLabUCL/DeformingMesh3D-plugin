@@ -1,22 +1,14 @@
 package deformablemesh.meshview;
 
 import deformablemesh.geometry.Node3D;
-import org.scijava.java3d.Appearance;
-import org.scijava.java3d.BranchGroup;
-import org.scijava.java3d.ColoringAttributes;
-import org.scijava.java3d.GeometryArray;
-import org.scijava.java3d.LineArray;
-import org.scijava.java3d.LineAttributes;
-import org.scijava.java3d.Node;
-import org.scijava.java3d.Shape3D;
-import org.scijava.java3d.Transform3D;
-import org.scijava.java3d.TransformGroup;
+import org.scijava.java3d.*;
 import org.scijava.vecmath.Point3d;
 import org.scijava.vecmath.Vector3d;
 import snakeprogram3d.display3d.DataObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created by msmith on 10/30/15.
@@ -35,18 +27,22 @@ public class LineDataObject implements DataObject {
     int FRAME;
     private BranchGroup BG;
     ColoringAttributes c_at;
-    List<double[]> positions = new ArrayList<>();
+    double[] positions;
+    int[] indexes;
+    IndexedLineArray line;
     public LineDataObject(List<Node3D> points){
         this(points, 3f);
     }
     public LineDataObject(List<Node3D> points, float width){
-        points.forEach(p->positions.add(p.getCoordinates()));
-        LineArray line = new LineArray(2*(positions.size()-1), GeometryArray.COORDINATES);
-        for(int i=0; i<positions.size()-1; i++){
-            line.setCoordinate(2*i,new Point3d(positions.get(i)));
-            line.setCoordinate(2*i+1,new Point3d(positions.get(i+1)));
 
-        }
+        createNewLineArray(
+                points.stream().map(
+                        Node3D::getCoordinates
+                ).collect(
+                        Collectors.toList()
+                )
+        );
+
         line3d = new Shape3D(line);
         line3d.setCapability(Shape3D.ALLOW_GEOMETRY_WRITE);
         LINEWIDTH=width;
@@ -92,19 +88,44 @@ public class LineDataObject implements DataObject {
         return a;
 
     }
+    private void createNewLineArray(List<double[]> points){
+        positions = new double[points.size()*3];
+        //each consecutive point is connected by one connection.
+        indexes = new int[points.size()*2 - 2];
+        line = new IndexedLineArray(points.size(),GeometryArray.COORDINATES, 2*points.size()-2);
+        for(int i=0; i<points.size(); i++){
+            if(i<points.size() -1) {
+                indexes[2 * i] = i;
+                indexes[2 * i + 1] = i + 1;
+            }
+            double[] pt = points.get(i);
+            positions[3*i] = pt[0];
+            positions[3*i + 1] = pt[1];
+            positions[3*i + 2] = pt[2];
+        }
 
+        line.setCoordinates(0, positions);
+        line.setCoordinateIndices(0, indexes);
+        line.setCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
+    }
     /**
      * updates the geometry of snakes, not safe if there are zero points.
      */
-    public void updateGeometry(List<double[]> positions){
+    public void updateGeometry(List<double[]> points){
 
-        LineArray line = new LineArray(2*(positions.size()-1), GeometryArray.COORDINATES);
-        for(int i=0; i<positions.size()-1; i++){
-            line.setCoordinate(2*i,new Point3d(positions.get(i)));
-            line.setCoordinate(2*i+1,new Point3d(positions.get(i+1)));
-
+        if(points.size() == this.positions.length/3){
+            for(int i=0; i<points.size(); i++){
+                double[] pt = points.get(i);
+                positions[3*i] = pt[0];
+                positions[3*i + 1] = pt[1];
+                positions[3*i + 2] = pt[2];
+            }
+            line.setCoordinates(0, positions);
+        } else{
+            createNewLineArray(points);
+            line3d.setGeometry(line);
         }
-        line3d.setGeometry(line);
+
 
     }
     public Node getNode(){
