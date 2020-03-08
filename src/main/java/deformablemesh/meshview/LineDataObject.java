@@ -7,6 +7,7 @@ import org.scijava.vecmath.Vector3d;
 import snakeprogram3d.display3d.DataObject;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -88,6 +89,34 @@ public class LineDataObject implements DataObject {
         return a;
 
     }
+
+    /**
+     * Creates a copy of the provided array to keep as a backing and updates the LineArray.
+     *
+     * @param positions an array containing coordinates: { x0, y0, z0, x1, y1, z1, ...}
+     */
+    public void updateGeometry(double[] positions){
+        if( positions.length == this.positions.length ){
+            System.arraycopy(positions, 0, this.positions, 0, this.positions.length);
+            line.setCoordinates(0, positions);
+        } else{
+            int n = positions.length/3;
+            this.positions = Arrays.copyOf(positions, 0);
+            //each consecutive point is connected by one connection.
+            indexes = new int[n*2 - 2];
+            line = new IndexedLineArray(n,GeometryArray.COORDINATES, 2*n-2);
+            for(int i=0; i<n-1; i++){
+                indexes[2 * i] = i;
+                indexes[2 * i + 1] = i + 1;
+            }
+
+            line.setCoordinates(0, positions);
+            line.setCoordinateIndices(0, indexes);
+            line.setCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
+            line3d.setGeometry(line);
+        }
+    }
+
     private void createNewLineArray(List<double[]> points){
         positions = new double[points.size()*3];
         //each consecutive point is connected by one connection.

@@ -147,7 +147,7 @@ public class DeformableLine3D {
         }
 
         if(data_object!=null){
-            data_object.updateGeometry(nodes.stream().map(Node3D::getCoordinates).collect(Collectors.toList()));
+            data_object.updateGeometry(positions);
         }
     }
 
