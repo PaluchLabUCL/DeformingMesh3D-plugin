@@ -330,9 +330,15 @@ public class DeformableMesh3D{
     public void addExternalEnergy(ExternalEnergy energy){
         energies.add(energy);
     }
+
+    public void removeExternalEnergy(ExternalEnergy energy){
+        energies.remove(energy);
+    }
+
     public void clearEnergies(){
         energies.clear();
     }
+
     public double calculateVolume(){
         return DeformableMesh3DTools.calculateVolume(new double[]{1,0,0}, positions, triangles);
     }

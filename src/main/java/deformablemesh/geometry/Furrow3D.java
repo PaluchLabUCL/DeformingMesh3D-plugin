@@ -20,7 +20,7 @@ import java.util.List;
  * Time: 11:42 AM
  * To change this template use File | Settings | File Templates.
  */
-public class Furrow3D {
+public class Furrow3D implements Interceptable{
     public double[] cm;
     public double[] normal;
     public double[] up;
@@ -391,5 +391,33 @@ public class Furrow3D {
         d = d>0?d:-d;
 
         return d;
+    }
+
+    @Override
+    public List<Intersection> getIntersections(double[] origin, double[] direction) {
+        double[] r = Vector3DOps.difference(this.cm, origin);
+        double toPlane = Vector3DOps.dot(r, normal);
+
+        double dot = Vector3DOps.dot(direction, normal);
+        double t = dot<0 ? 1 + dot : 1 - dot;
+        if(t < 1e-6 ){
+            //parallel to normal.
+            return new ArrayList<>();
+        }
+
+        double k = toPlane/dot;
+
+        double[] p = Vector3DOps.add(origin, direction, k);
+
+        return Arrays.asList( new Intersection(p, normal));
+    }
+    @Override
+    public boolean contains(double[] pt){
+        double[] r = Vector3DOps.difference(this.cm, pt);
+        double toPlane = Vector3DOps.dot(r, normal);
+        return false;
+        //return toPlane>=0;
+
+
     }
 }
