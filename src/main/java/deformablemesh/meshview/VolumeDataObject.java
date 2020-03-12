@@ -143,23 +143,14 @@ public class VolumeDataObject implements DataObject {
      * @param pts
      */
     public void setTextureData(MeshImageStack stack, List<int[]> pts){
-        int lowx = Integer.MAX_VALUE;
-        int highx = -lowx;
-        int lowy = Integer.MAX_VALUE;
-        int highy = highx;
-        int lowz = Integer.MAX_VALUE;
-        int highz = -lowz;
-
-        for(int[] pt: pts){
-            lowx = pt[0]<lowx?pt[0]:lowx;
-            lowy = pt[1]<lowy?pt[1]:lowy;
-            lowz = pt[2]<lowz?pt[2]:lowz;
-
-            highx = pt[0]>highx?pt[0]:highx;
-            highy = pt[1]>highy?pt[1]:highy;
-            highz = pt[2]>highz?pt[2]:highz;
-        }
-
+        int lowx = 0;
+        int highx = stack.getWidthPx() - 1;
+        int lowy = 0;
+        int highy = stack.getHeightPx() - 1;
+        int lowz = 0;
+        int highz = stack.getNSlices() - 1;
+        IntSummaryStatistics iss = pts.stream().mapToInt(i->i[2]).summaryStatistics();
+        System.out.println(iss.getMin() + ", " + iss.getMax() );
         int d = highz - lowz + 1;
         int h = highy - lowy + 1;
         int w = highx - lowx + 1;
@@ -171,7 +162,7 @@ public class VolumeDataObject implements DataObject {
         sizes = new int[]{w, h, d};
 
         for(int[] pt: pts){
-            texture_data[pt[0]-lowx][h - pt[1] + lowy - 1][pt[2]-lowz] = 255;
+            texture_data[pt[0]-lowx][h - pt[1] + lowy - 1][pt[2]-lowz-1] = 255;
         }
         updateVolume();
 
