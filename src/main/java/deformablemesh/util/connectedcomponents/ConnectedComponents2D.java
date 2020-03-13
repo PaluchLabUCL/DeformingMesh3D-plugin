@@ -1,4 +1,4 @@
-package deformablemesh.util;
+package deformablemesh.util.connectedcomponents;
 
 import ij.process.ImageProcessor;
 

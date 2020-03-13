@@ -4,14 +4,14 @@ import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Furrow3D;
 import deformablemesh.gui.GuiTools;
-import deformablemesh.util.ConnectedComponents2D;
+import deformablemesh.util.connectedcomponents.ConnectedComponents2D;
 import deformablemesh.util.astar.AStarBasic;
 import deformablemesh.util.astar.AStarXY;
 import deformablemesh.util.astar.PossiblePath;
-import ij.ImageStack;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+import snakeprogram.InsufficientPointsException;
 import snakeprogram.TwoDContourDeformation;
 import snakeprogram.energies.ImageEnergy;
 import snakeprogram.energies.IntensityEnergy;
@@ -172,7 +172,11 @@ public class ContractileRingDetector implements Iterable<Integer>{
         deformation.setBeta(BETA);
         deformation.setGamma(GAMMA);
         deformation.setWeight(WEIGHT);
-        deformation.initializeMatrix();
+        try {
+            deformation.initializeMatrix();
+        } catch(InsufficientPointsException e){
+            e.printStackTrace();
+        }
         for(int k = 0; k<10; k++){
             deformation.deformSnake();
 

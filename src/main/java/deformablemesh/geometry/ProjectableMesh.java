@@ -118,6 +118,8 @@ public class ProjectableMesh implements Projectable{
         Connection3D first = null;
         Connection3D b = null;
         boolean found = false;
+        int max = triangles.size();
+        int count = 0;
         do{
             if(found==false){
                 triangle = triangles.get(0);
@@ -155,8 +157,8 @@ public class ProjectableMesh implements Projectable{
                 }
 
             }
-
-        } while(triangles.size()>0);
+            count++;
+        } while(triangles.size()>0 && count<max);
 
 
         return ret;

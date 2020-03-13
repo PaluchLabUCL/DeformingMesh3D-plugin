@@ -46,16 +46,16 @@ public class FillingBinaryImage {
         mesh.GAMMA = 1000;
         mesh.ALPHA = 1.0;
         mesh.BETA = 0.0;
-        mesh.reshape();
+        //mesh.reshape();
 
-        double pressure = 1;
+        //double pressure = 1;
 
-        mesh.addExternalEnergy(new FillingForce(mesh, pressure, stack));
+        //mesh.addExternalEnergy(new FillingForce(mesh, pressure, stack));
 
         int count = 0;
 
-        while(count<400){
-            mesh.update();
+        //while(count<400){
+        //    mesh.update();
             /*if(count==300){
                 mesh.clearEnergies();
                 RayCastMesh.subDivideMesh(mesh);
@@ -63,9 +63,8 @@ public class FillingBinaryImage {
                 mesh.addExternalEnergy(new FillingForce(mesh, pressure, stack));
 
             }*/
-            count++;
-        }
-        System.out.println("special meshed");
+        //    count++;
+        //}
         return mesh;
 
 

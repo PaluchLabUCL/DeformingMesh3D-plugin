@@ -1,6 +1,5 @@
 package deformablemesh.util.connectedcomponents;
 
-import deformablemesh.util.ConnectedComponents2D;
 import ij.ImageStack;
 import ij.process.ImageProcessor;
 
@@ -8,7 +7,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ConnectedComponents3D {
@@ -133,7 +131,7 @@ public class ConnectedComponents3D {
      * Eliminates redundant points in the 'pre-map' and leaves final_map with the correct mappings
      **/
     private void reduceMap(){
-        System.out.println("reducing map");
+        System.out.println("reducing map " + premap.size());
         while(premap.size()>0){
             //Set for looping
             int[] next = premap.get(0);
