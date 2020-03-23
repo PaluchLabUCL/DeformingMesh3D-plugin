@@ -1,7 +1,14 @@
 package deformablemesh.util.connectedcomponents;
 
+import ij.ImageJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.process.ByteProcessor;
+import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
 
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -11,11 +18,13 @@ import java.util.*;
  */
 public class ConnectedComponents2D{
     ImageProcessor proc;
+    int[] workspace;
+    final int w,h;
     //filled after first pass, this has all of the mappings
     List<int[]> premap;
 
     //This is the actual map that has all of the mappings after they are reduced
-    Map<Integer,Integer> final_map;
+    Map<Integer, Integer> final_map;
 
     //Contains a map of label to collection of pixels it corresponds to.
     Map<Integer,List<int[]>> log;
@@ -35,14 +44,36 @@ public class ConnectedComponents2D{
      */
     public ConnectedComponents2D(ImageProcessor proc){
       this.proc = proc;
+      w = proc.getWidth();
+      h = proc.getHeight();
     }
 
     /**
      * This method needs to be called before any of the centroids can be accessed.
      */
     public void process(){
-      firstPass(this.proc);
-      secondPass(this.proc);
+        int n = w*h;
+        workspace = new int[n];
+
+        if( proc instanceof ShortProcessor ){
+            short[] pixels = (short[]) proc.getPixels();
+            for(int i = 0; i<n; i++){
+                workspace[i] = pixels[i] != 0 ? 1 : 0;
+            }
+        } else if( proc instanceof ByteProcessor){
+            byte[] pixels = (byte[]) proc.getPixels();
+            for(int i = 0; i<n; i++){
+                workspace[i] = pixels[i] != 0 ? 1 : 0;
+            }
+        } else {
+            for (int i = 0; i < n; i++) {
+                workspace[i] = this.proc.get(i) != 0 ? 1 : 0;
+            }
+        }
+
+        firstPass();
+        secondPass();
+
     }
 
     /**
@@ -62,9 +93,8 @@ public class ConnectedComponents2D{
      * Takes a binary and performs a first pass connected regions filter on it.
      * Goes through pixel by pixel and checks its top and left neighbors for values
      * Then marks what value this pixel should be.
-     * @param threshed binary image
      */
-    private void firstPass(ImageProcessor threshed){
+    private void firstPass(){
 
         premap = new ArrayList<int[]>();
         last_added = 0;
@@ -72,13 +102,10 @@ public class ConnectedComponents2D{
         final_map = new HashMap<>();
         final_map.put(0, 0);
 
-        int h = threshed.getHeight();
-        int w = threshed.getWidth();
-
         for(int i = 0; i<h; i++){
             for(int j = 0; j<w; j++){
-                int x = rowBy(threshed,j,i);
-                threshed.putPixel(j,i,x);
+                int x = rowBy(j,i);
+                set(j,i,x);
             }
         }
         reduceMap();
@@ -93,17 +120,16 @@ public class ConnectedComponents2D{
      *
      * If the pixel is zero, then there is now change
      *
-     * @param threshed image data
      * @param j - x coordinate
      * @param i - y coordinate
      * @return the index for the last added.
      */
-    private int rowBy(ImageProcessor threshed, int j, int i){
+    private int rowBy(int j, int i){
 
         int above,left,now;
-        above = threshed.getPixel(j,i-1);
-        left = threshed.getPixel(j-1,i);
-        now = threshed.getPixel(j,i);
+        above = get(j,i-1);
+        left = get(j-1,i);
+        now = get(j,i);
         if(now>0){
             if(above>0 && left>0){
                 if(above != left){
@@ -133,16 +159,17 @@ public class ConnectedComponents2D{
             //Set for looping
             int[] next = premap.get(0);
             premap.remove(0);
-            HashSet<Integer> next_set = new HashSet<>();
+            IntSet next_set = new IntSet();
             int source = next[0];
             next_set.add(next[0]);
             next_set.add(next[1]);
-            ArrayList<Integer> trying = new ArrayList<>();
-            for(Integer e: next_set)
-                trying.add(e);
+            IntSet trying = new IntSet();
+            for(int i = 0; i<next_set.size(); i++){
+                trying.add(next_set.get(i));
+            }
             while(trying.size()>0){
                 int cur = trying.get(0);
-                trying.remove(0);
+                trying.removeFirst();
                 ArrayList<int[]> replacement = new ArrayList<>();
                 for(int i=0;i<premap.size(); i++ ){
                     int[] test = premap.get(i);
@@ -163,8 +190,9 @@ public class ConnectedComponents2D{
                 premap=replacement;
             }
             //place value into hashmaps values
-            for(Integer e: next_set)
-                final_map.put(e,source);
+            for(int i = 0; i<next_set.size(); i++){
+                final_map.put(next_set.get(i), source);
+            }
         }
 
     }
@@ -173,26 +201,22 @@ public class ConnectedComponents2D{
      * Uses the map created from the numbered image processor, creates the log, which contains all
      * of the coordinates for each point in the connected region.
      *
-     * @param separate image processor with numbers that have been mapped, modifies map to be a binary image 0's or 255's.
      */
-    private void secondPass(ImageProcessor separate){
+    private void secondPass(){
 
         log = new HashMap<>();
 
-        for(Integer v: final_map.values()){
+        for(Integer value: final_map.values()){
             ArrayList<int[]> points = new ArrayList<>();
-            log.put(v,points);
+            log.put(value, points);
         }
-        int h = separate.getHeight();
-        int w = separate.getWidth();
         for(int i = 0; i<h; i++){
             for(int j = 0; j<w; j++){
-                int cur = separate.getPixel(j,i);
+                int cur = get(j,i);
                 int rep = final_map.get(cur);
                 int[] point = {j, i};
                 if(rep!=0){
                     log.get(rep).add(point);
-                    separate.putPixel(j, i, 255);
                 }
             }
         }
@@ -221,6 +245,22 @@ public class ConnectedComponents2D{
         }
     }
 
+    /**
+     * Sets the workspace value.
+     *
+     * @param x coordinate
+     * @param y coordinate
+     * @param value value to set to.
+     */
+    private void set(int x, int y, int value){
+        workspace[x + y*w] = value;
+    }
+
+    private int get(int x, int y){
+        if(x<0 || y<0) return 0;
+        return workspace[x + y*w];
+
+    }
 
     /**
      * A map of label -> region for all of the connected components. If this cc2d has not been processed it will be
@@ -235,4 +275,86 @@ public class ConnectedComponents2D{
         return log;
     }
 
+    public static void main(String[] args){
+        new ImageJ();
+        ImagePlus plus = new ImagePlus(Paths.get(args[0]).toAbsolutePath().toString());
+        ImageStack stack = plus.getStack();
+        int total = 0;
+        long start = System.nanoTime();
+        for(int i = 1; i<=stack.size(); i++){
+            ImageProcessor proc = stack.getProcessor(i);
+            proc.threshold(0);
+            proc.invert();
+            ConnectedComponents2D cc2d = new ConnectedComponents2D(proc);
+            cc2d.process();
+            Map<Integer, List<int[]>> regions = cc2d.getRegions();
+            total += regions.size();
+            System.out.println(".");
+        }
+        long elapsed = System.nanoTime() - start;
+        System.out.println(total + " regions in " + (elapsed/1e9) +"s");
+        //29239 regions.
+        //using the provided image processor for a workspace, 65 seconds to run.
+        // 55 seconds if there isn't a final labelling step !?.
+        plus.show();
+
+    }
+
+}
+
+
+/**
+ * This is a basic set that just makes sure duplicates aren't added. Elements can be removed from ends only. Insertion
+ * complexity is N.
+ */
+class IntSet{
+    final static int MAX = Short.MAX_VALUE;
+    int[] backing = new int[8];
+    int size = 0;
+    int offset = 0;
+    public IntSet(){
+    }
+
+    public boolean add(int s){
+        for(int i = 0; i<size; i++){
+            if(backing[i + offset]==s){
+                return false;
+            }
+        }
+        checkSize();
+        int i = size++ + offset;
+        backing[i] = s;
+        return true;
+    }
+
+    /**
+     * Adding a pixel.
+     */
+    private void checkSize(){
+
+                int n = backing.length*2;
+                n = n>MAX ? MAX : n;
+                int[] new_backing = new int[n];
+                System.arraycopy(backing, offset, new_backing, 0, size);
+                offset=0;
+                backing = new_backing;
+
+    }
+    public void removeFirst(){
+        offset++;
+        size--;
+    }
+
+    public int get(int i ){
+        return backing[i + offset];
+    }
+    public int size(){
+        return size;
+    }
+
+
+    @Override
+    public String toString(){
+        return Arrays.toString(Arrays.copyOf(backing, size));
+    }
 }
