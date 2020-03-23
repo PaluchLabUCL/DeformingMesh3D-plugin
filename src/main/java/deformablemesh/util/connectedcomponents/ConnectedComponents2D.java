@@ -43,7 +43,6 @@ public class ConnectedComponents2D{
     public void process(){
       firstPass(this.proc);
       secondPass(this.proc);
-      calculateCentroids();
     }
 
     /**
@@ -54,7 +53,7 @@ public class ConnectedComponents2D{
      */
     public List<double[]> getCentroids(){
         if(centroids ==null){
-            process();
+            calculateCentroids();
         }
         return centroids;
     }
@@ -200,6 +199,9 @@ public class ConnectedComponents2D{
     }
 
     private void calculateCentroids(){
+        if(log==null){
+            process();
+        }
         centroids = new ArrayList<>();
 
         for(Integer key: log.keySet()){
