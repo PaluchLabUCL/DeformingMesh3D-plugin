@@ -315,10 +315,10 @@ public class ContractileRingDetector implements Iterable<Integer>{
      * @param binary
      */
     void pruneBinaryBlobs(ImageProcessor binary){
-        ConnectedComponents2D components = new ConnectedComponents2D();
+        ConnectedComponents2D components = new ConnectedComponents2D(binary);
 
-        ArrayList<double[]> centroids = components.getCentroids(binary);
-        HashMap<Integer, List<int[]>> blobs = components.getPoints();
+        List<double[]> centroids = components.getCentroids();
+        Map<Integer, List<int[]>> blobs = components.getRegions();
         int max = 0;
         int min = binary.getHeight()*binary.getWidth();
         int biggest = 0;
