@@ -8,7 +8,22 @@ import javax.script.Bindings;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.ActionMap;
+import javax.swing.BoxLayout;
+import javax.swing.InputMap;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.KeyStroke;
+import javax.swing.ListModel;
+import javax.swing.Popup;
+import javax.swing.PopupFactory;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ListDataListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Caret;
@@ -19,7 +34,6 @@ import java.awt.EventQueue;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
@@ -31,6 +45,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import static java.awt.event.KeyEvent.VK_ENTER;
 
 /**
  * Created by msmith on 4/14/14.
@@ -45,6 +61,10 @@ public class SwingJSTerm {
     JFrame frame;
     SegmentationController controls;
     int commandIndex;
+    String[] historyTemp = new String[1];
+    JButton previous = new JButton("previous");
+    JButton next = new JButton("next");
+
     SwingJSTerm(SegmentationController controls){
 
         NashornScriptEngineFactory factory = new NashornScriptEngineFactory();
@@ -92,15 +112,24 @@ public class SwingJSTerm {
         input = tbs.input;
         input.setRows(10);
 
+        KeyStroke ks = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.SHIFT_MASK);
+
+        input.getInputMap().put(ks, "Submit");
+        input.getActionMap().put("Submit", new AbstractAction(){
+            @Override
+            public void actionPerformed(ActionEvent evt){
+                submit();
+            }
+        });
+
         JScrollPane house = new JScrollPane(input);
 
-        String[] historyTemp = new String[1];
 
 
 
 
-        JButton previous = new JButton("previous");
-        JButton next = new JButton("next");
+
+
 
         previous.addActionListener((evt)->{
             commandIndex++;
@@ -144,18 +173,9 @@ public class SwingJSTerm {
 
         JButton eval = new JButton("eval");
         eval.addActionListener((event) -> {
-
-            String s = input.getText();
-            input.setText("");
-            historyTemp[0] = "";
-            commandHistory.add(s);
-            commandIndex = 0;
-            next.setEnabled(false);
-            previous.setEnabled(true);
-
-            evaluateExpression(s);
-
+            submit();
         });
+
         JPanel buttons = new JPanel();
         buttons.setLayout(new BoxLayout(buttons, BoxLayout.LINE_AXIS));
         buttons.add(eval);
@@ -171,7 +191,17 @@ public class SwingJSTerm {
 
         return root;
     }
+    public void submit(){
+        String s = input.getText();
+        input.setText("");
+        historyTemp[0] = "";
+        commandHistory.add(s);
+        commandIndex = 0;
+        next.setEnabled(false);
+        previous.setEnabled(true);
 
+        evaluateExpression(s);
+    }
 
     public void showTerminal(){
         if(frame==null){

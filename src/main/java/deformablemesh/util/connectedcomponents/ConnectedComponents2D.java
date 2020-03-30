@@ -217,6 +217,7 @@ public class ConnectedComponents2D{
                 int[] point = {j, i};
                 if(rep!=0){
                     log.get(rep).add(point);
+                    set(j, i, rep);
                 }
             }
         }
@@ -256,10 +257,9 @@ public class ConnectedComponents2D{
         workspace[x + y*w] = value;
     }
 
-    private int get(int x, int y){
+    public int get(int x, int y){
         if(x<0 || y<0) return 0;
         return workspace[x + y*w];
-
     }
 
     /**
@@ -300,6 +300,32 @@ public class ConnectedComponents2D{
 
     }
 
+    public int getWidth() {
+        return w;
+    }
+    public int getHeight(){
+        return h;
+    }
+
+    public List<int[]> getLabelledPoints(int labelB) {
+        return log.get(labelB);
+    }
+
+    public int get(int i) {
+        return workspace[i];
+    }
+
+    /**
+     * Moves the unlabelled pixel to a labelled region. Add the int[] to the collection associated with the label.
+     * updates the backing workspace.
+     *
+     * @param p {x, y}
+     * @param label region to be associated with.
+     */
+    public void label(int[] p, int label) {
+        log.get(label).add(p);
+        set(p[0], p[1], label);
+    }
 }
 
 
