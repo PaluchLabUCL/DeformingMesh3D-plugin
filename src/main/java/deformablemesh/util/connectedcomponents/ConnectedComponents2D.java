@@ -275,6 +275,27 @@ public class ConnectedComponents2D{
         return log;
     }
 
+    /**
+     * Removes a region from this cc2d by removing the label from the map, and setting all of the pixels associated
+     * with the provided label to 0.
+     * @param label
+     */
+    public void removeRegion(int label){
+        List<int[]> background = log.get(0);
+        if(background == null || background.size()==0){
+            System.out.println("no background pixels");
+            //not keeping background pixels.
+            background = new ArrayList<>();
+        }
+        if(log.containsKey(label)){
+            List<int[]> px = log.get(label);
+            for(int[] pt: px){
+                set(pt[0], pt[1], 0);
+                background.add(pt);
+            }
+        }
+    }
+
     public static void main(String[] args){
         new ImageJ();
         ImagePlus plus = new ImagePlus(Paths.get(args[0]).toAbsolutePath().toString());
