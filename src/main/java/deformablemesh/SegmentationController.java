@@ -843,16 +843,6 @@ public class SegmentationController {
     }
 
     /**
-     * TODO remove
-     * @Deprecated
-     */
-    public void showEnergy() {
-        submit(()->{
-            meshFrame3D.showEnergy(model.stack, model.generateImageEnergy());
-        });
-    }
-
-    /**
      * There are 4 types of energy based on the image.
      * @param selectedItem
      */
@@ -1814,8 +1804,7 @@ public class SegmentationController {
     }
 
     /**
-     * Sets up the provided meshframe3d as the main threed display. There is no clean up if this is not the first
-     * meshframe3D.
+     * Sets up the provided meshframe3d as the main threed display.
      *
      * @param meshFrame3D
      */

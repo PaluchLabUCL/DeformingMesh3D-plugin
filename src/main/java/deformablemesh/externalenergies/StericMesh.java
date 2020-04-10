@@ -28,7 +28,9 @@ public class StericMesh implements ExternalEnergy{
         deformableMesh = neighbor;
         this.id = id;
         this.weight=weight;
-
+        if(id.triangles==null){
+            System.out.println(id.positions.length + ", " + id.connection_index.length + ", " + id.triangle_index.length);
+        }
         for(Triangle3D t: id.triangles){
             int[] dexs = t.getIndices();
             for(Integer i: dexs){

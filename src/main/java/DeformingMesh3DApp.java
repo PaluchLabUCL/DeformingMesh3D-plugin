@@ -45,6 +45,7 @@ public class DeformingMesh3DApp{
         ring_control.startUI();
         controller.addTabbedPanel(ring_control.getContentPane(controller.getFrame()), "furrow");
         control.setMeshFrame3D(mf3d);
+        controller.addMeshFrame3D(mf3d);
         model.setRingController(ring_control);
         PropertySaver.positionFrames(controller, mf3d);
         return control;

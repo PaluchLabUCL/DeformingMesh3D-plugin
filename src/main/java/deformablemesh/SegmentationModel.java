@@ -120,12 +120,20 @@ public class SegmentationModel {
 
         stop = false;
 
+        Map<DeformableMesh3D, List<StericMesh>> stericEnergies = new HashMap<>();
+
+        if(stericNeighborWeight != 0){
+            for(DeformableMesh3D mesh: meshes){
+                stericEnergies.put(mesh, generateStericEnergies( mesh ) );
+            }
+        }
+
         //apply energies
         for(DeformableMesh3D mesh: meshes){
             mesh.clearEnergies();
 
             //mesh.PRESSURE = pressure;
-            ExternalEnergy erg = generateImageEnergy();
+            ExternalEnergy erg = generateImageEnergy(mesh);
             mesh.addExternalEnergy(erg);
 
             if(pressure!=0){
@@ -135,6 +143,12 @@ public class SegmentationModel {
             if(normalize!=0){
                 mesh.addExternalEnergy(new TriangleAreaDistributor(stack, mesh, normalize));
 
+            }
+
+            if(stericNeighborWeight!=0){
+                for(ExternalEnergy eg: stericEnergies.get(mesh)){
+                    mesh.addExternalEnergy(eg);
+                }
             }
 
             snakeBox.addRingEnergy(stack.CURRENT, mesh);
@@ -152,9 +166,13 @@ public class SegmentationModel {
                 if(hardBoundaries){
                     mesh.confine(getBounds());
                 }
-
                 if(stop){
                     break;
+                }
+            }
+            for(DeformableMesh3D mesh: meshes){
+                for(StericMesh sm: stericEnergies.get(mesh)){
+                    sm.update();
                 }
             }
         }
@@ -457,7 +475,7 @@ public class SegmentationModel {
         return divisions;
     }
 
-    public ExternalEnergy generateImageEnergy(){
+    public ExternalEnergy generateImageEnergy(DeformableMesh3D mesh){
         ExternalEnergy erg;
         switch(energyType){
             case Intensity:
@@ -467,10 +485,10 @@ public class SegmentationModel {
                 erg = new GradientEnergy(stack, getImageWeight());
                 break;
             case PerpendicularIntensity:
-                erg = new PerpendicularIntensityEnergy(stack, getSelectedMesh(getCurrentFrame()), getImageWeight());
+                erg = new PerpendicularIntensityEnergy(stack, mesh, getImageWeight());
                 break;
             case PerpendicularGradient:
-                erg = new PerpendicularGradientEnergy(stack, getSelectedMesh(getCurrentFrame()), getImageWeight());
+                erg = new PerpendicularGradientEnergy(stack, mesh, getImageWeight());
                 break;
             default:
                 erg = new ExternalEnergy(){
@@ -516,7 +534,7 @@ public class SegmentationModel {
 
         //mesh.PRESSURE = pressure;
         if(image_weight!=0) {
-            ExternalEnergy erg = generateImageEnergy();
+            ExternalEnergy erg = generateImageEnergy(selectedMesh);
             selectedMesh.addExternalEnergy(erg);
         }
         if(pressure!=0){
@@ -528,7 +546,7 @@ public class SegmentationModel {
         }
 
         if(stericNeighborWeight!=0){
-            List<ExternalEnergy> segs = generateStericEnergies();
+            List<StericMesh> segs = generateStericEnergies(selectedMesh);
             for(ExternalEnergy eg: segs){
                 selectedMesh.addExternalEnergy(eg);
             }
@@ -549,7 +567,7 @@ public class SegmentationModel {
         List<ExternalEnergy> energies = new ArrayList<>();
         //mesh.PRESSURE = pressure;
         if(image_weight!=0) {
-            ExternalEnergy erg = generateImageEnergy();
+            ExternalEnergy erg = generateImageEnergy(selectedMesh);
             energies.add(erg);
         }
         if(pressure!=0){
@@ -561,21 +579,20 @@ public class SegmentationModel {
         }
 
         if(stericNeighborWeight!=0){
-            List<ExternalEnergy> segs = generateStericEnergies();
+            List<StericMesh> segs = generateStericEnergies(selectedMesh);
             energies.addAll(segs);
         }
 
         return energies;
     }
 
-    private List<ExternalEnergy> generateStericEnergies() {
+    private List<StericMesh> generateStericEnergies(DeformableMesh3D mesh) {
         List<Track> tracks = tracker.getAllMeshTracks();
-        DeformableMesh3D sel = getSelectedMesh(stack.CURRENT);
-        List<ExternalEnergy> es = new ArrayList<>(tracks.size());
+        List<StericMesh> es = new ArrayList<>(tracks.size());
         for(Track track: tracks){
-            if(!track.containsMesh(sel) && track.containsKey(stack.CURRENT) ){
+            if(!track.containsMesh(mesh) && track.containsKey(stack.CURRENT) ){
 
-                es.add(new StericMesh(sel, track.getMesh(stack.CURRENT), stericNeighborWeight));
+                es.add(new StericMesh(mesh, track.getMesh(stack.CURRENT), stericNeighborWeight));
 
             }
         }

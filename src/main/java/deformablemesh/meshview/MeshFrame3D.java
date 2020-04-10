@@ -60,10 +60,11 @@ public class MeshFrame3D {
         return vdo;
     }
 
-    static class HudDisplay{
-        public void draw(Graphics2D g){}
+    @FunctionalInterface
+    static interface HudDisplay{
+        void draw(Graphics2D g);
     }
-    HudDisplay hud = new HudDisplay();
+    HudDisplay hud = g->{};
     private SegmentationController segmentationController;
 
     List<DeformableMesh3D> showing = new ArrayList<>();
@@ -148,12 +149,28 @@ public class MeshFrame3D {
 
     }
 
+    /**
+     * For drawing graphics on the rendered screen.
+     *
+     * @param hud
+     */
+    public void setHud(HudDisplay hud){
+        this.hud = hud;
+        canvas.repaint();
+    }
+
+    public void setNoHud(){
+        this.hud = g->{};
+        canvas.repaint();
+    }
+
     public Component asJPanel(Window parent){
         GraphicsConfiguration gc = DataCanvas.getBestConfigurationOnSameDevice(parent);
         Color3f background = new Color3f(1.0f,0.0f,1.0f);
         canvas = new DataCanvas(gc, background){
             @Override
             public void postRender(){
+                super.postRender();
                 J3DGraphics2D g = getGraphics2D();
                 hud.draw(g);
                 g.flush(false);
@@ -354,40 +371,6 @@ public class MeshFrame3D {
     public void setSegmentationController(SegmentationController control){
         segmentationController = control;
         snakeBox = control.getSnakeBox();
-
-        addKeyListener(new KeyListener(){
-
-            @Override
-            public void keyTyped(KeyEvent e) {
-                char c = e.getKeyChar();
-                switch(c){
-                    case ' ':
-                        toggleAxis();
-                        break;
-                    case 's':
-                        segmentationController.takeSnapShot();
-                        break;
-                    case 'n':
-                        segmentationController.selectNextMeshTrack();
-                        break;
-                    case 'o':
-                        segmentationController.toggleSurface();
-                        break;
-                    default:
-                        break;
-                }
-            }
-
-            @Override
-            public void keyPressed(KeyEvent e) {
-
-            }
-
-            @Override
-            public void keyReleased(KeyEvent e) {
-
-            }
-        });
     }
 
     public void syncMesh(int currentFrame){

@@ -3,6 +3,8 @@ package deformablemesh.gui;
 import deformablemesh.SegmentationController;
 import deformablemesh.externalenergies.ImageEnergyType;
 import deformablemesh.gui.meshinitialization.CircularMeshInitializationDialog;
+import deformablemesh.meshview.HotKeyDelegate;
+import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.track.MeshTrackManager;
 import deformablemesh.track.Track;
 import ij.IJ;
@@ -26,6 +28,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * GUI commands -> Delegate to segmentation controller. GUI based actions should be funneled through this class
+ * for enabling/disabling the UI.
+ *
+ *
  * User: msmith
  * Date: 7/16/13
  * Time: 10:35 AM
@@ -35,7 +41,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
     Map<String, ParameterControl> parameterControls = new HashMap<>();
     boolean ready = true;
     ArrayList<JComponent> buttons = new ArrayList<>();
-
+    JButton deformButton;
     FrameIndicator frameIndicator = new FrameIndicator();
     private JFrame frame;
     JTabbedPane tabbedPane;
@@ -46,10 +52,9 @@ public class ControlFrame implements ReadyObserver, FrameListener {
     SwingJSTerm terminal;
     Dimension pm = new Dimension(29, 29);
     JLabel message = new JLabel("");
-
+    HotKeyDelegate mf3DInterface;
     public ControlFrame( SegmentationController model){
         this.segmentationController = model;
-
         terminal = new SwingJSTerm(model);
 
     }
@@ -77,7 +82,9 @@ public class ControlFrame implements ReadyObserver, FrameListener {
     public JFrame getFrame(){
         return frame;
     }
-
+    public void addMeshFrame3D( MeshFrame3D frame){
+        mf3DInterface = new HotKeyDelegate(frame, segmentationController, this);
+    }
     private JPanel createStatusPanel(){
         JPanel status = new JPanel();
         status.setLayout(new BoxLayout(status, BoxLayout.PAGE_AXIS));
@@ -251,24 +258,24 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         buttons.add(next);
         buttonPanel.add(next);
         next.addActionListener(evt -> {
-            setReady(false);
-            segmentationController.nextFrame();
-            finished();
+            nextFrameAction();
         });
 
 
     }
-
+    public void initializeMeshAction(){
+        if(!segmentationController.hasOriginalPlus()){
+            return;
+        }
+        setReady(false);
+        new CircularMeshInitializationDialog(frame, segmentationController, this::finished).start();
+    }
     public void createButtonInitializeMesh2(JPanel panel){
         final JButton prompt_mesh = new JButton("initialize mesh...");
         buttons.add(prompt_mesh);
         panel.add(prompt_mesh);
         prompt_mesh.addActionListener((evt)->{
-            if(!segmentationController.hasOriginalPlus()){
-                return;
-            }
-            setReady(false);
-            new CircularMeshInitializationDialog(frame, segmentationController, this::finished).start();
+            initializeMeshAction();
         });
     }
 
@@ -322,9 +329,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         buttons.add(show_volume);
         buttonPanel.add(show_volume);
         show_volume.addActionListener(e -> {
-            setReady(false);
-            segmentationController.showVolume();
-            finished();
+            showVolumeAction();
         });
     }
 
@@ -380,11 +385,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         JButton hide_volume = new JButton("hide volume");
         buttons.add(hide_volume);
         buttonPanel.add(hide_volume);
-        hide_volume.addActionListener(actionEvent -> {
-            setReady(false);
-            segmentationController.hideVolume();
-            finished();
-        });
+        hide_volume.addActionListener(actionEvent -> hideVolumeAction());
     }
 
     public void createButtonAdjustMinimum(JPanel buttonPanel){
@@ -456,30 +457,35 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         buttonPanel.add(sub);
     }
 
-    public void createButtonDeform(JPanel buttonPanel){
-        final JButton deform = new JButton("deform");
-        buttons.add(deform);
-        buttonPanel.add(deform);
-
-        deform.addActionListener(actionEvent -> {
-            if(ready){
-                setReady(false);
-                deform.setText("stop!");
-                EventQueue.invokeLater(() -> deform.setEnabled(true));
-                if((actionEvent.getModifiers()&ActionEvent.CTRL_MASK)>0){
-                    segmentationController.deformAllMeshes();
-                } else{
-                    segmentationController.deformMesh();
-                }
-
-
+    public void deformAction(boolean deformAll){
+        if(ready){
+            setReady(false);
+            deformButton.setText("stop!");
+            EventQueue.invokeLater(() -> deformButton.setEnabled(true));
+            if(deformAll){
+                segmentationController.deformAllMeshes();
             } else{
-                deform.setEnabled(false);
-                deform.setText("stopping");
-                segmentationController.stopRunning();
-                segmentationController.submit(() -> deform.setText("deform"));
-                finished();
+                segmentationController.deformMesh();
             }
+
+
+        } else{
+            deformButton.setEnabled(false);
+            deformButton.setText("stopping");
+            segmentationController.stopRunning();
+            segmentationController.submit(() -> deformButton.setText("deform"));
+            finished();
+        }
+    }
+
+    public void createButtonDeform(JPanel buttonPanel){
+        deformButton = new JButton("deform");
+
+        buttons.add(deformButton);
+        buttonPanel.add(deformButton);
+
+        deformButton.addActionListener(actionEvent -> {
+            deformAction( (actionEvent.getModifiers() & ActionEvent.CTRL_MASK) > 0);
         });
 
     }
@@ -630,8 +636,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         edit.add(undo);
 
         undo.addActionListener((evt)->{
-            segmentationController.undo();
-            finished();
+            undoAction();
         });
         undo.setEnabled(false);
 
@@ -643,8 +648,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         edit.add(redo);
 
         redo.addActionListener((evt)->{
-            segmentationController.redo();
-            finished();
+            redoAction();
         });
         redo.setEnabled(false);
 
@@ -767,10 +771,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         mesh.add(track);
         track.setAccelerator(KeyStroke.getKeyStroke('t'));
         track.addActionListener(evt->{
-            if(ready) {
-                segmentationController.trackMesh();
-                finished();
-            }
+            trackMeshAction();
         });
 
         JMenuItem trackBack = new JMenuItem("track backwards");
@@ -924,6 +925,79 @@ public class ControlFrame implements ReadyObserver, FrameListener {
 
 
         return menu;
+    }
+
+    public void nextFrameAction(){
+        if(ready) {
+            setReady(false);
+            segmentationController.nextFrame();
+            finished();
+        }
+    }
+
+    public void previousFrameAction(){
+        if(ready) {
+            setReady(false);
+            segmentationController.previousFrame();
+            finished();
+        }
+    }
+
+    public void trackMeshAction(){
+        if(ready) {
+            setReady(false);
+            segmentationController.trackMesh();
+            finished();
+        }
+    }
+
+    public void trackMeshBackwardsAction(){
+        if(ready) {
+            setReady(false);
+            segmentationController.trackMeshBackwards();
+            finished();
+        }
+
+    }
+
+    public void showVolumeAction(){
+        if(ready){
+            setReady(false);
+            segmentationController.showVolume();
+            finished();
+        }
+    }
+
+    public void hideVolumeAction(){
+        if(ready){
+            setReady(false);
+            segmentationController.hideVolume();
+            finished();
+        }
+    }
+
+    public void undoAction(){
+        if(ready){
+            setReady(false);
+            segmentationController.undo();
+            finished();
+        }
+    }
+
+    public void redoAction(){
+        if(ready){
+            setReady(false);
+            segmentationController.redo();
+            finished();
+        }
+    }
+
+    public void remeshAction(){
+        if(ready){
+            setReady(false);
+            segmentationController.reMesh();
+            finished();
+        }
     }
 
     public void saveAs(){
