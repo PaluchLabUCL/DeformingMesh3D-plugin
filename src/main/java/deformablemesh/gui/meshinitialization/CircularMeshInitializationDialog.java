@@ -57,6 +57,16 @@ public class CircularMeshInitializationDialog extends JDialog {
 
     public void start(){
         content = new JPanel();
+
+        KeyStroke enter = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, true);
+        content.getInputMap().put(enter, "ADD_MESH");
+        content.getActionMap().put("ADD_MESH", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                createMesh();
+            }
+        });
+
         content.setLayout(new BorderLayout());
         host = new JPanel();
 
@@ -173,9 +183,6 @@ public class CircularMeshInitializationDialog extends JDialog {
             public void windowDeactivated(WindowEvent e) {}
         });
 
-        sanitizeContent(content);
-        attachActions(content);
-
         showMeshes();
         setVisible(true);
 
@@ -194,44 +201,6 @@ public class CircularMeshInitializationDialog extends JDialog {
 
         content.invalidate();
         validate();
-    }
-
-    private void attachActions(JComponent jcomp){
-        jcomp.getInputMap().put(KeyStroke.getKeyStroke('n'), "nexted");
-        jcomp.getActionMap().put("nexted", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                nPressed();
-            }
-        });
-
-        jcomp.getInputMap().put(KeyStroke.getKeyStroke('d'), "clear");
-        jcomp.getActionMap().put("clear", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                model.clearSelectedMesh();
-                initializer.clearProjectableMeshes();
-                showMeshes();
-            }
-        });
-    }
-    public void sanitizeContent(Container container){
-
-        Component[] comps = container.getComponents();
-        for(Component comp: comps){
-            if(comp instanceof JComponent){
-                JComponent jcomp = (JComponent)comp;
-                attachActions(jcomp);
-            }
-            if(comp instanceof Container){
-                sanitizeContent((Container)comp);
-            }
-        }
-    }
-
-    public void nPressed(){
-        model.selectNextMeshTrack();
-        initializer.repaint();
     }
 
 

@@ -100,7 +100,7 @@ public class SwingJSTerm {
         root.setLayout(new BoxLayout(root, BoxLayout.PAGE_AXIS));
         //root.setLayout(new BorderLayout());
 
-        display = new JTextArea();
+        display = new JTextArea("**shift+enter will execute command immediately.**");
         display.setEditable(false);
         JScrollPane display_pane = new JScrollPane(display);
         display_pane.setPreferredSize(new Dimension(600, 100));

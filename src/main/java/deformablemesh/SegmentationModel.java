@@ -170,9 +170,11 @@ public class SegmentationModel {
                     break;
                 }
             }
-            for(DeformableMesh3D mesh: meshes){
-                for(StericMesh sm: stericEnergies.get(mesh)){
-                    sm.update();
+            if(stericNeighborWeight!=0) {
+                for (DeformableMesh3D mesh : meshes) {
+                    for (StericMesh sm : stericEnergies.get(mesh)) {
+                        sm.update();
+                    }
                 }
             }
         }
