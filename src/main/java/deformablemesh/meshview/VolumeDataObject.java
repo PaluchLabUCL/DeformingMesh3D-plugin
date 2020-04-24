@@ -138,6 +138,7 @@ public class VolumeDataObject implements DataObject {
 
     /**
      * For creating a volume that shows part of an image stack.
+     * #TODO fix: this shouldn't change anything regarding the geometry.
      *
      * @param stack
      * @param pts
@@ -165,7 +166,6 @@ public class VolumeDataObject implements DataObject {
             texture_data[pt[0]-lowx][h - pt[1] + lowy - 1][pt[2]-lowz-1] = 255;
         }
         updateVolume();
-
     }
 
     public void setMinMaxRange(double min, double max){

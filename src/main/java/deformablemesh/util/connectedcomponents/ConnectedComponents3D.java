@@ -1,8 +1,11 @@
 package deformablemesh.util.connectedcomponents;
 
+import ij.ImageJ;
+import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ImageProcessor;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -132,10 +135,18 @@ public class ConnectedComponents3D {
      **/
     private void reduceMap(){
         System.out.println("reducing map " + premap.size());
+
+        int total = premap.size();
+        int fivePercent = (int) (premap.size() * 0.05);
+        int goal = total - fivePercent;
         while(premap.size()>0){
             //Set for looping
             int[] next = premap.get(0);
             premap.remove(0);
+            if(premap.size() < goal){
+                System.out.println((total - premap.size())*100.0/total + "%");
+                goal = goal - fivePercent;
+            }
             HashSet<Integer> next_set = new HashSet<Integer>();
             int source = next[0];
             next_set.add(next[0]);
@@ -202,6 +213,38 @@ public class ConnectedComponents3D {
                 }
             }
         }
+    }
+
+    static public List<Region> getRegions2(ImageStack stack){
+        List<ConnectedComponents2D> comp2Ds = new ArrayList<>();
+        for(int i = 1; i<=stack.size(); i++){
+            ConnectedComponents2D cc2d = new ConnectedComponents2D(stack.getProcessor(i));
+            cc2d.process();
+            comp2Ds.add(cc2d);
+        }
+
+        List<Region> regions = new ArrayList<>();
+        return regions;
+    }
+
+    public static void main(String[] args){
+        new ImageJ();
+
+        File output;
+        File base;
+        ImagePlus plus;
+
+        base = args.length >= 1? new File(args[0]) : new File(ij.IJ.getFilePath("select mosaic image"));
+
+        plus = ij.IJ.openImage(base.getAbsolutePath());
+        ImageStack threshed = new ImageStack(plus.getWidth(), plus.getHeight());
+        for(int i = 1; i<=plus.getNSlices(); i++){
+            threshed.addSlice(plus.getStack().getProcessor(i).convertToShort(false));
+        }
+        List<Region> regions = ConnectedComponents3D.getRegions2(threshed);
+
+        new ImagePlus("blobbed", threshed).show();
+
     }
 
 }

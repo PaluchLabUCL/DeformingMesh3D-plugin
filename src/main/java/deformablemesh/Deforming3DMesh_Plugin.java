@@ -16,7 +16,7 @@ import java.io.IOException;
  * Created by msmith on 12/1/15.
  */
 public class Deforming3DMesh_Plugin implements PlugInFilter {
-    public static final String version = "0.36-dev";
+    public static final String version = "0.37-dev";
     public static SegmentationModel createDeformingMeshApplication(){
         MeshFrame3D mf3d = new MeshFrame3D();
         mf3d.showFrame(false);
@@ -34,6 +34,7 @@ public class Deforming3DMesh_Plugin implements PlugInFilter {
         ring_control.startUI();
         controller.addTabbedPanel(ring_control.getContentPane(controller.getFrame()), "furrow");
         controls.setMeshFrame3D(mf3d);
+        controller.addMeshFrame3D(mf3d);
         model.setRingController(ring_control);
         PropertySaver.positionFrames(controller, mf3d);
         return model;
