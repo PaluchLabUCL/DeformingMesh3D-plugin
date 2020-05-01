@@ -253,7 +253,7 @@ public class ConnectedComponents2D{
      * @param y coordinate
      * @param value value to set to.
      */
-    private void set(int x, int y, int value){
+    void set(int x, int y, int value){
         workspace[x + y*w] = value;
     }
 
@@ -347,6 +347,9 @@ public class ConnectedComponents2D{
         log.get(label).add(p);
         set(p[0], p[1], label);
     }
+
+
+
 }
 
 

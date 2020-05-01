@@ -6,38 +6,39 @@ import ij.ImageStack;
 import ij.process.ImageProcessor;
 
 import java.io.File;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 public class ConnectedComponents3D {
-    final List<short[]> pixels = new ArrayList<>();
+    final List<ConnectedComponents2D> pixels = new ArrayList<>();
     int width;
     int height;
-    //filled after first pass, this has all of the mappings
-    ArrayList<int[]> premap;
-
-    //This is the actual map that has all of the mappings after they are reduced
-    HashMap<Integer,Integer> final_map;
 
     //Contains all of the points for an associated value
-    HashMap<Integer,ArrayList<int[]>> log;
+    TreeMap<Integer,List<int[]>> log = new TreeMap<>();
 
     //list of centroids, x,y,weight they are stored as doubles
-    ArrayList<double[]> output;
+    List<double[]> output;
 
     int last_added;
 
+    /**
+     * Convenience method for getting all of the regions. This will return
+     *
+     * @param short_threshed
+     * @return
+     */
     static public List<Region> getRegions(ImageStack short_threshed){
         ConnectedComponents3D cc3d = new ConnectedComponents3D();
-        cc3d.width = short_threshed.getWidth();
-        cc3d.height = short_threshed.getHeight();
-        for(int i = 1; i<=short_threshed.size(); i++){
-            cc3d.pixels.add((short[])short_threshed.getProcessor(i).getPixels());
-        }
-        System.out.println("first pass");
         cc3d.firstPass(short_threshed);
         System.out.println("second pass");
         cc3d.secondPass(short_threshed);
@@ -52,180 +53,194 @@ public class ConnectedComponents3D {
         Then it marks its what value this pixel should be.
     */
     private void firstPass(ImageStack threshed){
-        premap = new ArrayList<int[]>();
-        last_added = 0;
-
-        final_map = new HashMap<Integer,Integer>();
-        final_map.put(0,0);
-
-        int h = threshed.getHeight();
-        int w = threshed.getWidth();
-        int d = threshed.getSize();
-        for(int k = 1; k<=d; k++){
-            System.out.println(k + " / " + d);
-            short[] px = pixels.get(k-1);
-
-            for(int i = 0; i<h; i++){
-                for(int j = 0; j<w; j++){
-
-                    int x = rowBy(j,i,k);
-
-
-                    px[j + i*w] = (short)x;
-
-                }
-            }
-        }
-        reduceMap();
-    }
-    /*
-        This is the function that filters each pixel, if the current pixel
-        has a value then it takes the number above, to the left or behind.
-        If there is both a number above and a number to the left then a map values
-        is add.
-    */
-    private int rowBy(int j, int i, int k){
-        int above,left,behind,now;
-        above = (i-1)<0?0:getPixel(j,i-1,k);
-        left = (j-1)<0?0:getPixel(j-1,i,k);
-        behind = k>1?getPixel(j,i,k-1):0;
-
-        now = getPixel(j,i,k);
-
-        if(now>0){
-            //valid point
-            if(above>0){
-                if(left>0) map(above,left);
-                if(behind>0) map(above,behind);
-
-                return above;
-            } else if(left>0){
-                if(behind>0) map(left,behind);
-
-
-                return left;
-            }else if(behind>0){
-
-                return behind;
-
-
-            } else{
-
-                last_added += 1;
-
-                int[] a = {last_added,last_added};
-                premap.add(a);
-                return last_added;
-
-            }
-        } else
-            return 0;
-    }
-    public void map(int a, int b){
-        int[] m = {a,b};
-        premap.add(m);
-    }
-    public int getPixel(int j, int i, int k){
-        //return threshed.getProcessor(k).getPixel(j,i);
-        return pixels.get(k-1)[j + i*width];
-
-    }
-    /**
-     * Eliminates redundant points in the 'pre-map' and leaves final_map with the correct mappings
-     **/
-    private void reduceMap(){
-        System.out.println("reducing map " + premap.size());
-
-        int total = premap.size();
-        int fivePercent = (int) (premap.size() * 0.05);
-        int goal = total - fivePercent;
-        while(premap.size()>0){
-            //Set for looping
-            int[] next = premap.get(0);
-            premap.remove(0);
-            if(premap.size() < goal){
-                System.out.println((total - premap.size())*100.0/total + "%");
-                goal = goal - fivePercent;
-            }
-            HashSet<Integer> next_set = new HashSet<Integer>();
-            int source = next[0];
-            next_set.add(next[0]);
-            next_set.add(next[1]);
-            ArrayList<Integer> trying = new ArrayList<Integer>();
-            for(Integer e: next_set)
-                trying.add(e);
-            while(trying.size()>0){
-                Integer cur = trying.get(0);
-                trying.remove(0);
-                ArrayList<int[]> replacement = new ArrayList<int[]>();
-                for(int i=0;i<premap.size(); i++ ){
-                    int[] test = premap.get(i);
-                    if(cur.equals(test[0])||cur.equals(test[1])){
-                        int size = next_set.size();
-                        next_set.add(test[0]);
-                        if(next_set.size()>size){
-                            size += 1;
-                            trying.add(test[0]);
-                        }
-                        next_set.add(test[1]);
-                        if(next_set.size()>size)
-                            trying.add(test[1]);
-                    }
-                    else
-                        replacement.add(test);
-                }
-                premap=replacement;
-            }
-            //place value into hashmaps values
-            for(int e: next_set)
-                final_map.put(e,source);
-        }
-
-    }
-
-
-    private void secondPass(ImageStack stack){
-    /*This two jobs, it goes through and does the map so that all of the connected regions
-      have their associated points, and it sets the values of the pixels to 255
-    */
-
-        log = new HashMap<Integer,ArrayList<int[]>>();
-
-        for(Integer v: final_map.values()){
-            ArrayList<int[]> points = new ArrayList<int[]>();
-            log.put(v,points);
-        }
-        int h = stack.getHeight();
-        int w = stack.getWidth();
-        int d = stack.getSize();
-        for(int k = 1; k<=d; k++){
-            ImageProcessor separate = stack.getProcessor(k);
-            for(int i = 0; i<h; i++){
-                for(int j = 0; j<w; j++){
-                    int cur = separate.getPixel(j,i);
-                    int rep = final_map.get(cur);
-                    int[] point = {j,i,k};
-
-                    if(rep!=0){
-                        log.get(rep).add(point);
-                    }
-
-                }
-            }
-        }
-    }
-
-    static public List<Region> getRegions2(ImageStack stack){
-        List<ConnectedComponents2D> comp2Ds = new ArrayList<>();
-        for(int i = 1; i<=stack.size(); i++){
-            ConnectedComponents2D cc2d = new ConnectedComponents2D(stack.getProcessor(i));
+        for(int i = 1; i<=threshed.size(); i++){
+            ConnectedComponents2D cc2d = new ConnectedComponents2D(threshed.getProcessor(i));
             cc2d.process();
-            comp2Ds.add(cc2d);
+            add(cc2d, i);
+        }
+    }
+    static class Mapping{
+        final Integer A;
+        final Integer B;
+        final int hc;
+        Mapping(Integer a, Integer b){
+            A = a;
+            B = b;
+            hc = A + B<<16;
+        }
+        @Override
+        public int hashCode(){
+            return hc;
         }
 
-        List<Region> regions = new ArrayList<>();
-        return regions;
+        @Override
+        public boolean equals(Object obj) {
+            if(obj==this){
+                return true;
+            }
+            Mapping obj2 = (Mapping) obj;
+            return obj2.A.equals(A) && obj2.B.equals(B);
+        }
     }
+    private void add(ConnectedComponents2D cc2d, int slice){
+        if(pixels.size() > 0){
+            ConnectedComponents2D previous = pixels.get(pixels.size() - 1);
+            Map<Integer, List<int[]>> regions2D = cc2d.getRegions();
+            Set<Mapping> finishing = new HashSet<>();
+            int free = log.lastKey() + 1;
+            Set<Mapping> conjoined = new HashSet<>();
+
+
+            for(Integer key: regions2D.keySet()){
+                if(key==0){
+                    continue;
+                }
+                TreeSet<Integer> linked = new TreeSet<>();
+                for(int[] px2d: regions2D.get(key)){
+                    int l = previous.get(px2d[0],px2d[1]);
+                    if(l!=0) {
+                        linked.add(l);
+                    }
+                }
+                if(linked.size()==0){
+                    //start a new region.
+                    //get a valid key value, update cc2d
+                    Integer open = free;
+                    free++;
+                    finishing.add(new Mapping(key, open));
+
+                } else if(linked.size()==1){
+                    //add it to appropriate region.
+                    for(Integer i : linked){
+                        finishing.add(new Mapping(key, i));
+                    }
+                } else{
+                    Integer bottom = linked.pollFirst();
+                    finishing.add(new Mapping(key, bottom));
+                    for(Integer i : linked ){
+                        conjoined.add( new Mapping(i, bottom));
+                    }
+                }
+            }
+            /*
+                Now that we're done we have 2 maps.
+                finishing: cc2d regions to existing regions.
+                conjoined: disconnected mappings of existing regions.
+
+                Goal: reduce conjoined.
+                N^? version.
+                  current: { from, to } & tomap: {}
+                  search through every mapping for from/to if either appears. add to tomap.
+                  move tomap to current and repeate.
+            */
+            System.out.println("reducing: " + conjoined.size() + " regions");
+            Map<Integer, Integer> mapped = new HashMap<>();
+
+            TreeSet<Integer> current = new TreeSet<>();
+            Set<Integer> toMap = new HashSet<>();
+            TreeSet<Integer> checked = new TreeSet<>();
+            Deque<Mapping> stack = new ArrayDeque<>(conjoined);
+            Deque<Mapping> next = new ArrayDeque<>();
+            while(stack.size()>0){
+                Mapping first = stack.pollFirst();
+                current.add(first.A);
+                current.add(first.B);
+
+                while(current.size() > 0) {
+                    for (Mapping map : stack) {
+                        if (current.contains(map.A)) {
+                            toMap.add(map.B);
+                        } else if (current.contains(map.B)) {
+                            toMap.add(map.A);
+                        } else {
+                            next.add(map);
+                        }
+                    }
+                    checked.addAll(current);
+                    current.clear();
+                    current.addAll(toMap);
+                    toMap.clear();
+
+                    stack.clear();
+                    stack.addAll(next);
+                    next.clear();
+                }
+                //found all of the mappings for the first map.
+                Integer bottom = checked.pollFirst();
+                for(Integer i: checked){
+                    mapped.put(i, bottom);
+                }
+            }
+
+            //shift old pixels that
+            for(Integer i: mapped.keySet()){
+                Integer target = mapped.get(i);
+                List<int[]> source = log.get(i);
+                List<int[]> dest = log.get(target);
+                for(int[] px: source){
+                    dest.add(px);
+                    set(px, target);
+                }
+            }
+            pixels.add(cc2d);
+            for(Mapping m : finishing){
+                Integer label;
+                if(mapped.containsKey(m.B)){
+                    label = mapped.get(m.B);
+                } else{
+                    label = m.B;
+                }
+                List<int[]> px = regions2D.get(m.A);
+                List<int[]> destination = log.computeIfAbsent(label, ArrayList::new);
+                for(int[] p: px){
+                    destination.add(new int[]{p[0], p[1], slice});
+                    //regions no longer match labels!
+                    cc2d.set(p[0], p[1], label);
+                }
+            }
+
+
+        } else{
+            pixels.add(cc2d);
+            Map<Integer, List<int[]>> regions2D = cc2d.getRegions();
+            for(Integer key: regions2D.keySet()){
+                List<int[]> px = log.computeIfAbsent( key, ArrayList::new );
+                for(int[] px2d : regions2D.get(key)){
+                    px.add(new int[]{px2d[0], px2d[1], slice});
+                }
+            }
+        }
+
+    }
+
+    /**
+     * This breaks the backing cc2d. Regions will no longer map labels.
+     * @param xyz
+     * @param value
+     */
+    private void set(int[] xyz, int value){
+        pixels.get(xyz[2]-1).set(xyz[0], xyz[1], value);
+    }
+
+    /**
+     * Labels the stack with the regions from the first pass.
+     *
+     * @param stack
+     */
+    private void secondPass(ImageStack stack){
+        for(Integer key: log.keySet()){
+            List<int[]> px = log.get(key);
+            for(int[] x: px){
+                stack.getProcessor(x[2]).set(x[0], x[1], key);
+            }
+
+
+
+        }
+
+    }
+
+
 
     public static void main(String[] args){
         new ImageJ();
@@ -241,7 +256,7 @@ public class ConnectedComponents3D {
         for(int i = 1; i<=plus.getNSlices(); i++){
             threshed.addSlice(plus.getStack().getProcessor(i).convertToShort(false));
         }
-        List<Region> regions = ConnectedComponents3D.getRegions2(threshed);
+        List<Region> regions = ConnectedComponents3D.getRegions(threshed);
 
         new ImagePlus("blobbed", threshed).show();
 
