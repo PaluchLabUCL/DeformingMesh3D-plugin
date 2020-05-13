@@ -1,6 +1,19 @@
 # DeformingMesh3D
 ThreeD image segmentation algorithm, for roundish cells.
 
+## Roadmap 1.0 Draft
+This is the start of a draft for a 1.0 release version. Right now I have quite a few
+components that are nearly ready but need to be added. The two major features that I
+want included in a 1.0 release.
+
+- Manual Mesh editing.
+- Exposing Remesh algorithm.
+
+Further I will create a github.io page for the instructions. Please contact me or
+create an issue for any features that should be included in the 1.0 release, or
+any documentation that should be included.
+
+
 ## installation
 
 The easiest way to install this plugin is through the [Fiji](https://fiji.sc/) update site.
@@ -141,6 +154,26 @@ controls.submit( function(){
 
 ```
 # Changes
+0.37
+- Added key command actions to 3D display.
+- Added help screen to hud to display key commands.
+- Added mesh export options for wire-frame and shell meshes.
+- Swing javascript terminal has a shortcut execution mode.
+- Contrast adjustment tool.
+- Selecting open image returns to the current frame for swapping energies.
+- Improved 3D volume data handline, now is a DataObject.
+- Created a 3D surface for volume textures.
+- Improved 3D geometry display performance.
+- python meshes have a reader and writer.
+- Bug fix: color selection could cause infinite loop.
+- Connected components refactoring.
+- Connection based remeshing *
+- Manual Mesh editing *
+- Forces can be displayed as vectors *
+- VolumeDataObject is accessible through MeshFrame3D api for displaying multi-channels. *
+
+* only available through javascript.
+
 0.36
 
 - javascript available actions improved.
