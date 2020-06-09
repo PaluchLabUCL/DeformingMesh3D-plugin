@@ -171,8 +171,8 @@ public class ProjectableMesh implements Projectable{
         Node3D a = con.A;
         Node3D b = con.B;
 
-        double s1 = furrow.getDistance(a);
-        double s2 = furrow.getDistance(b);
+        double s1 = Math.abs(furrow.getDistance(a));
+        double s2 = Math.abs(furrow.getDistance(b));
 
         double[] ptA = a.getCoordinates();
 
@@ -203,8 +203,8 @@ public class ProjectableMesh implements Projectable{
             Node3D a = con.A;
             Node3D b = con.B;
 
-            double s1 = furrow.getDistance(a);
-            double s2 = furrow.getDistance(b);
+            double s1 = Math.abs(furrow.getDistance(a));
+            double s2 = Math.abs(furrow.getDistance(b));
 
             double[] ptA = a.getCoordinates();
 

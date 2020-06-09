@@ -12,6 +12,7 @@ package deformablemesh.geometry;
 public class Node3D {
     private double[] positions;
     public final int index;
+    double gammaFactor = 1;
     public Node3D(double[] data, int index){
         positions = data;
         this.index = index;
@@ -71,5 +72,20 @@ public class Node3D {
         return index;
     }
 
+    /**
+     * Gamma affects how much the node moves. For most nodes, the gamma is determined by
+     * @param gamma
+     * @return
+     */
+    public double getGamma(double gamma) {
+        return gamma*gammaFactor;
+    }
 
+    /**
+     * This determines how much this node moves compared to the rest of the mesh.
+     * @param factor
+     */
+    public void setGammaFactor(double factor){
+        gammaFactor = factor;
+    }
 }

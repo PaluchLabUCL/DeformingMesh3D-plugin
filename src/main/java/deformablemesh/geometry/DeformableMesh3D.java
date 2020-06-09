@@ -211,7 +211,7 @@ public class DeformableMesh3D{
 
 
         for(Node3D n: nodes){
-            data[n.index][n.index] += GAMMA;
+            data[n.index][n.index] += n.getGamma(GAMMA);
         }
 
         Matrix M = new Matrix(data);
@@ -275,9 +275,10 @@ public class DeformableMesh3D{
         for(Node3D n: nodes){
             n.update();
             pt = n.getCoordinates();
-            fx[n.index] += GAMMA*pt[0];
-            fy[n.index] += GAMMA*pt[1];
-            fz[n.index] += GAMMA*pt[2];
+            double gamma = n.getGamma(GAMMA);
+            fx[n.index] += gamma*pt[0];
+            fy[n.index] += gamma*pt[1];
+            fz[n.index] += gamma*pt[2];
         }
 
         for(ExternalEnergy external: energies) {

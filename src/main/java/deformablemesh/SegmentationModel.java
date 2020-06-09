@@ -61,7 +61,7 @@ public class SegmentationModel {
     private int divisions = 2;
     public SnakeBox snakeBox;
     private RingController ringController;
-
+    private List<Node3D> selectedNodes = new ArrayList<>();
     public ImageEnergyType energyType;
 
     Color backgroundColor = Color.WHITE;
@@ -92,6 +92,16 @@ public class SegmentationModel {
         if(selectedMesh.ALPHA!=ALPHA || selectedMesh.BETA!=BETA || selectedMesh.GAMMA!=GAMMA){
             reshape = true;
         }
+
+        if(selectedNodes.size() != 0){
+            //limits the amount of nodes to deform.
+            for(Node3D node: selectedMesh.nodes){
+                if(!selectedNodes.contains(node)){
+                    reshape = true;
+                }
+            }
+        }
+
         if(reshape){
             selectedMesh.ALPHA=ALPHA;
             selectedMesh.GAMMA=GAMMA;
@@ -109,6 +119,12 @@ public class SegmentationModel {
                 selectedMesh.confine(getBounds());
             }
             c++;
+        }
+        if(selectedNodes.size() != 0) {
+            for (Node3D node : selectedMesh.nodes) {
+                node.setGammaFactor(1.0);
+            }
+            reshape = true;
         }
     }
 
@@ -594,7 +610,7 @@ public class SegmentationModel {
         for(Track track: tracks){
             if(!track.containsMesh(mesh) && track.containsKey(stack.CURRENT) ){
 
-                es.add(new StericMesh(mesh, track.getMesh(stack.CURRENT), stericNeighborWeight));
+                es.add(new SofterStericMesh(mesh, track.getMesh(stack.CURRENT), stericNeighborWeight));
 
             }
         }

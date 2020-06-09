@@ -16,7 +16,7 @@ import java.io.IOException;
  * Created by msmith on 12/1/15.
  */
 public class Deforming3DMesh_Plugin implements PlugInFilter {
-    public static final String version = "0.38";
+    public static final String version = "0.38-dev";
     public static SegmentationModel createDeformingMeshApplication(){
         MeshFrame3D mf3d = new MeshFrame3D();
         mf3d.showFrame(false);

@@ -179,6 +179,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             segmentationController.showVolumeClippingDialog();
         });
         buttonPanel.add(vc);
+        buttons.add(vc);
     }
 
     private void createRigidBoundaryCheckbox(JPanel buttonPanel) {

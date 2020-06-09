@@ -379,6 +379,13 @@ public class Furrow3D implements Interceptable{
 
     }
 
+    /**
+     * Gets the signed distance to the point, if the value is greater than 0 then the point is infront of the plane,
+     * if it is negative then the point is behind the plane.
+     *
+     * @param a node to check
+     * @return the normal distance to the plane
+     */
     public double getDistance(Node3D a) {
         double[] pt = a.getCoordinates();
         double[] r = new double[]{
@@ -388,7 +395,7 @@ public class Furrow3D implements Interceptable{
         };
 
         double d = Vector3DOps.dot(r, normal);
-        d = d>0?d:-d;
+        //d = d>0?d:-d;
 
         return d;
     }

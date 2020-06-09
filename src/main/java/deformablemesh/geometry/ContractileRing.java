@@ -47,8 +47,8 @@ public class ContractileRing {
             Node3D a = con.A;
             Node3D b = con.B;
 
-            double s1 = furrow.getDistance(a);
-            double s2 = furrow.getDistance(b);
+            double s1 = Math.abs(furrow.getDistance(a));
+            double s2 = Math.abs(furrow.getDistance(b));
 
             if(s1<s2){
                 nodes.add(a);
