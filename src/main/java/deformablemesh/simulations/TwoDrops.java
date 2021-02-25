@@ -29,7 +29,7 @@ public class TwoDrops {
 
     public TwoDrops(){
         Sphere sA = new Sphere(new double[]{-0.075, 0, 0.2}, 0.1);
-        a = new NewtonMesh3D(RayCastMesh.rayCastMesh(sA, sA.getCenter(), 1));
+        a = new NewtonMesh3D(RayCastMesh.rayCastMesh(sA, sA.getCenter(), 2));
         //a = RayCastMesh.rayCastMesh(sA, sA.getCenter(), 1);
         a.GAMMA = 100;
         a.ALPHA = 0.1;
@@ -38,7 +38,7 @@ public class TwoDrops {
         a.setShowSurface(true);
         a.setColor(Color.RED);
         Sphere sB = new Sphere(new double[]{0.075, 0, 0.2}, 0.1);
-        b = new NewtonMesh3D(RayCastMesh.rayCastMesh(sB, sB.getCenter(), 1));
+        b = new NewtonMesh3D(RayCastMesh.rayCastMesh(sB, sB.getCenter(), 2));
         //b = RayCastMesh.rayCastMesh(sB, sB.getCenter(), 1);
 
         b.ALPHA = 0.1;

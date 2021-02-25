@@ -1,5 +1,6 @@
 package deformablemesh.externalenergies;
 
+import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.geometry.CurvatureCalculator;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.InterceptingMesh3D;
@@ -51,7 +52,7 @@ public class SofterStericMesh extends StericMesh {
 
 
         double[] pt = new double[3];
-        double[] center = mesh.getCenter();
+        //double[] center = mesh.getCenter();
         for(int i = 0; i<fx.length; i++){
             pt[0] = positions[3*i];
             pt[1] = positions[3*i + 1];
@@ -71,6 +72,8 @@ public class SofterStericMesh extends StericMesh {
 
                 //cross intersections until we pass our point.
                 double penetration = 0;
+
+
                 for(RotatedIntersection inter: intersections){
                     if(inter.dot>0){
                         //In the rotated intersection frame. the origin is zero.
@@ -86,7 +89,22 @@ public class SofterStericMesh extends StericMesh {
                         }
                     }
                 }
+
+
                 if(!outside){
+                /*
+                    //is the normal pointed in or out of the mesh?
+                    double[] ptQ = new double[]{
+                            pt[0] + normal[0]*penetration*2,
+                            pt[1] + normal[1]*penetration*2,
+                            pt[2] + normal[2]*penetration*2
+                    };
+                    if(mesh.contains(ptQ)){
+                        //force is not pushing mesh out.
+                        System.out.println("Quoi!");
+                        throw new RuntimeException("Borked at: " + mesh);
+                    }
+                */
                     fx[i] += penetration*weight*normal[0]*100;
                     fy[i] += penetration*weight*normal[1]*100;
                     fz[i] += penetration*weight*normal[2]*100;

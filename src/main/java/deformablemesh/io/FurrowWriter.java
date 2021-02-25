@@ -21,7 +21,7 @@ public class FurrowWriter {
     public static void writeFurrows(File f, MeshImageStack stack, ContractileRingDetector detector) {
         try( BufferedWriter br = Files.newBufferedWriter(Paths.get(f.toString()), Charset.forName("utf-8"))  ) {
             br.write("#furrow3d - ver 0.2\n");
-            br.write("#center of mass in image coordinates, normal - normalized vector");
+            br.write("#center of mass in image coordinates, normal - normalized vector\n");
             br.write("#frame\tcenter:x (px) \ty (px)\tz (slice) \tnormal:x\ty\tz\n");
             for(Integer i: detector) {
                 Furrow3D furrow = detector.getFurrow(i);
@@ -58,8 +58,8 @@ public class FurrowWriter {
                 double y1 = Double.parseDouble(values[2]);
                 double z1 = Double.parseDouble(values[3]);
                 double nx = Double.parseDouble(values[4]);
-                double ny = Double.parseDouble(values[4]);
-                double nz = Double.parseDouble(values[4]);
+                double ny = Double.parseDouble(values[5]);
+                double nz = Double.parseDouble(values[6]);
 
                 Furrow3D furrow = new Furrow3D(
                         stack.getNormalizedCoordinate(new double[]{x1,y1,z1}),

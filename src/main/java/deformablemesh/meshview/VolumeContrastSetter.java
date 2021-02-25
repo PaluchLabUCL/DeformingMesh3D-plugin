@@ -63,10 +63,16 @@ public class VolumeContrastSetter{
         panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
         JButton accept = new JButton("accept");
         accept.addActionListener(evt->{
-            double[] clips = range.getClipValues();
-            System.out.println("setting: " + clips[0] + ", " + clips[1]);
-            vdo.setMinMaxRange(clips[0], clips[1]);
+            double[] clamped = preview.previewVdo.getClampedMinMax();
+            //using the original vdo we want to find clip values that give the same clamped values.
+            double[] mm = vdo.getMaxRangeMinMax();
+
+            double rmin = ( clamped[0] - mm[0] )/(mm[1] - mm[0]);
+            double rmax = ( clamped[1] - mm[0])/(mm[1] - mm[0]);
+            System.out.println(" : global clips: " + rmin + ", " + rmax);
             dialog.dispose();
+            vdo.setMinMaxRange(rmin, rmax);
+
         });
         JButton cancel = new JButton("cancel");
         cancel.addActionListener(evt->{
@@ -196,6 +202,8 @@ public class VolumeContrastSetter{
 
             mf3d.addDataObject(vdo);
         }
+
+
 
         void setMinMaxClipping(double min, double max){
             previewVdo.setMinMaxRange(min, max);

@@ -65,14 +65,14 @@ public class PropertySaver {
                     case "alpha":
                         control.setAlpha(Double.parseDouble(pair[1]));
                         break;
-                    case "normalize":
-                        control.setNormalizerWeight(Double.parseDouble(pair[1]));
-                        break;
                     case "divisions":
                         control.setDivisions(Integer.parseInt(pair[1]));
                         break;
                     case "beta":
                         control.setBeta(Double.parseDouble(pair[1]));
+                        break;
+                    case "steric-weight":
+                        control.setStericNeighborWeight(Double.parseDouble(pair[1]));
                         break;
                     default:
                         System.out.println("skipping: " + pair[0]);
@@ -105,7 +105,8 @@ public class PropertySaver {
             writer.write(String.format("%s\t%s\n","image-weight", Double.toHexString(control.getImageWeight())));
             writer.write(String.format("%s\t%s\n","curve-weight", Double.toHexString(control.getCurveWeight())));
             writer.write(String.format("%s\t%s\n","alpha", Double.toHexString(control.getAlpha())));
-            writer.write(String.format("%s\t%s\n","normalize", Double.toHexString(control.getNormalizeWeight())));
+            //writer.write(String.format("%s\t%s\n","normalize", Double.toHexString(control.getNormalizeWeight())));
+            writer.write(String.format("%s\t%s\n","steric-weight", Double.toHexString(control.getStericNeighborWeight())));
             writer.write(String.format("%s\t%d\n","divisions", control.getDivisions()));
             writer.write(String.format("%s\t%s\n","beta", Double.toHexString(control.getBeta())));
         } catch(IOException exc){

@@ -10,6 +10,8 @@ import deformablemesh.gui.GuiTools;
 import deformablemesh.gui.RingController;
 import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;
+import ij.ImagePlus;
+import ij.WindowManager;
 import org.scijava.java3d.*;
 import org.scijava.vecmath.*;
 import snakeprogram3d.display3d.CanvasView;
@@ -19,8 +21,10 @@ import snakeprogram3d.display3d.ThreeDSurface;
 import snakeprogram3d.display3d.VolumeTexture;
 
 import javax.imageio.ImageIO;
+import javax.swing.JColorChooser;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -29,6 +33,8 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,9 +49,8 @@ import java.util.stream.Collectors;
  * Time: 8:45 AM
  * To change this template use File | Settings | File Templates.
  */
-public class MeshFrame3D {
+public class    MeshFrame3D {
     DataCanvas canvas;
-    KeyListener canvasContoller;
 
     JFrame frame;
     Axis3D axis;
@@ -61,7 +66,7 @@ public class MeshFrame3D {
     }
 
     @FunctionalInterface
-    static interface HudDisplay{
+    public static interface HudDisplay{
         void draw(Graphics2D g);
     }
     HudDisplay hud = g->{};
@@ -79,8 +84,77 @@ public class MeshFrame3D {
     float ambient = 0.75f;
     float directional = 0.1f;
 
+    List<ChannelVolume> channelVolumes = new ArrayList<>();
+
     public MeshFrame3D(){
 
+    }
+
+    public void addChannelVolume(ChannelVolume cv){
+        channelVolumes.add(cv);
+        segmentationController.addFrameListener(cv);
+        addDataObject(cv.vdo);
+    }
+
+    public void removeChannelVolume(ChannelVolume cv){
+        channelVolumes.remove(cv);
+        segmentationController.removeFrameListener(cv);
+        removeDataObject(cv.vdo);
+    }
+
+    public List<ChannelVolume> getChannelVolumes(){
+        return Collections.unmodifiableList(channelVolumes);
+    }
+
+
+    public void createNewChannelVolume(){
+        ImagePlus plus = GuiTools.selectOpenImage(frame);
+        Color c = JColorChooser.showDialog(null, "Select Color", Color.WHITE);
+        if(plus != null && c != null){
+            ChannelVolume cv = new ChannelVolume(new MeshImageStack(plus), c);
+            addChannelVolume(cv);
+        }
+    }
+
+    public void chooseToremoveChannelVolume(){
+        if(channelVolumes.size() == 0 ) return;
+        Object[] choices = channelVolumes.toArray();
+
+        Object option = JOptionPane.showInputDialog(
+                frame,
+                "Select Channel to Remove:",
+                "Choose Channel",
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                choices,
+                choices[0]
+        );
+        if(option instanceof ChannelVolume) {
+            removeChannelVolume((ChannelVolume) option);
+        }
+    }
+
+    public void chooseToContrastChannelVolume(){
+        if(channelVolumes.size() == 0 ) return;
+        Object[] choices = channelVolumes.toArray();
+
+        Object option = JOptionPane.showInputDialog(
+                frame,
+                "Select Channel to adjust Contrast:",
+                "Choose Channel",
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                choices,
+                choices[0]
+        );
+        if(option == null) return;
+
+        if(option instanceof ChannelVolume) {
+            ChannelVolume volume = (ChannelVolume) option;
+            VolumeContrastSetter setter = new VolumeContrastSetter(volume.vdo);
+            setter.setPreviewBackgroundColor(getBackgroundColor());
+            setter.showDialog(getJFrame());
+        }
     }
 
     /**
@@ -123,6 +197,24 @@ public class MeshFrame3D {
      */
     public void rotateView(int dx, int dy){
         canvas.rotateView(dx, dy);
+    }
+
+    /**
+     * All of the values necessary to have the same view.
+     *
+     * @return @see DataCanvas#getViewParameters
+     */
+    public double[] getViewParameters(){
+        double[] arr = canvas.getViewParameters();
+        return canvas.getViewParameters();
+    }
+    /**
+     * Restores a previous view.
+     *
+     * @return @see snakeprogram3d.display3d.DataCanvas#setViewParameters
+     */
+    public void setViewParameters(double[] parameters){
+        canvas.setViewParameters(parameters);
     }
 
     public void showFrame(boolean exit_on_close){

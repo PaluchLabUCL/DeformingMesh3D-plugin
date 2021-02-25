@@ -27,14 +27,17 @@ public class FurrowPlaneDataObject implements DataObject {
     IndexedTriangleArray surface_front;
     IndexedTriangleArray surface_back;
     double[] positions;
-    public FurrowPlaneDataObject(double[] cm, double[] normal) {
+    public FurrowPlaneDataObject(double[] cm, double[] normal){
+        this(cm, normal, 0.125);
+    }
+    public FurrowPlaneDataObject(double[] cm, double[] normal, double length) {
         lines = new IndexedLineArray(4, GeometryArray.COORDINATES, 8 );
 
         positions = new double[]{
-                -0.5,-0.5,0,
-                0.5,-0.5,0,
-                0.5,0.5,0,
-                -0.5,0.5,0
+                -length,-length,0,
+                length,-length,0,
+                length,length,0,
+                -length,length,0
 
         };
 

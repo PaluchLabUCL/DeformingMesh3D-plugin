@@ -574,6 +574,30 @@ public class SegmentationModel {
 
     }
 
+    public List<ExternalEnergy> getExternalEnergies( DeformableMesh3D selectedMesh){
+        System.out.println(image_weight + ", " + pressure);
+        List<ExternalEnergy> energies = new ArrayList<>();
+        //mesh.PRESSURE = pressure;
+        if(image_weight!=0) {
+            ExternalEnergy erg = generateImageEnergy(selectedMesh);
+            energies.add(erg);
+        }
+        if(pressure!=0){
+            energies.add(new PressureForce(selectedMesh, pressure));
+        }
+
+        if(normalize!=0){
+            energies.add(new TriangleAreaDistributor(stack, selectedMesh, normalize));
+        }
+
+        if(stericNeighborWeight!=0){
+            List<StericMesh> segs = generateStericEnergies(selectedMesh);
+            energies.addAll(segs);
+        }
+
+        return energies;
+    }
+
     /**
      * returns a list of all the external energies, except 'ring energy' affecting the currently selected mesh.
      *

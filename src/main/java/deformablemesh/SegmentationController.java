@@ -359,10 +359,11 @@ public class SegmentationController {
     }
 
 
-    public void reMeshConnections(){
+    public void reMeshConnections(double minConnectionLength, double maxConnectionLength){
         main.submit(()->{
             int f = model.getCurrentFrame();
             ConnectionRemesher remesher =  new ConnectionRemesher();
+            remesher.setMinAndMaxLengths(minConnectionLength, maxConnectionLength);
             DeformableMesh3D newMesh = remesher.remesh(getSelectedMesh());
             addMesh(f, newMesh);
         });
@@ -1778,6 +1779,43 @@ public class SegmentationController {
      */
     public String getRedoName(){
         return actionStack.getRedoableActionName();
+    }
+
+    public double getStericNeighborWeight() {
+
+        return model.getStericNeighborWeight();
+    }
+
+    /**
+     * Shows forces on the currently selected mesh. First clears any external energies\
+     * then shows any updates.
+     *
+     */
+    public void showForces() {
+        DeformableMesh3D mesh = getSelectedMesh();
+        mesh.clearEnergies();
+        showForces(mesh);
+    }
+
+    public void showForces(DeformableMesh3D mesh){
+        boolean clear = true;
+        if(mesh.getExternalEnergies().size()>0){
+            clear = false;
+        } else{
+            model.getExternalEnergies(mesh).forEach(mesh::addExternalEnergy);
+        }
+
+        VectorField vf = new VectorField(mesh);
+
+        vf.initialize();
+
+        if(clear){
+            mesh.clearEnergies();
+        }
+        meshFrame3D.addTransientObject(vf);
+        addMeshListener(i -> {
+            vf.update();
+        });
     }
 
     /**

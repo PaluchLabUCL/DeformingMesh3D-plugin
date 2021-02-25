@@ -217,6 +217,24 @@ public class HotKeyDelegate {
                 accessControl::hideVolumeAction
         );
 
+        createActionMapKey(
+                KeyStroke.getKeyStroke(KeyEvent.VK_C, 0, true),
+                "ADD_VOLUME",
+                "add volume channel",
+                frame::createNewChannelVolume
+        );
+        createActionMapKey(
+                KeyStroke.getKeyStroke(KeyEvent.VK_X, 0, true),
+                "REMOVE_VOLUME",
+                "remove volume channel",
+                frame::chooseToremoveChannelVolume
+        );
+        createActionMapKey(
+                KeyStroke.getKeyStroke(KeyEvent.VK_A, 0, true),
+                "CONTRAST_VOLUME",
+                "contrast volume channel",
+                frame::chooseToContrastChannelVolume
+        );
 
         createActionMapKey(
                 KeyStroke.getKeyStroke(KeyEvent.VK_H, 0, true),

@@ -1,6 +1,8 @@
 package deformablemesh.gui;
 
 import deformablemesh.Deforming3DMesh_Plugin;
+import ij.ImagePlus;
+import ij.WindowManager;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -232,6 +234,32 @@ public class GuiTools {
         }
 
 
+    }
+
+    static public ImagePlus selectOpenImage(JFrame parent){
+        String[] imageLabels = WindowManager.getImageTitles();
+
+        if(imageLabels.length==0) return null;
+
+        Object[] choices = new Object[imageLabels.length];
+        for(int i = 0; i<choices.length; i++){
+            choices[i] = imageLabels[i];
+        }
+
+        Object option = JOptionPane.showInputDialog(
+                parent,
+                "Choose from open images:",
+                "Choose Open Image",
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                choices,
+                choices[0]
+        );
+        if(option instanceof String) {
+            ImagePlus plus = WindowManager.getImage((String) option);
+            return plus;
+        }
+        return null;
     }
 
     private static Image icon;

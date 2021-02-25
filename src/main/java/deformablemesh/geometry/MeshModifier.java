@@ -1,6 +1,7 @@
 package deformablemesh.geometry;
 
 import deformablemesh.DeformableMesh3DTools;
+import deformablemesh.MeshImageStack;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.meshview.LineDataObject;
 import deformablemesh.meshview.MeshFrame3D;
@@ -10,6 +11,7 @@ import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;
 import deformablemesh.util.actions.ActionStack;
 import deformablemesh.util.actions.UndoableActions;
+import ij.ImagePlus;
 import org.scijava.java3d.*;
 import org.scijava.java3d.utils.geometry.Text2D;
 import org.scijava.java3d.utils.picking.PickIntersection;
@@ -25,8 +27,11 @@ import javax.swing.*;
 import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.FileDialog;
+import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
@@ -42,69 +47,77 @@ import java.util.stream.Collectors;
  * Created by msmith on 21.09.17.
  */
 public class MeshModifier {
-
     BlockingQueue<Runnable> tasks = new ArrayBlockingQueue<>(50);
     DeformableMesh3D mesh;
     MeshFrame3D frame;
     private boolean running = true;
     List<Node3D> selected = new ArrayList<>();
-    List<MoveableSphere> markers = new ArrayList<>();
+    List<Sphere> markers = new ArrayList<>();
     LineDataObject obj;
     Furrow3D furrow;
-    StateManager manager = new StateManager();
+    StateManager manager;
     ActionStack stack = new ActionStack();
-    private class StateManager{
-        JRadioButtonMenuItem viewMode, dragMode, sculptMode;
-        MeshFrame3D managed;
-        StateManager(){
-            managed = frame;
-        }
+    enum InteractionMode{
+        drag,
+        selection,
+        sculpt,
+        view;
 
-        public void buildDisplay(){
-            JPanel content = new JPanel();
-            ButtonGroup modeSelector = new ButtonGroup();
-            viewMode = new JRadioButtonMenuItem("view");
 
-            dragMode = new JRadioButtonMenuItem("drag");
-            sculptMode = new JRadioButtonMenuItem("sculpt");
-            content.setLayout(new BoxLayout(content, BoxLayout.PAGE_AXIS));
-            content.add(viewMode);
-            content.add(dragMode);
-            content.add(sculptMode);
+    }
+    InteractionMode mode = InteractionMode.view;
 
-            modeSelector.add(viewMode);
-            modeSelector.add(dragMode);
-            modeSelector.add(sculptMode);
-            ActionListener patience = new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    System.out.println("actioned" + e.getActionCommand() + e.getSource());
-                }
-            };
-            modeSelector.setSelected(viewMode.getModel(), true);
-            viewMode.addActionListener(patience);
-            dragMode.addActionListener(patience);
-            sculptMode.addActionListener(patience);
+    private class StateManager implements MeshFrame3D.HudDisplay{
 
-            JFrame frame = new JFrame("mode selector");
-            frame.setContentPane(content);
-            frame.pack();
-            frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-            frame.setVisible(true);
+        StateManager() {
         }
 
         public void selectViewMode(){
-            viewMode.setSelected(true);
+            mode = InteractionMode.view;
             frame.setCanvasControllerEnabled(true);
         }
 
+
         public void selectDragMode(){
-            dragMode.setSelected(true);
+            frame.setCanvasControllerEnabled(false);
+            mode = InteractionMode.drag;
+        }
+
+        public void setSculptMode(){
+            mode = InteractionMode.sculpt;
             frame.setCanvasControllerEnabled(false);
         }
 
+        Color background = new Color(100, 100, 100, 100);
+        Color foreground = Color.BLACK;
+
+        public void draw(Graphics2D g){
+            int w  = frame.getJFrame().getContentPane().getWidth();
+            int h = frame.getJFrame().getContentPane().getHeight();
+            g.setColor(background);
+            g.fillRect(5, 5, w - 5, 100);
+
+            g.setColor(foreground);
+            g.drawString("Modifying Mesh: ", 20, 40);
+            g.drawString(mode.name(), 20, 60);
+
+        }
 
 
+    }
+
+    private void deselectNode(int index){
+        selected.remove(index);
+        Sphere m = markers.get(index);
+        markers.remove(m);
+        frame.removeDataObject(m.createDataObject());
+    }
+
+    public void selectNone(){
+        List<Node3D> nodes = new ArrayList<>(selected);
+        for(int i = nodes.size()-1; i>=0; i--){
+            deselectNode(i);
+        }
     }
 
     public void start(){
@@ -142,10 +155,10 @@ public class MeshModifier {
 
 
         frame.setBackgroundColor(new Color(40, 40, 80));
-        DeformableMesh3D mesh = RayCastMesh.sphereRayCastMesh(3);
-        mesh.setColor(Color.YELLOW);
-        mesh.setShowSurface(false);
-        setMesh(mesh);
+        //DeformableMesh3D mesh = RayCastMesh.sphereRayCastMesh(3);
+        //mesh.setColor(Color.YELLOW);
+        //mesh.setShowSurface(false);
+        //setMesh(mesh);
         new Thread(this::mainLoop).start();
         frame.addPickListener(new PointPicking());
         frame.addLights();
@@ -153,7 +166,41 @@ public class MeshModifier {
         furrow = new Furrow3D(new double[]{0,0,0}, new double[]{0, -1, 0});
         furrow.create3DObject();
         frame.addDataObject(furrow.getDataObject());
-        manager.buildDisplay();
+        manager = new StateManager();
+        frame.setHud(manager);
+        frame.addKeyListener(getKeyListener());
+    }
+
+    private KeyListener getKeyListener(){
+
+        return new KeyListener() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+                switch(e.getKeyCode()){
+                    case KeyEvent.VK_A:
+                        if(e.isControlDown()){
+                            selectNone();
+                        }
+                        break;
+                    case KeyEvent.VK_S:
+                        manager.setSculptMode();
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+
+            }
+        };
+
     }
 
     public static void main(String[] args){
@@ -161,22 +208,28 @@ public class MeshModifier {
         EventQueue.invokeLater(()->{
             MeshModifier mod = new MeshModifier();
             mod.start();
-            List<Track> tracks = null;
-//            try {
-//
-//                tracks = MeshWriter.loadMeshes(new File("sample.bmf"));
-//                DeformableMesh3D mesh = tracks.get(0).getMesh(tracks.get(0).getFirstFrame());
-//                mod.setMesh(mesh);
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
+
+            try {
+                ImagePlus plus = new ImagePlus("./" + args[0]);
+                List<Track> tracks = MeshWriter.loadMeshes(new File(args[1]));
+                DeformableMesh3D mesh = tracks.get(0).getMesh(tracks.get(0).getFirstFrame());
+                mod.setMesh(mesh);
+                mod.setImage(plus);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+
         });
 
 
 
     }
 
+    public void setImage(ImagePlus plus){
+        MeshImageStack stack = new MeshImageStack(plus);
 
+    }
 
     public void setMesh(DeformableMesh3D mesh){
         if(this.mesh!=null){
@@ -236,20 +289,18 @@ public class MeshModifier {
             manager.selectViewMode();
             furrow.getDataObject().getBranchGroup().setPickable(false);
             mesh.data_object.getBranchGroup().setPickable(true);
-            System.out.println(dragging + " , " + delta);
             if(dragging!=null && delta !=null){
 
                 if(selected.size()==0){
                     System.out.println("no nodes selected");
-
                 }
+
                 double[] displacement = new double[3];
                 delta.get(displacement);
                 List<double[]> displacements = selected.stream().map(s->displacement).collect(Collectors.toList());
 
 
                 stack.postAction(new DisplaceNodesAction(mesh, selected, displacements));
-                System.out.println(stack.hasUndo());
             }
             dragging = null;
             delta = null;
@@ -257,6 +308,7 @@ public class MeshModifier {
 
         @Override
         public void updateClicked(PickResult[] results, MouseEvent evt) {
+            System.out.println("clicked");
             for(PickResult result: results){
                 Node node = result.getObject();
                 if( mesh.data_object.getBranchGroup().indexOfChild(node) > -1 ){
@@ -274,7 +326,11 @@ public class MeshModifier {
 
         @Override
         public void updateMoved(PickResult[] results, MouseEvent evt) {
-
+            switch(mode){
+                case sculpt:
+                    System.out.println("scultping");
+                    break;
+            }
         }
 
         @Override
@@ -298,6 +354,13 @@ public class MeshModifier {
                                 pt.y - dragging.y,
                                 pt.z - dragging.z
                         );
+                        for(int i = 0; i<selected.size(); i++){
+                            double[] starting = selected.get(i).getCoordinates();
+                            markers.get(i).moveTo(new double[]{
+                                    starting[0] + delta.x, starting[1] + delta.y, starting[2] + delta.z
+                            });
+                        }
+
                     }
                 }
             }
@@ -306,27 +369,22 @@ public class MeshModifier {
         }
     }
 
+
+
     void toggleSelectNode(Node3D n){
 
         if(selected.contains(n)){
             //deselected.
             int i = selected.indexOf(n);
-            selected.remove(i);
-            MoveableSphere m = markers.get(i);
-            markers.remove(m);
-            frame.removeDataObject(m);
+            deselectNode(i);
         } else{
             selected.add(n);
-            MoveableSphere s = new MoveableSphere(0.025);
             double[] pt = n.getCoordinates();
-            s.moveTo(new Point3d(pt[0], pt[1], pt[2]));
+            Sphere s = new Sphere(pt, 0.025);
+
             markers.add(s);
-            frame.addDataObject(s);
-
+            frame.addDataObject(s.createDataObject());
         }
-
-
-
     }
 
     Node3D getClosesNode(double x, double y, double z){

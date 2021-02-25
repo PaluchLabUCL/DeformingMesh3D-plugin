@@ -3,6 +3,7 @@ package deformablemesh.geometry;
 import deformablemesh.meshview.SphereDataObject;
 import deformablemesh.ringdetection.FurrowTransformer;
 import deformablemesh.util.Vector3DOps;
+import org.scijava.vecmath.Point3d;
 
 import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
@@ -64,6 +65,14 @@ public class Sphere implements Projectable, Interceptable{
             obj.moveTo(center[0], center[1], center[2]);
         }
     }
+
+    public void moveTo(double[] pt){
+        center[0] = pt[0];
+        center[1] = pt[1];
+        center[2] = pt[2];
+        update();
+    }
+
 
     public void moveBy(double[] delta){
         center[0] += delta[0];

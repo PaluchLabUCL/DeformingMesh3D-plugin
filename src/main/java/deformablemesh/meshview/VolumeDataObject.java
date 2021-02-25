@@ -21,6 +21,7 @@ import java.util.List;
 public class VolumeDataObject implements DataObject {
     Color color;
     Sizeable3DSurface surface;
+    MultiChannelVolumeTexture volume;
     double[][][] texture_data;
     double scale;
     /*size of the backing texture block, (w, h, d), essentially pixels.*/
@@ -32,6 +33,8 @@ public class VolumeDataObject implements DataObject {
     TransformGroup tg;
     double min  = 0;
     double max = 1;
+
+
     public VolumeDataObject(Color c) {
         color = c;
         offsets = new double[]{0,0,0};
@@ -182,8 +185,8 @@ public class VolumeDataObject implements DataObject {
         Color volumeColor = color;
         //size of the texture backing data.
 
+         volume = new MultiChannelVolumeTexture(texture_data, min, max, new Color3f(volumeColor));
 
-        VolumeTexture volume = new VolumeTexture(texture_data, min, max, new Color3f(volumeColor));
         if(surface==null){
             /*
              * The surface is positioned such that the origin corner is at -lengths[0]/2, -lengths[1]/2, 0
@@ -217,7 +220,13 @@ public class VolumeDataObject implements DataObject {
         return branchGroup;
     }
 
+    public double[] getMaxRangeMinMax(){
+        return volume.getMaxRangeMinMax(0);
+    }
+    public double[] getClampedMinMax(){
+        return volume.getAbsoluteMinMax(0);
+    }
     public double[] getMinMax() {
-        return new double[]{min ,max};
+        return new double[] {min, max};
     }
 }

@@ -125,7 +125,8 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         createEnergySelector(buttonPanel);
 
         //createButtonShowEnergy(buttonPanel);
-        createButtonShowMeshVolume(buttonPanel);
+        //createButtonShowMeshVolume(buttonPanel);
+        createButtonShowForces(buttonPanel);
         createButtonHideVolume(buttonPanel);
 
         createButtonAdjustVolumeContrast(buttonPanel);
@@ -147,8 +148,17 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         SetValue set_pressure = d -> segmentationController.setPressure(d);
         inputs.add(GuiTools.createInputField("pressure", createSavingValue(set_pressure), segmentationController.getPressure(), this));
 
-        SetValue normalizer = d -> segmentationController.setNormalizerWeight(d);
-        inputs.add(GuiTools.createInputField("normalize", createSavingValue(normalizer), segmentationController.getNormalizeWeight(), this));
+        //SetValue normalizer = d -> segmentationController.setNormalizerWeight(d);
+        //inputs.add(GuiTools.createInputField("normalize", createSavingValue(normalizer), segmentationController.getNormalizeWeight(), this));
+        SetValue stericNeighbors = d -> segmentationController.setStericNeighborWeight(d);
+        inputs.add(
+            GuiTools.createInputField(
+                "steric neighbors",
+                createSavingValue(stericNeighbors) ,
+                segmentationController.getStericNeighborWeight(),
+                this
+            )
+        );
 
         SetValue set_image_weight = d -> segmentationController.setWeight(d);
         inputs.add(GuiTools.createInputField("image weight", createSavingValue(set_image_weight), segmentationController.getImageWeight(), this));
@@ -334,6 +344,16 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         });
     }
 
+    public void createButtonShowForces(JPanel buttonPanel){
+        JButton showForces = new JButton("show forces");
+        buttons.add(showForces);
+        buttonPanel.add(showForces);
+        showForces.addActionListener(e->{
+            setReady(false);
+            segmentationController.showForces();
+            finished();
+        });
+    }
     public void createButtonShowMeshVolume(JPanel buttonPanel){
         JButton showMeshVolume = new JButton("show mesh volume");
         buttons.add(showMeshVolume);
@@ -1155,43 +1175,22 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             field.setMaximumSize(size);
             field.setPreferredSize(size);
             field.setEnabled(false);
-            field.addMouseListener(new MouseListener() {
-
+            field.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
                     field.setEnabled(true);
                 }
-
-                @Override
-                public void mousePressed(MouseEvent e) {
-                }
-
-                @Override
-                public void mouseReleased(MouseEvent e) {
-                }
-
-                @Override
-                public void mouseEntered(MouseEvent e) {
-                }
-
-                @Override
-                public void mouseExited(MouseEvent e) {
-                }
             });
 
-            field.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent actionEvent) {
-                    try {
-                        int frame = Integer.parseInt(field.getText());
-                        segmentationController.toFrame(frame-1);
-                        field.setEnabled(false);
-                    } catch (NumberFormatException exc) {
-                        //oh well
-                    }
+            field.addActionListener( (actionEvent) -> {
+                try {
+                    int frame = Integer.parseInt(field.getText());
+                    segmentationController.toFrame(frame-1);
+                    field.setEnabled(false);
+                } catch (NumberFormatException exc) {
+                    //oh well
                 }
-            });
+            } );
 
             field.addFocusListener(new FocusListener() {
 

@@ -11,6 +11,7 @@ import javax.script.ScriptException;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ActionMap;
+import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.InputMap;
 import javax.swing.JButton;
@@ -24,12 +25,17 @@ import javax.swing.ListModel;
 import javax.swing.Popup;
 import javax.swing.PopupFactory;
 import javax.swing.SwingUtilities;
+import javax.swing.border.BevelBorder;
+import javax.swing.border.Border;
+import javax.swing.border.EtchedBorder;
 import javax.swing.event.ListDataListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Caret;
 import javax.swing.text.Document;
 import javax.swing.text.Utilities;
+import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Event;
 import java.awt.EventQueue;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
@@ -55,7 +61,6 @@ public class SwingJSTerm {
 
     final ScriptEngine engine;
     JTextArea display, input;
-    List<String> history = new LinkedList<String>();
     List<String> commandHistory = new ArrayList<>();
     List<ReadyObserver> observers = new ArrayList<>();
     JFrame frame;
@@ -74,6 +79,7 @@ public class SwingJSTerm {
 
         engine.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
         engine.put("controls", controls);
+        engine.put("terminal", this);
         try {
             addClasses();
         } catch (Exception e) {
@@ -100,8 +106,13 @@ public class SwingJSTerm {
         root.setLayout(new BoxLayout(root, BoxLayout.PAGE_AXIS));
         //root.setLayout(new BorderLayout());
 
-        display = new JTextArea("**shift+enter will execute command immediately.**");
+        display = new JTextArea("**shift+enter will execute command immediately.**\n");
         display.setEditable(false);
+
+        display.setBorder(BorderFactory.createCompoundBorder(
+                display.getBorder(),
+                BorderFactory.createEmptyBorder(15, 15, 15, 15)));
+
         JScrollPane display_pane = new JScrollPane(display);
         display_pane.setPreferredSize(new Dimension(600, 100));
         root.add(display_pane);
@@ -183,7 +194,11 @@ public class SwingJSTerm {
         buttons.add(next);
         root.add(house);
         root.add(buttons);
-
+        Border b = BorderFactory.createCompoundBorder(
+            BorderFactory.createBevelBorder(BevelBorder.RAISED),
+            BorderFactory.createEmptyBorder(5, 5, 5, 5)
+        );
+        root.setBorder(b);
         frame = new JFrame();
         frame.setContentPane(root);
         frame.pack();
@@ -191,6 +206,29 @@ public class SwingJSTerm {
 
         return root;
     }
+
+    public void echo(Object o){
+        String echoed;
+        if(o.getClass().isArray()){
+            if(o instanceof double[]){
+                echoed = Arrays.toString((double[])o);
+            } else if(o instanceof int[]){
+                echoed = Arrays.toString((int[])o);
+            } else if(o instanceof byte[]){
+                echoed = Arrays.toString((byte[])o);
+            } else if(o instanceof Object[]){
+                echoed = Arrays.toString((Object[])o);
+            } else{
+                echoed = o.toString();
+            }
+        }else{
+            echoed = o.toString() + "\n";
+        }
+        EventQueue.invokeLater(()->{
+            display.append(echoed);
+        });
+    }
+
     public void submit(){
         String s = input.getText();
         input.setText("");
@@ -211,10 +249,12 @@ public class SwingJSTerm {
     }
     private void evaluateExpression(String s){
         String[] lines = s.split("\n");
-        for(String line: lines){
-            history.add(line + '\n');
-        }
-        EventQueue.invokeLater(() -> display.setText(""));
+
+        EventQueue.invokeLater(()->{
+            for(String line: lines){
+                display.append(line + '\n');
+            }
+        });
 
         try{
             controls.submit(()->{
@@ -222,14 +262,13 @@ public class SwingJSTerm {
             });
             engine.eval(s);
         } catch (ScriptException e) {
-
-            StackTraceElement[] elements = e.getStackTrace();
-            history.add(e.getMessage() + '\n');
-            if(elements.length>0){
-
-                history.add(elements[0].toString() + '\n');
-
-            }
+            EventQueue.invokeLater(()->{
+                StackTraceElement[] elements = e.getStackTrace();
+                display.append(e.getMessage() + '\n');
+                if(elements.length>0){
+                    display.append(elements[0].toString() + '\n');
+                }
+            });
 
         } finally{
             if(controls!=null){
@@ -239,9 +278,7 @@ public class SwingJSTerm {
             }
         }
         StringBuilder build = new StringBuilder();
-        history.stream().forEach((w)->build.append(w));
 
-        EventQueue.invokeLater(() -> display.setText(build.toString()));
 
     }
 

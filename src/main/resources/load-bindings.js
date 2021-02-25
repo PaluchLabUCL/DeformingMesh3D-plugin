@@ -15,6 +15,9 @@ var ImageStack = Java.type("ij.ImageStack");
 var ColorProcessor = Java.type("ij.process.ColorProcessor");
 var ImageStack = Java.type("ij.ImageStack");
 
+function echo(obj){
+    terminal.echo(obj);
+}
 function snapshotsThreeSixty(steps){
     mf3d = controls.getMeshFrame3D();
     stack = 0;

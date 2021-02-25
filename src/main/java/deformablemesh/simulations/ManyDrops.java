@@ -1,19 +1,16 @@
 package deformablemesh.simulations;
 
-import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.externalenergies.ExternalEnergy;
 import deformablemesh.externalenergies.SofterStericMesh;
 import deformablemesh.externalenergies.StericMesh;
-import deformablemesh.externalenergies.TriangleAreaDistributor;
 import deformablemesh.externalenergies.VolumeConservation;
 import deformablemesh.geometry.CurvatureCalculator;
 import deformablemesh.geometry.DeformableMesh3D;
-import deformablemesh.geometry.NewtonMesh3D;
 import deformablemesh.geometry.Node3D;
 import deformablemesh.geometry.RayCastMesh;
 import deformablemesh.geometry.Sphere;
-import deformablemesh.meshview.Arrow;
 import deformablemesh.meshview.MeshFrame3D;
+import deformablemesh.meshview.VectorField;
 import deformablemesh.util.Vector3DOps;
 import ij.ImageJ;
 import ij.ImagePlus;
@@ -30,7 +27,6 @@ import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -103,7 +99,7 @@ public class ManyDrops {
         }
         forces.forEach(force ->{
             force.initialize();
-            force.vectors.forEach(frame::addDataObject);
+            force.getVectors().forEach(frame::addDataObject);
         });
 
         frame.addDataObject(surface.surfaceGeometry.data_object);
@@ -196,7 +192,7 @@ public class ManyDrops {
     }
 
     public void step(){
-
+        System.out.println("steppin");
         for(DeformableMesh3D mesh: meshes){
             mesh.update();
         }
@@ -426,80 +422,3 @@ class Pacer{
 
 
 
-class VectorField{
-    DeformableMesh3D mesh;
-    List<Arrow> vectors;
-
-    double scale = 0.1;
-
-    public VectorField(DeformableMesh3D mesh){
-        this.mesh = mesh;
-        vectors = new ArrayList<>();
-    }
-    public void initialize(){
-        int n = mesh.nodes.size();
-        if(mesh!=null){
-            List<ExternalEnergy> energies = mesh.getExternalEnergies();
-            final double[] fx = new double[n];
-            final double[] fy = new double[n];
-            final double[] fz = new double[n];
-
-
-
-            for(ExternalEnergy external: energies) {
-                external.updateForces(mesh.positions, fx, fy, fz);
-            }
-
-            for(int i = 0; i<n; i++){
-                Node3D node = mesh.nodes.get(i);
-                double[] pt = node.getCoordinates();
-                double[] f = {fx[i], fy[i], fz[i]};
-                double m = Vector3DOps.normalize(f);
-                if(m<1e-4){
-                    continue;
-                }
-                Arrow a = new Arrow(1, 0.0625);
-                a.pointAlong(f);
-                m = m*scale;
-                a.moveTo(pt[0] + f[0]*m*0.5, pt[1] + f[1]*m*0.5, pt[2] + f[2]*m*0.5);
-                a.setScale(m);
-                vectors.add(a);
-            }
-
-        }
-
-    }
-
-    public void update(){
-
-        int n = mesh.nodes.size();
-        if(mesh!=null){
-            List<ExternalEnergy> energies = mesh.getExternalEnergies();
-            final double[] fx = new double[n];
-            final double[] fy = new double[n];
-            final double[] fz = new double[n];
-
-
-
-            for(ExternalEnergy external: energies) {
-                external.updateForces(mesh.positions, fx, fy, fz);
-            }
-
-            for(int i = 0; i<n; i++){
-                Node3D node = mesh.nodes.get(i);
-                double[] pt = node.getCoordinates();
-                double[] f = {fx[i], fy[i], fz[i]};
-                double m = Vector3DOps.normalize(f);
-                if(m<1e-4){
-                    continue;
-                }
-                m = m*scale;
-                Arrow a = vectors.get(i);
-                a.moveTo(pt[0] + f[0]*m*0.5, pt[1] + f[1]*m*0.5, pt[2] + f[2]*m*0.5);
-                a.pointAlong(f);
-                a.setScale(m);
-            }
-
-        }
-    }
-}

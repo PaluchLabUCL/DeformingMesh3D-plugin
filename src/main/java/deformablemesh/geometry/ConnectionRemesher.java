@@ -577,4 +577,8 @@ public class ConnectionRemesher {
         rem.frame.addDataObject(rmesh.data_object);
     }
 
+    public void setMinAndMaxLengths(double minConnectionLength, double maxConnectionLength) {
+        minLength = minConnectionLength;
+        maxLength = maxConnectionLength;
+    }
 }
