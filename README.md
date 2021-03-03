@@ -154,6 +154,12 @@ controls.submit( function(){
 
 ```
 # Changes
+0.38
+- Contrast preview dialog matches the clamped values.
+- Removed the normalizer weight from controls, added steric neighbors.
+- Exposed connection remesher in javascript with min/max lengths.
+- Contrast adjustment for displayed channels.
+
 0.37
 - Added key command actions to 3D display.
 - Added help screen to hud to display key commands.
@@ -161,7 +167,7 @@ controls.submit( function(){
 - Swing javascript terminal has a shortcut execution mode.
 - Contrast adjustment tool.
 - Selecting open image returns to the current frame for swapping energies.
-- Improved 3D volume data handline, now is a DataObject.
+- Improved 3D volume data handling, now is a DataObject.
 - Created a 3D surface for volume textures.
 - Improved 3D geometry display performance.
 - python meshes have a reader and writer.

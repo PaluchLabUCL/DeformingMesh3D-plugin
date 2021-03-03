@@ -3,6 +3,7 @@ package deformablemesh.externalenergies;
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.CompositeInterceptables;
+import deformablemesh.geometry.CurvatureCalculator;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Interceptable;
 import deformablemesh.geometry.RayCastMesh;
@@ -28,74 +29,27 @@ public class BallooningEnergy implements ExternalEnergy{
     final Interceptable constraint;
     final DeformableMesh3D mesh;
     final double weight;
-    final double[] counters;
+    CurvatureCalculator calculator;
+
     public BallooningEnergy(Interceptable constraint, DeformableMesh3D mesh, double weight){
         this.constraint = constraint;
         this.mesh = mesh;
         this.weight = weight;
-        counters = new double[mesh.nodes.size()];
-        int[] indexes = new int[3];
-        for(Triangle3D tri: mesh.triangles){
-            tri.getIndices(indexes);
-            for(int dex: indexes){
-                counters[dex]++;
-            }
-        }
-        for(int i = 0; i<counters.length; i++){
-            if(counters[i]>0){
-                counters[i]=1/counters[i];
-            }
-        }
+        calculator = new CurvatureCalculator(mesh);
+
     }
 
     @Override
     public void updateForces(double[] positions, double[] fx, double[] fy, double[] fz) {
-        int[] indexes = new int[3];
 
-        double factor = weight;
-        double[] pt = new double[3];
-        for(Triangle3D t: mesh.triangles){
-            t.update();
-            t.getIndices(indexes);
-            int a = indexes[0];
-            int b = indexes[1];
-            int c = indexes[2];
-
-            double f_x = t.normal[0]* factor;
-            double f_y = t.normal[1]* factor;
-            double f_z = t.normal[2]* factor;
-
-            pt[0] = positions[3*a];
-            pt[1] = positions[3*a + 1];
-            pt[2] = positions[3*a + 2];
-
-            if(constraint.contains(pt)) {
-                fx[a] += f_x*counters[a];
-                fy[a] += f_y*counters[a];
-                fz[a] += f_z*counters[a];
+        for(int i = 0; i<positions.length/3; i++){
+            if(constraint.contains(mesh.nodes.get(i).getCoordinates())){
+                double[] normal = calculator.getNormal(i);
+                double area = calculator.calculateMixedArea(mesh.nodes.get(i));
+                fx[i] += weight*area*normal[0];
+                fy[i] += weight*area*normal[1];
+                fz[i] += weight*area*normal[2];
             }
-
-            pt[0] = positions[3*b];
-            pt[1] = positions[3*b + 1];
-            pt[2] = positions[3*b + 2];
-
-            if(constraint.contains(pt)){
-                fx[b] += f_x*counters[b];
-                fy[b] += f_y*counters[b];
-                fz[b] += f_z*counters[b];
-            }
-
-            pt[0] = positions[3*c];
-            pt[1] = positions[3*c + 1];
-            pt[2] = positions[3*c + 2];
-
-            if(constraint.contains(pt)){
-                fx[c] += f_x*counters[c];
-                fy[c] += f_y*counters[c];
-                fz[c] += f_z*counters[c];
-
-            }
-
 
         }
     }

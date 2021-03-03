@@ -61,11 +61,11 @@ public class SphericalCavity {
     MeshFrame3D frame = new MeshFrame3D();
 
     class CavityEnergy implements ExternalEnergy{
-        double radius = 0.014;
+        double radius = 0.3;
         double x = 0;
         double y = 0;
         double z = 0;
-        double mag = 1.25/4;
+        double mag = 10.0;
 
 
 
@@ -176,6 +176,22 @@ public class SphericalCavity {
             return 0;
         }
     }
+    File filename = new File("simulated-mesh.bmf");
+    public void saveMeshes(){
+        List<Track> tracks = new ArrayList<>();
+        for(DeformableMesh3D mesh: drops){
+            Track t = new Track(ColorSuggestions.getColorName(mesh.getColor()));
+            t.addMesh(0, mesh);
+            tracks.add(t);
+        }
+        MeshTracker tracker = new MeshTracker();
+        tracker.addMeshTracks(tracks);
+        try {
+            MeshWriter.saveMeshes(new File("./simulated-spheres.bmf"), tracker);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
     private class Display{
         JLabel steps = new JLabel("steps: ");
         JCheckBox record = new JCheckBox("recording");
@@ -221,21 +237,23 @@ public class SphericalCavity {
             constraints.gridx = 3;
             JButton save = new JButton("save");
             save.addActionListener(evt->{
-                List<Track> tracks = new ArrayList<>();
-                for(DeformableMesh3D mesh: drops){
-                    Track t = new Track(ColorSuggestions.getColorName(mesh.getColor()));
-                    t.addMesh(0, mesh);
-                    tracks.add(t);
-                }
-                MeshTracker tracker = new MeshTracker();
-                tracker.addMeshTracks(tracks);
-                try {
-                    MeshWriter.saveMeshes(new File("./simulated-spheres.bmf"), tracker);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                saveMeshes();
             });
             panel.add(save, constraints);
+
+            constraints.gridy += 1;
+            constraints.gridx = 0;
+
+            JButton but = new JButton("set radius: ");
+            JTextField field = new JTextField(5);
+            field.setText("" + ce.radius);
+            but.addActionListener( evt->{
+                double radius = Double.parseDouble(field.getText());
+                ce.radius = radius;
+            });
+            panel.add(but, constraints);
+            constraints.gridx+=1;
+            panel.add(field, constraints);
             frame.setContentPane(panel);
             frame.pack();
             frame.setVisible(true);
@@ -308,7 +326,7 @@ public class SphericalCavity {
         display.steps.setText("steps: " + steps);
 
         if(recordSnapShots){
-
+            stepsPerFrame = Integer.parseInt(display.stepsPerSnapshot.getText());
             if(steps%stepsPerFrame == 0){
                 plotCurvature();
 
@@ -402,7 +420,7 @@ public class SphericalCavity {
         frame.addLights();
 
         int n = 2;
-        double r = 0.08;
+        double r = 0.14;
         double delta = n==1 ? 1 : 2*r/(n-1);
         for(int i = 0; i<n; i++){
             for(int j = 0; j<n; j++){
@@ -413,14 +431,15 @@ public class SphericalCavity {
                     double x = i*delta - r;
                     double y = j*delta - r;
                     double z = k*delta - r;
-                    if(i==1 && j==1){
-                        z = -z;
-                    }
-                    if( k > 0){
+
+                    if( k == 1){
                         double xp = Math.cos(Math.PI/4)*x - Math.sin(Math.PI/4)*y;
                         double yp = Math.sin(Math.PI/4)*x + Math.cos(Math.PI/4)*y;
                         x = xp;
                         y = yp;
+                    }
+                    if(i==1 && j==1){
+                        z = -z;
                     }
 
                     Sphere sphere = new Sphere(new double[]{x, y , z}, 0.1);
@@ -429,13 +448,14 @@ public class SphericalCavity {
                     //mesh = new NewtonMesh3D(mesh);
                     mesh.setShowSurface(true);
                     mesh.setColor(ColorSuggestions.getSuggestion());
+                    double pl = (pressure)*(0.1 + 5*i + 5*j);
                     mesh.GAMMA = 100;
-                    mesh.ALPHA = 1.0/2;
-                    mesh.BETA = 0.1/4;
+                    mesh.ALPHA = 0.1 + 5*i + 5*j;
+                    mesh.BETA = 0;
                     mesh.addExternalEnergy(ce);
-                    mesh.addExternalEnergy(new VolumeConservation(mesh, pressure/4));
+                    mesh.addExternalEnergy(new VolumeConservation(mesh, pl));
                     //mesh.addExternalEnergy(new PressureForce(mesh, pressure));
-                    mesh.addExternalEnergy(new TriangleAreaDistributor(null, mesh, pressure));
+                    mesh.addExternalEnergy(new TriangleAreaDistributor(null, mesh, pl));
                     mesh.reshape();
                     drops.add(mesh);
                     mesh.create3DObject();
@@ -448,7 +468,7 @@ public class SphericalCavity {
         /*drops.forEach(d ->{
             List<ExternalEnergy> energies = new ArrayList<>();
             for(ExternalEnergy ee: d.getExternalEnergies()){
-                if ( ee instanceof SofterStericMesh){
+                if ( ee instanceof TriangleAreaDistributor){
                     energies.add(ee);
                 }
             }

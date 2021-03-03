@@ -1,31 +1,26 @@
 package deformablemesh.externalenergies;
 
+import deformablemesh.DeformableMesh3DTools;
+import deformablemesh.geometry.CurvatureCalculator;
 import deformablemesh.geometry.DeformableMesh3D;
+import deformablemesh.geometry.Node3D;
 import deformablemesh.geometry.Triangle3D;
 
-public class VolumeConservation implements ExternalEnergy{
+public class VolumeConservation  implements ExternalEnergy{
     final DeformableMesh3D mesh;
     final double weight;
-    final double[] counters;
     double volume;
+
+    CurvatureCalculator calculator;
+
     public VolumeConservation(DeformableMesh3D mesh, double weight){
         this.mesh = mesh;
-        counters = new double[mesh.nodes.size()];
-        int[] indexes = new int[3];
-        for(Triangle3D tri: mesh.triangles){
-            tri.getIndices(indexes);
-            for(int dex: indexes){
-                counters[dex]++;
-            }
-        }
-        for(int i = 0; i<counters.length; i++){
-            if(counters[i]>0){
-                counters[i]=1/counters[i];
-            }
-        }
         volume = mesh.calculateVolume(new double[]{0, 0, 1});
+        double area = DeformableMesh3DTools.calculateSurfaceArea(mesh);
 
-        this.weight = weight*0.1/volume;
+        calculator = new CurvatureCalculator(mesh);
+
+        this.weight = weight/volume/area*1000/volume/volume;
 
 
 
@@ -42,46 +37,14 @@ public class VolumeConservation implements ExternalEnergy{
     public void updateForces(double[] positions, double[] fx, double[] fy, double[] fz) {
         double nv = mesh.calculateVolume(new double[]{0, 0, 1});
 
-        int[] indexes = new int[3];
-        double dv = weight*(-nv + volume);
-        double factor = dv;
-        double[] pt = new double[3];
-        for(Triangle3D t: mesh.triangles){
-            t.update();
-            t.getIndices(indexes);
-            int a = indexes[0];
-            int b = indexes[1];
-            int c = indexes[2];
-
-            double f_x = t.normal[0]* factor;
-            double f_y = t.normal[1]* factor;
-            double f_z = t.normal[2]* factor;
-
-            pt[0] = positions[3*a];
-            pt[1] = positions[3*a + 1];
-            pt[2] = positions[3*a + 2];
-
-                fx[a] += f_x*counters[a];
-                fy[a] += f_y*counters[a];
-                fz[a] += f_z*counters[a];
-
-            pt[0] = positions[3*b];
-            pt[1] = positions[3*b + 1];
-            pt[2] = positions[3*b + 2];
-
-                fx[b] += f_x*counters[b];
-                fy[b] += f_y*counters[b];
-                fz[b] += f_z*counters[b];
-
-            pt[0] = positions[3*c];
-            pt[1] = positions[3*c + 1];
-            pt[2] = positions[3*c + 2];
-
-                fx[c] += f_x*counters[c];
-                fy[c] += f_y*counters[c];
-                fz[c] += f_z*counters[c];
-
-
+        double dv = (-nv + volume);
+        double factor = weight*dv*dv*dv;
+        for(int i = 0; i<positions.length/3; i++){
+            double[] normal = calculator.getNormal(i);
+            double area = calculator.calculateMixedArea(mesh.nodes.get(i));
+            fx[i] += factor*area*normal[0];
+            fy[i] += factor*area*normal[1];
+            fz[i] += factor*area*normal[2];
 
         }
     }
