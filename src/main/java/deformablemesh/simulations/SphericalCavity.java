@@ -419,12 +419,12 @@ public class SphericalCavity {
         frame.setBackgroundColor(new Color(0, 60, 0));
         frame.addLights();
 
-        int n = 2;
+        int n = 3;
         double r = 0.14;
         double delta = n==1 ? 1 : 2*r/(n-1);
         for(int i = 0; i<n; i++){
             for(int j = 0; j<n; j++){
-                for(int k = 1; k<n; k++){
+                for(int k = 0; k<n; k++){
 
                 //if(i != j || i!=4) continue;
 
@@ -433,12 +433,12 @@ public class SphericalCavity {
                     double z = k*delta - r;
 
                     if( k == 1){
-                        double xp = Math.cos(Math.PI/4)*x - Math.sin(Math.PI/4)*y;
-                        double yp = Math.sin(Math.PI/4)*x + Math.cos(Math.PI/4)*y;
+                        double xp = Math.cos(Math.PI/32)*x - Math.sin(Math.PI/32)*y;
+                        double yp = Math.sin(Math.PI/32)*x + Math.cos(Math.PI/32)*y;
                         x = xp;
                         y = yp;
                     }
-                    if(i==1 && j==1){
+                    if(i==1 && j==9){
                         z = -z;
                     }
 
@@ -449,8 +449,11 @@ public class SphericalCavity {
                     mesh.setShowSurface(true);
                     mesh.setColor(ColorSuggestions.getSuggestion());
                     double pl = (pressure)*(0.1 + 5*i + 5*j);
+                    pl = 0.1*pressure;
                     mesh.GAMMA = 100;
                     mesh.ALPHA = 0.1 + 5*i + 5*j;
+
+                    mesh.ALPHA = 0.1;
                     mesh.BETA = 0;
                     mesh.addExternalEnergy(ce);
                     mesh.addExternalEnergy(new VolumeConservation(mesh, pl));

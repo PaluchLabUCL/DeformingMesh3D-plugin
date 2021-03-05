@@ -53,6 +53,7 @@ public class SofterStericMesh extends StericMesh {
 
         double[] pt = new double[3];
         //double[] center = mesh.getCenter();
+
         for(int i = 0; i<fx.length; i++){
             pt[0] = positions[3*i];
             pt[1] = positions[3*i + 1];
@@ -73,43 +74,51 @@ public class SofterStericMesh extends StericMesh {
                 //cross intersections until we pass our point.
                 double penetration = 0;
 
-
+                //we're coming from negative infinity (outside) to the origin.
+                boolean borked = false;
                 for(RotatedIntersection inter: intersections){
                     if(inter.dot>0){
-                        //In the rotated intersection frame. the origin is zero.
+                        //We've crossed the origin, so the last intersection determines
+                        // the penetration.
                         break;
                     } else{
+
                         boolean facingUp = Vector3DOps.dot(inter.surface, normal)>0;
                         if(facingUp){
-                            //surface is facing up. means we just left.
-                            outside=true;
+                            //surface is facing up. Should only happen when we just left.
+                            if(outside){
+                                borked = true;
+                            } else if(borked){
+                                //this is a very rare condition.
+                                borked = false;
+                            }
+
+                            outside=!outside;
+
                         } else{
-                            outside=false;
+                            if(!outside){
+                                borked = true;
+                            } else if(borked){
+                                //Gets better?
+                                borked = false;
+                            }
+                            outside=!outside;
                             penetration = inter.dot;
                         }
                     }
                 }
 
+                if(borked) {
+                    continue;
+                }
 
                 if(!outside){
-                /*
-                    //is the normal pointed in or out of the mesh?
-                    double[] ptQ = new double[]{
-                            pt[0] + normal[0]*penetration*2,
-                            pt[1] + normal[1]*penetration*2,
-                            pt[2] + normal[2]*penetration*2
-                    };
-                    if(mesh.contains(ptQ)){
-                        //force is not pushing mesh out.
-                        System.out.println("Quoi!");
-                        throw new RuntimeException("Borked at: " + mesh);
-                    }
-                */
                     fx[i] += penetration*weight*normal[0]*100;
                     fy[i] += penetration*weight*normal[1]*100;
                     fz[i] += penetration*weight*normal[2]*100;
                 }
             }
+
         }
     }
 
