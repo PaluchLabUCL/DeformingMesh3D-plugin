@@ -262,6 +262,60 @@ public class DeformableMesh3D{
         }
     }
 
+    /**
+     * Performs the bulk of calculations for doing an update. Creates a runnable that represents
+     * finally changing the positions
+     * @return
+     */
+    public Runnable partialUpdate(){
+        if(decomp==null){
+            reshape();
+        }
+
+        final double[] fx = new double[nodes.size()];
+        final double[] fy = new double[nodes.size()];
+        final double[] fz = new double[nodes.size()];
+
+        double[] pt;
+        for(Node3D n: nodes){
+            n.update();
+            pt = n.getCoordinates();
+            double gamma = n.getGamma(GAMMA);
+            fx[n.index] += gamma*pt[0];
+            fy[n.index] += gamma*pt[1];
+            fz[n.index] += gamma*pt[2];
+        }
+
+        for(ExternalEnergy external: energies) {
+            external.updateForces(positions, fx, fy, fz);
+        }
+
+        final Matrix FX = new Matrix(fx,nodes.size());
+        Matrix deltax = decomp.solve(FX);
+        double[] nx = deltax.getRowPackedCopy();
+
+        final Matrix FY = new Matrix(fy,nodes.size());
+        Matrix deltay = decomp.solve(FY);
+        double[] ny = deltay.getRowPackedCopy();
+
+        final Matrix FZ = new Matrix(fz,nodes.size());
+        Matrix deltaz = decomp.solve(FZ);
+        double[] nz = deltaz.getRowPackedCopy();
+        return ()-> {
+            for (int i = 0; i < nodes.size(); i++) {
+                positions[3 * i] = nx[i];
+                positions[3 * i + 1] = ny[i];
+                positions[3 * i + 2] = nz[i];
+
+            }
+            if(data_object!=null){
+                data_object.updateGeometry(positions);
+            }
+        };
+    }
+
+
+
     public void update(){
         if(decomp==null){
             reshape();

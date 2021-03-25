@@ -4,24 +4,83 @@ import deformablemesh.MeshImageStack;
 import deformablemesh.externalenergies.ExternalEnergy;
 import deformablemesh.externalenergies.TriangleAreaDistributor;
 import deformablemesh.geometry.*;
+import deformablemesh.io.MeshWriter;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.meshview.VolumeDataObject;
+import deformablemesh.track.Track;
+import deformablemesh.util.DistanceTransformMosaicImage;
+import ij.ImageJ;
 import ij.ImagePlus;
 
 import javax.imageio.ImageIO;
 import java.awt.Color;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * A small class for testing energies to make a mesh swell and fill a binary boundary.
+ *
+ * - This poses a couple of questions. Should the outward growing pressure turn off when the
+ * mesh exceeds the boundaries of the cavity?
+ * - Should the boundary apply a force, that will balance with the outward force.
+ * - Should the cavity be a distance transform. Either on the outside, or the inside or both.
+ *
  */
 public class FillingBinaryImage {
+    int frame;
+    MeshImageStack stack;
+    List<DeformableMesh3D> meshes;
+    public FillingBinaryImage(MeshImageStack mis, List<DeformableMesh3D> meshes){
+        stack = mis;
+        this.meshes = meshes;
+    }
+    public void showDeformation(){
+        MeshFrame3D frame = new MeshFrame3D();
+        frame.showFrame(false);
 
+        for(DeformableMesh3D mesh: meshes){
+            mesh.create3DObject();
+            frame.addDataObject(mesh.data_object);
+        }
+
+
+
+    }
+
+    public void setFrame(int frame){
+        this.frame = frame;
+    }
+
+    public static void main(String[] args) throws IOException {
+        /*new ImageJ();
+        ImagePlus plus = new ImagePlus(Paths.get(args[0]).toAbsolutePath().toString());
+        DistanceTransformMosaicImage dtmi = new DistanceTransformMosaicImage(plus);
+        dtmi.findBlobs();
+
+        dtmi.createCascades();
+        ImagePlus p2 = dtmi.createLabeledImage();
+        p2.show();*/
+        ImagePlus plus = new ImagePlus(Paths.get(args[0]).toAbsolutePath().toString());
+        MeshImageStack mis = new MeshImageStack(plus);
+        List<Track> tracks = MeshWriter.loadMeshes(Paths.get(args[1]).toFile());
+        for(int i = 0; i<mis.getNFrames(); i++){
+            final int fi = i;
+            List<DeformableMesh3D> meshes = tracks.stream().filter(
+                    t -> t.containsKey(fi)
+            ).map(
+                    t->t.getMesh(fi)
+            ).collect(Collectors.toList());
+            FillingBinaryImage fbi = new FillingBinaryImage(mis, meshes);
+            fbi.setFrame(fi);
+            fbi.showDeformation();
+        }
+    }
 
     public static DeformableMesh3D fillBinaryWithMesh(ImagePlus plus, List<int[]> points){
         MeshImageStack stack = new MeshImageStack(plus);
@@ -61,7 +120,6 @@ public class FillingBinaryImage {
                 RayCastMesh.subDivideMesh(mesh);
                 mesh.reshape();
                 mesh.addExternalEnergy(new FillingForce(mesh, pressure, stack));
-
             }*/
         //    count++;
         //}
@@ -70,128 +128,7 @@ public class FillingBinaryImage {
 
     }
 
-    public static void main(String[] args){
-        ImagePlus binary = new ImagePlus(Paths.get(args[0]).toAbsolutePath().toString());
-
-        MeshImageStack stack = new MeshImageStack(binary);
-
-
-        MeshFrame3D frame = new MeshFrame3D();
-        frame.showFrame(true);
-        frame.addLights();
-
-
-        Sphere sA = new Sphere(new double[]{0, 0, 0}, 0.1);
-        //a = new NewtonMesh3D(RayCastMesh.rayCastMesh(sA, sA.getCenter(), 2));
-        DeformableMesh3D mesh = RayCastMesh.rayCastMesh(sA, sA.getCenter(), 2);
-        mesh.GAMMA = 1000;
-        mesh.ALPHA = 1.0;
-        mesh.BETA = 0.0;
-        mesh.reshape();
-        mesh.setShowSurface(true);
-        mesh.create3DObject();
-        frame.addDataObject(mesh.data_object);
-
-        binary.show();
-
-        double pressure = 1;
-
-        mesh.addExternalEnergy(new FillingForce(mesh, pressure, stack));
-
-        int count = 0;
-        while(count<400){
-            mesh.update();
-            if(count==300){
-                frame.removeDataObject(mesh.data_object);
-                mesh.clearEnergies();
-                RayCastMesh.subDivideMesh(mesh);
-
-                mesh.reshape();
-                mesh.create3DObject();
-                frame.addDataObject(mesh.data_object);
-                mesh.addExternalEnergy(new FillingForce(mesh, pressure, stack));
-
-            }
-
-            try{
-                ImageIO.write(frame.snapShot(), "PNG", new File(String.format("snaps/snap-%03d.png", count)));
-            } catch (Exception e){
-
-            }
-
-            count++;
-        }
-        System.out.println("done");
-    }
 
 }
 
-class FillingForce implements ExternalEnergy {
-    double PRESSURE;
-    Map<Integer, List<Triangle3D>> adjacencyMap = new HashMap<>();
-    MeshImageStack binaryStack;
-    Box3D bounds;
-    public FillingForce(DeformableMesh3D mesh, double pressure, MeshImageStack stack){
-        PRESSURE = pressure;
 
-        for(int i = 0; i<mesh.nodes.size(); i++){
-            adjacencyMap.put(i, new ArrayList<>());
-        }
-
-        int[] dexes = new int[3];
-        for(Triangle3D triangle: mesh.triangles){
-            triangle.getIndices(dexes);
-            for(int i = 0; i<3; i++){
-                adjacencyMap.get(dexes[i]).add(triangle);
-            }
-        }
-        this.binaryStack = stack;
-        bounds = stack.getLimits();
-    }
-
-    @Override
-    public void updateForces(double[] positions, double[] fx, double[] fy, double[] fz) {
-
-
-
-
-        for(int i = 0; i<fx.length; i++){
-
-            if(
-                    bounds.contains(new double[]{positions[3*i], positions[3*i+1], positions[3*i + 2]})
-                            &&  grow(positions[3*i], positions[3*i+1], positions[3*i + 2]) ){
-
-                double factor = PRESSURE/3.0/adjacencyMap.get(i).size();
-
-                for(Triangle3D t : adjacencyMap.get(i)){
-                    t.update();
-
-                    double f_x = t.normal[0]* factor;
-                    double f_y = t.normal[1]* factor;
-                    double f_z = t.normal[2]* factor;
-
-                    fx[i] += f_x;
-                    fy[i] += f_y;
-                    fz[i] += f_z;
-                }
-            }
-        }
-    }
-
-    protected boolean grow(double x, double y, double z){
-        if ( binaryStack.getInterpolatedValue(x, y, z) != 0 ){
-            return true;
-        }
-        return false;
-    }
-    protected double scale(double x, double y, double z){
-        double v= binaryStack.getInterpolatedValue(x,y,z);
-        v = v<0?0:v;
-        return v>1?1:v;
-    }
-
-    @Override
-    public double getEnergy(double[] pos) {
-        return 0;
-    }
-}

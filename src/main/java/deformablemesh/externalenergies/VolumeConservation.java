@@ -20,7 +20,9 @@ public class VolumeConservation  implements ExternalEnergy{
 
         calculator = new CurvatureCalculator(mesh);
 
-        this.weight = weight/volume/area*1000/volume/volume;
+        this.weight = weight*1e8;
+
+        System.out.println( weight/area/volume/volume/volume*2 + ", " + weight);
 
 
 

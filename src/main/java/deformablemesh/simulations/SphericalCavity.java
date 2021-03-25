@@ -39,8 +39,13 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 public class SphericalCavity {
     double pressure = 1.0;
@@ -196,6 +201,8 @@ public class SphericalCavity {
         JLabel steps = new JLabel("steps: ");
         JCheckBox record = new JCheckBox("recording");
         JTextField stepsPerSnapshot = new JTextField(10);
+        JTextField radPerSnapShot = new JTextField(10);
+        JCheckBox rotate = new JCheckBox("rotate view");
         Display(){
             JFrame frame = new JFrame("simulation controls");
             JPanel panel = new JPanel();
@@ -254,6 +261,16 @@ public class SphericalCavity {
             panel.add(but, constraints);
             constraints.gridx+=1;
             panel.add(field, constraints);
+
+            constraints.gridy += 1;
+            constraints.gridx = 0;
+            panel.add(rotate, constraints);
+            constraints.gridx += 1;
+            panel.add(new JLabel("Angle per snapshot: "), constraints);
+            constraints.gridx += 1;
+            panel.add(radPerSnapShot, constraints);
+
+
             frame.setContentPane(panel);
             frame.pack();
             frame.setVisible(true);
@@ -271,61 +288,88 @@ public class SphericalCavity {
 
     }
 
+    Graph graph = new Graph();
+    Graph volume = new Graph();
+
     public void createCurvaturePlots(){
+        graph.setBackground(Color.DARK_GRAY);
+        graph.setAxisColor(Color.WHITE);
+        volume.setBackground(Color.DARK_GRAY);
+        volume.setAxisColor(Color.WHITE);
         int i = 0;
+        volume.addData(new double[]{steps}, new double[]{ 4*Math.PI/3.0*Math.pow(ce.radius, 3) });
+
         for(DeformableMesh3D mesh: drops){
             CurvatureCalculator calc = new CurvatureCalculator(mesh);
+
             List<double[]> v = calc.calculateCurvature();
-            double min = Double.MAX_VALUE;
-            double max = -min;
             double ave = 0;
-            for(double[] row: v){
+            double ave2 = 0;
+            double area = 0;
+            List<double[]> curves = calc.calculateCurvature();
+            for(int j = 0; j <curves.size(); j++){
+                double[] row = curves.get(j);
                 double c = row[3];
-                min = Math.min(min, c);
-                max = Math.max(max, c);
-                ave += c;
+                double ai = calc.calculateMixedArea(j);
+                area += ai;
+                ave += c*ai;
+                ave2 += c*c*ai;
+
             }
-            ave = ave/v.size();
+            ave = ave/area;
+            ave2 = Math.sqrt(ave2/area - ave*ave);
+
             DataSet set = graph.addData(new double[]{steps}, new double[]{ave});
             set.setColor(mesh.getColor());
-            set = graph.addData(new double[]{ steps},new double[]{min});
+            set = graph.addData(new double[]{ steps},new double[]{ave2});
             set.setColor(mesh.getColor());
-            set = graph.addData(new double[]{steps}, new double[]{max});
-            set.setColor(mesh.getColor());
-        }
-        graph.show(false);
-    }
 
+            set = volume.addData( new double[]{steps}, new double[]{mesh.calculateVolume()});
+            set.setColor(mesh.getColor());
+
+        }
+        graph.show(false, "curvatures");
+        volume.show(false, "volumes");
+    }
     public void plotCurvature(){
         int i = 0;
+        volume.getDataSet(i).addPoint(steps, 4*Math.PI/3.0*Math.pow(ce.radius, 3));
         for(DeformableMesh3D mesh: drops){
             CurvatureCalculator calc = new CurvatureCalculator(mesh);
-            List<double[]> v = calc.calculateCurvature();
-            double min = Double.MAX_VALUE;
-            double max = -min;
+
             double ave = 0;
-            for(double[] row: v){
+            double ave2 = 0;
+            double area = 0;
+            List<double[]> curves = calc.calculateCurvature();
+            for(int j = 0; j <curves.size(); j++){
+                double[] row = curves.get(j);
                 double c = row[3];
-                min = Math.min(min, c);
-                max = Math.max(max, c);
-                ave += c;
+                double ai = calc.calculateMixedArea(j);
+                area += ai;
+                ave += c*ai;
+                ave2 += c*c*ai;
+
             }
-            ave = ave/v.size();
-            graph.getDataSet(3*i).addPoint(steps, ave);
-            graph.getDataSet(3*i + 1).addPoint(steps, min);
-            graph.getDataSet(3*i + 2).addPoint(steps, max);
+            ave = ave/area;
+            ave2 = Math.sqrt(ave2/area - ave*ave);
+            graph.getDataSet(2*i).addPoint(steps, ave);
+            graph.getDataSet(2*i + 1).addPoint(steps, ave2);
+
+            volume.getDataSet(i+1).addPoint(steps, mesh.calculateVolume());
             i++;
         }
         graph.refresh(true);
+        volume.refresh(true);
     }
     Display display = new Display();
     ImageStack snapShots;
     ImagePlus plus;
-    Graph graph = new Graph();
+
     public void updateDisplay(){
         display.steps.setText("steps: " + steps);
 
         if(recordSnapShots){
+
             stepsPerFrame = Integer.parseInt(display.stepsPerSnapshot.getText());
             if(steps%stepsPerFrame == 0){
                 plotCurvature();
@@ -333,6 +377,11 @@ public class SphericalCavity {
                 if(snapShots!=null && snapShots.size()>=500){
                     return;
                 }
+
+                if(display.rotate.isSelected()){
+                    frame.rotateView(Integer.parseInt( display.radPerSnapShot.getText() ), 0 );
+                }
+
                 BufferedImage img = frame.snapShot();
                 ImageProcessor p = new ColorProcessor(img);
                 if(snapShots==null){
@@ -347,6 +396,7 @@ public class SphericalCavity {
                         plus.show();
                     }
                 }
+                requestRemesh = true;
             }
         }
     }
@@ -364,7 +414,7 @@ public class SphericalCavity {
 
         drops.replaceAll( mesh -> {
             ConnectionRemesher rem = new ConnectionRemesher();
-            rem.setMinAndMaxLengths(0.008, 0.019);
+            rem.setMinAndMaxLengths(0.02, 0.06);
             DeformableMesh3D remeshed = rem.remesh(mesh);
             remeshed.GAMMA = mesh.GAMMA;
             remeshed.ALPHA = mesh.ALPHA;
@@ -372,6 +422,7 @@ public class SphericalCavity {
             remeshed.setColor(mesh.getColor());
             remeshed.setShowSurface(true);
             remeshed.addExternalEnergy(ce);
+
             for (ExternalEnergy e : mesh.getExternalEnergies()) {
                 if (e instanceof VolumeConservation) {
                     VolumeConservation vc = (VolumeConservation) e;
@@ -379,6 +430,13 @@ public class SphericalCavity {
                     re.setVolume(vc.getVolume());
                     remeshed.addExternalEnergy(re);
                     break;
+                } else if( e instanceof PressureForce){
+                    PressureForce pf = (PressureForce) e;
+                    PressureForce x = new PressureForce(remeshed, pressure);
+                    x.setMaxMixedArea(pf.getMaxMixedArea());
+                    remeshed.addExternalEnergy(x);
+                } else if( e instanceof TriangleAreaDistributor){
+                    remeshed.addExternalEnergy( new TriangleAreaDistributor(null, remeshed, pressure*0.5) );
                 }
             }
             remeshed.create3DObject();
@@ -386,24 +444,64 @@ public class SphericalCavity {
             frame.addDataObject(remeshed.data_object);
             return remeshed;
         });
-
+        stericMeshes.clear();
+        prepareStericEnergies();
 
     }
     public void simulate(){
+        long last = System.currentTimeMillis();
         while(!interrupted.get()){
             pause();
             if(requestRemesh){
                 remeshMeshes();
                 requestRemesh = false;
             }
-            step();
+            step2();
             steps++;
             updateDisplay();
+            if(steps%100 == 0){
+                long next = System.currentTimeMillis();
+                System.out.println( (next - last)/100 + "ave ms per step");
+                last = next;
+            }
         }
         System.out.println("broken after: " + steps);
     }
 
+    ExecutorService service = Executors.newCachedThreadPool();
+
+    public void step2(){
+        try {
+            List<Future<Runnable>> futures = service.invokeAll(
+                    drops.stream().map(d -> (Callable<Runnable>)d::partialUpdate).collect(Collectors.toList())
+            );
+
+            futures.stream().map( f-> {
+                try {
+                    return f.get();
+                } catch (Exception e) {
+                    return null;
+                }
+            } ).forEach(Runnable::run);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        List<Future<?>> futures = new ArrayList<>();
+        for(SofterStericMesh s: stericMeshes){
+            futures.add( service.submit(s::update) );
+        }
+        futures.forEach( f ->{
+            try{
+                f.get();
+            } catch(Exception e){
+                //wtf.
+            }
+        });
+        fields.forEach(VectorField::update);
+    }
+
     public void step(){
+
         for(DeformableMesh3D mesh: drops){
             mesh.update();
         }
@@ -419,27 +517,48 @@ public class SphericalCavity {
         frame.setBackgroundColor(new Color(0, 60, 0));
         frame.addLights();
 
-        int n = 3;
-        double r = 0.14;
-        double delta = n==1 ? 1 : 2*r/(n-1);
-        for(int i = 0; i<n; i++){
-            for(int j = 0; j<n; j++){
-                for(int k = 0; k<n; k++){
+        int nx = 2;
+        int ny = 2;
+        int nz = 3;
+        double r = 0.2;
+        double deltax = nx==1 ? 1 : 2*r/(nx-1);
+        double deltay = ny==1 ? 1 : 2*r/(ny-1);
+        double deltaz = nz==1 ? 1 : 2*r/(nz-1);
+        double rx = nx==1 ? 0 : r;
+        double ry = ny == 1 ? 0 : r;
+        double rz = nz == 1 ? 0 : r;
 
+        for(int i = 0; i<nx; i++){
+            for(int j = 0; j<ny; j++){
+                for(int k = 0; k<nz; k++){
+                    if(i==1 && j==1){
+                        continue;
+                    }
                 //if(i != j || i!=4) continue;
+                    int a = i==1 ? 1 : 0;
+                    int b = j == 1 ? 1 : 0;
+                    int c = k == 1 ? 1 : 0;
 
-                    double x = i*delta - r;
-                    double y = j*delta - r;
-                    double z = k*delta - r;
 
-                    if( k == 1){
-                        double xp = Math.cos(Math.PI/32)*x - Math.sin(Math.PI/32)*y;
-                        double yp = Math.sin(Math.PI/32)*x + Math.cos(Math.PI/32)*y;
+                    double x = i*deltax - rx;
+                    double y = j*deltay - ry;
+                    double z = k*deltaz - rz;
+
+/*
+                    if(a + b + c == 3){
+                        //pass
+                    } else if(a + b + c != 2){
+                        continue;
+                    }
+*/
+
+
+                    //z = 0;
+                    if( k == 1 ){
+                        double xp = Math.cos(Math.PI)*x - Math.sin(Math.PI)*y;
+                        double yp = Math.sin(Math.PI)*x + Math.cos(Math.PI)*y;
                         x = xp;
                         y = yp;
-                    }
-                    if(i==1 && j==9){
-                        z = -z;
                     }
 
                     Sphere sphere = new Sphere(new double[]{x, y , z}, 0.1);
@@ -448,17 +567,15 @@ public class SphericalCavity {
                     //mesh = new NewtonMesh3D(mesh);
                     mesh.setShowSurface(true);
                     mesh.setColor(ColorSuggestions.getSuggestion());
-                    double pl = (pressure)*(0.1 + 5*i + 5*j);
-                    pl = 0.1*pressure;
                     mesh.GAMMA = 100;
-                    mesh.ALPHA = 0.1 + 5*i + 5*j;
-
                     mesh.ALPHA = 0.1;
                     mesh.BETA = 0;
                     mesh.addExternalEnergy(ce);
-                    mesh.addExternalEnergy(new VolumeConservation(mesh, pl));
+                    VolumeConservation vc = new VolumeConservation(mesh, pressure);
+                    vc.setVolume(vc.getVolume()*8);
+                    mesh.addExternalEnergy(vc);
                     //mesh.addExternalEnergy(new PressureForce(mesh, pressure));
-                    mesh.addExternalEnergy(new TriangleAreaDistributor(null, mesh, pl));
+                    mesh.addExternalEnergy(new TriangleAreaDistributor(null, mesh, pressure*0.01));
                     mesh.reshape();
                     drops.add(mesh);
                     mesh.create3DObject();

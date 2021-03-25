@@ -496,12 +496,6 @@ public class SegmentationModel {
     public ExternalEnergy generateImageEnergy(DeformableMesh3D mesh){
         ExternalEnergy erg;
         switch(energyType){
-            case Intensity:
-                erg = new IntensityEnergy(stack, getImageWeight());
-                break;
-            case Gradient:
-                erg = new GradientEnergy(stack, getImageWeight());
-                break;
             case PerpendicularIntensity:
                 erg = new PerpendicularIntensityEnergy(stack, mesh, getImageWeight());
                 break;

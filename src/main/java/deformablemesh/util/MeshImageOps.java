@@ -1,5 +1,7 @@
 package deformablemesh.util;
 
+import deformablemesh.MeshImageStack;
+import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ImageProcessor;
 
@@ -224,6 +226,15 @@ public class MeshImageOps {
             }
         }
         return new double[]{sumx/sum,sumy/sum,sumz/sum};
+    }
+
+    MeshImageStack distanceTransformBinaryImage(ImagePlus stack){
+
+            DistanceTransformMosaicImage dtmi = new DistanceTransformMosaicImage(stack);
+            dtmi.findBlobs();
+            dtmi.createCascades();
+            return new MeshImageStack(dtmi.createLabeledImage());
+
     }
 
 }

@@ -78,6 +78,12 @@ public class MeshTracker {
 
     }
 
+    public Track createTrack(){
+        Track track = new Track(tracks.stream().map(Track::getColor).collect(Collectors.toList()));
+        tracks.add(track);
+        return track;
+    }
+
     /**
      * Creates a new track and selects it.
      *

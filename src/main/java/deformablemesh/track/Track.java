@@ -95,6 +95,15 @@ public class Track {
         return max;
     }
 
+    public int getFrame(DeformableMesh3D mesh){
+        for(Integer i: track.keySet()){
+            if(track.get(i)==mesh){
+                return i;
+            };
+        }
+        return -1;
+    }
+
     public int size(){
         return track.size();
     }

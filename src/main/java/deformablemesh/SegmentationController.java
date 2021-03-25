@@ -182,20 +182,41 @@ public class SegmentationController {
     }
 
     /**
-     * Remove the currently selected mesh, from the current frame only.
+     * Least efficient way to clear a mesh. Removes the mesh one time from a single track.
      *
+     * @param mesh
      */
-    public void clearSelectedMesh() {
-
-        if(!model.hasSelectedMesh()){
-            return;
+    public void clearMesh(DeformableMesh3D mesh){
+        for(Track track: getAllTracks()){
+            if(track.containsMesh(mesh)){
+                int key = track.getFrame(mesh);
+                clearMeshFromTrack(track, key, mesh);
+                break;
+            }
         }
+    }
 
+    /**
+     *
+     * @param f
+     * @param t
+     */
+    public void clearMeshFromTrack(Track t, int f){
+        if(t.containsKey(f)) {
+            DeformableMesh3D mesh = t.getMesh(f);
+            clearMeshFromTrack(t, f, mesh);
+        }
+    }
+
+    /**
+     * Clears the mesh specified mesh from the track at the specific time frame.
+     *
+     * @param old track that mesh will be removed from.
+     * @param f time frame.
+     * @param mesh mesh to be removed.
+     */
+    public void clearMeshFromTrack(final Track old, final int f, final DeformableMesh3D mesh){
         actionStack.postAction(new UndoableActions(){
-
-            final Track old = model.getSelectedTrack();
-            final int f = model.getCurrentFrame();
-            DeformableMesh3D mesh = old.getMesh(f);
             @Override
             public void perform() {
                 submit(() -> {
@@ -223,7 +244,21 @@ public class SegmentationController {
                 return "clear selected mesh";
             }
         });
+    }
+    /**
+     * Remove the currently selected mesh, from the current frame only.
+     *
+     */
+    public void clearSelectedMesh() {
 
+        if(!model.hasSelectedMesh()){
+            return;
+        }
+        final Track old = model.getSelectedTrack();
+        final int f = model.getCurrentFrame();
+        DeformableMesh3D mesh = old.getMesh(f);
+
+        clearMeshFromTrack(old, f, mesh);
     }
 
     /**
