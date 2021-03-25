@@ -9,8 +9,6 @@ import org.scijava.java3d.*;
 import org.scijava.vecmath.Color3f;
 import org.scijava.vecmath.Vector3d;
 import org.scijava.vecmath.Vector4f;
-import snakeprogram3d.display3d.DataObject;
-import snakeprogram3d.display3d.VolumeTexture;
 
 import java.awt.Color;
 import java.util.ArrayList;

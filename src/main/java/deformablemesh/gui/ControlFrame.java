@@ -757,36 +757,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             finished();
         });
 
-        JMenuItem saveSnakes = new JMenuItem("save curves");
-        mesh.add(saveSnakes);
-        saveSnakes.addActionListener((evt)->{
-            setReady(false);
-            FileDialog fd = new FileDialog(frame,"File to save curve data to");
-            fd.setMode(FileDialog.SAVE);
-            fd.setFile(segmentationController.getShortImageName() + ".snake");
-            fd.setVisible(true);
-            if(fd.getFile()!=null){
-                File f = new File(fd.getDirectory(),fd.getFile());
-                segmentationController.saveCurvesAsSnakes(f);
-            }
-            finished();
-        });
-
-        JMenuItem loadSnakes = new JMenuItem("load curves");
-        mesh.add(loadSnakes);
-        loadSnakes.addActionListener((evt)->{
-            setReady(false);
-            FileDialog fd = new FileDialog(frame,"Load curve data from snake file");
-            fd.setMode(FileDialog.LOAD);
-            fd.setVisible(true);
-            if(fd.getFile()==null){
-                finished();
-                return;
-            }
-            File f = new File(fd.getDirectory(),fd.getFile());
-            segmentationController.loadCurvesFromSnakes(f);
-            finished();
-        });
         mesh.addSeparator();
         JMenuItem track = new JMenuItem("track selected");
         mesh.add(track);

@@ -11,7 +11,6 @@ import org.scijava.java3d.TransformGroup;
 import org.scijava.java3d.utils.geometry.Sphere;
 import org.scijava.vecmath.Color3f;
 import org.scijava.vecmath.Vector3f;
-import snakeprogram3d.display3d.DataObject;
 
 import java.awt.Color;
 import java.util.ArrayList;

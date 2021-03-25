@@ -19,7 +19,6 @@ import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import lightgraph.DataSet;
 import lightgraph.Graph;
-import snakeprogram3d.display3d.DataObject;
 
 import java.awt.Color;
 import java.awt.Image;
@@ -1442,26 +1441,6 @@ public class SegmentationController {
      */
     public void saveFurrows(File f) {
         submit(()->model.saveFurrows(f));
-    }
-
-    /**
-     * Saves all of the curves, used for constraining meshs into a 3D snake file.
-     *
-     * @param f
-     */
-    public void saveCurvesAsSnakes(File f) {
-        submit(()->model.saveCurvesAsSnakes(f));
-    }
-
-    /**
-     * Loads 3d snake control curves.
-     *
-     * @param f
-     */
-    public void loadCurvesFromSnakes(File f) {
-        submit(()->{
-            model.loadCurvesFromSnakes(f);
-        });
     }
 
     /**

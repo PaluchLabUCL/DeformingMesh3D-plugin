@@ -3,6 +3,7 @@ package deformablemesh.geometry;
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
 import deformablemesh.io.MeshWriter;
+import deformablemesh.meshview.CanvasView;
 import deformablemesh.meshview.LineDataObject;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.meshview.SphereDataObject;
@@ -19,9 +20,6 @@ import org.scijava.java3d.utils.picking.PickResult;
 import org.scijava.vecmath.Color3f;
 import org.scijava.vecmath.Point3d;
 import org.scijava.vecmath.Vector3d;
-import snakeprogram3d.display3d.CanvasView;
-import snakeprogram3d.display3d.DataObject;
-import snakeprogram3d.display3d.MoveableSphere;
 
 import javax.swing.*;
 import java.awt.Color;
@@ -35,6 +33,7 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
@@ -50,6 +49,7 @@ public class MeshModifier {
     BlockingQueue<Runnable> tasks = new ArrayBlockingQueue<>(50);
     DeformableMesh3D mesh;
     MeshFrame3D frame;
+    MeshImageStack mis;
     private boolean running = true;
     List<Node3D> selected = new ArrayList<>();
     List<Sphere> markers = new ArrayList<>();
@@ -57,6 +57,7 @@ public class MeshModifier {
     Furrow3D furrow;
     StateManager manager;
     ActionStack stack = new ActionStack();
+
     enum InteractionMode{
         drag,
         selection,
@@ -207,18 +208,19 @@ public class MeshModifier {
 
         EventQueue.invokeLater(()->{
             MeshModifier mod = new MeshModifier();
+            ImagePlus plus = new ImagePlus(Paths.get(args[0]).toAbsolutePath().toString());
+            mod.setImage(plus);
             mod.start();
 
             try {
-                ImagePlus plus = new ImagePlus("./" + args[0]);
+
                 List<Track> tracks = MeshWriter.loadMeshes(new File(args[1]));
                 DeformableMesh3D mesh = tracks.get(0).getMesh(tracks.get(0).getFirstFrame());
                 mod.setMesh(mesh);
-                mod.setImage(plus);
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
 
         });
 
@@ -227,7 +229,7 @@ public class MeshModifier {
     }
 
     public void setImage(ImagePlus plus){
-        MeshImageStack stack = new MeshImageStack(plus);
+        mis = new MeshImageStack(plus);
 
     }
 

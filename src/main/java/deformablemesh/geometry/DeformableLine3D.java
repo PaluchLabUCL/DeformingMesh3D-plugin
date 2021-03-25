@@ -3,9 +3,8 @@ package deformablemesh.geometry;
 import Jama.LUDecomposition;
 import Jama.Matrix;
 import deformablemesh.externalenergies.ExternalEnergy;
-import deformablemesh.meshview.DeformableMeshDataObject;
+import deformablemesh.meshview.DataObject;
 import deformablemesh.meshview.LineDataObject;
-import snakeprogram3d.display3d.DataObject;
 
 import java.awt.Color;
 import java.util.ArrayList;

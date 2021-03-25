@@ -14,11 +14,6 @@ import ij.ImagePlus;
 import ij.WindowManager;
 import org.scijava.java3d.*;
 import org.scijava.vecmath.*;
-import snakeprogram3d.display3d.CanvasView;
-import snakeprogram3d.display3d.DataCanvas;
-import snakeprogram3d.display3d.DataObject;
-import snakeprogram3d.display3d.ThreeDSurface;
-import snakeprogram3d.display3d.VolumeTexture;
 
 import javax.imageio.ImageIO;
 import javax.swing.JColorChooser;
@@ -211,7 +206,7 @@ public class    MeshFrame3D {
     /**
      * Restores a previous view.
      *
-     * @return @see snakeprogram3d.display3d.DataCanvas#setViewParameters
+     * @see DataCanvas#setViewParameters
      */
     public void setViewParameters(double[] parameters){
         canvas.setViewParameters(parameters);

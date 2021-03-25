@@ -27,10 +27,6 @@ public class ContractileRing {
     public ContractileRing(List<double[]> pts){
         points = pts;
     }
-    public static ContractileRing from3DSnake(snakeprogram3d.Snake snake, MeshImageStack stack, int i){
-        List<double[]> pts = snake.getCoordinates(i).stream().map(stack::getNormalizedCoordinate).collect(Collectors.toList());
-        return new ContractileRing(pts);
-    }
 
     static double square(double v){
         return v*v;
@@ -374,14 +370,5 @@ public class ContractileRing {
 
 
         return nodes;
-    }
-
-    /**
-     * Creates a contracile ring, and mesh, for deformations.
-     * @param args
-     */
-    public static void main(String[] args){
-
-
     }
 }

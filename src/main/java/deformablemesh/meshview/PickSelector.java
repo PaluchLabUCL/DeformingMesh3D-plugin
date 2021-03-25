@@ -7,7 +7,6 @@ import deformablemesh.track.Track;
 import ij.plugin.filter.PlugInFilter;
 import org.scijava.java3d.GeometryArray;
 import org.scijava.java3d.utils.picking.PickResult;
-import snakeprogram3d.display3d.CanvasView;
 
 import java.awt.event.MouseEvent;
 import java.util.List;

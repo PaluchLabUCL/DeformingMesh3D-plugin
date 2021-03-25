@@ -1,10 +1,13 @@
 package deformablemesh.geometry;
 
+import deformablemesh.MeshImageStack;
+import deformablemesh.meshview.DataObject;
 import deformablemesh.meshview.FurrowPlaneDataObject;
 import deformablemesh.meshview.MeshFrame3D;
+import deformablemesh.meshview.SphereDataObject;
+import deformablemesh.meshview.TexturedPlaneDataObject;
 import deformablemesh.util.Vector3DOps;
 import org.scijava.vecmath.Point3d;
-import snakeprogram3d.display3d.MoveableSphere;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,29 +30,18 @@ public class Furrow3D implements Interceptable{
 
     //double[] line;
     FurrowPlaneDataObject object;
-    public Furrow3D(double[] r1, double[] r2, int old){
-        cm = new double[3];
-        for(int i = 0; i<3; i++){
-            cm[i] = 0.5*(r2[i] + r1[i]);
-        }
 
 
-        normal = new double[]{-(r2[1] - r1[1]), r2[0] - r1[0], 0 };
-        double norm = Math.sqrt(normal[0]*normal[0] + normal[1]*normal[1]);
-        normal[0] = normal[0]/norm;
-        normal[1] = normal[1]/norm;
-
-    }
-
+    /**
+     * Creates a 3D furrow based on the center and direction.
+     *
+     * @param center
+     * @param direction
+     */
     public Furrow3D(double[] center, double[] direction){
-
         cm = Arrays.copyOf(center, 3);
         normal = Arrays.copyOf(direction, 3);
-
     }
-
-
-
 
     public void create3DObject(){
 
@@ -57,7 +49,7 @@ public class Furrow3D implements Interceptable{
 
     }
 
-    public FurrowPlaneDataObject getDataObject(){
+    public DataObject getDataObject(){
         return object;
     }
 
@@ -278,13 +270,12 @@ public class Furrow3D implements Interceptable{
         frame.showFrame(true);
         frame.addDataObject(mesh.data_object);
 
-        MoveableSphere spherez = new MoveableSphere(0.1);
-        spherez.moveTo(new Point3d(0,0,1));
+        SphereDataObject spherez = new SphereDataObject(new double[]{0, 0, 1}, 0.1);
         frame.addDataObject(spherez);
 
         double theta = 0;
         Furrow3D furrow = null;
-        List<MoveableSphere> spheres = new ArrayList<MoveableSphere>();
+        List<SphereDataObject> spheres = new ArrayList<>();
 
         while(true){
             theta += 0.01;
@@ -294,7 +285,7 @@ public class Furrow3D implements Interceptable{
             if(furrow!=null){
                 frame.removeDataObject(furrow.getDataObject());
             }
-            for(MoveableSphere s: spheres){
+            for(SphereDataObject s: spheres){
                 frame.removeDataObject(s);
             }
             spheres.clear();
@@ -307,8 +298,7 @@ public class Furrow3D implements Interceptable{
             List<double[]> intersections = furrow.getIntersections(mesh.connections);
             for(double[] intersect: intersections){
 
-                MoveableSphere i = new MoveableSphere(0.02);
-                i.moveTo(new Point3d(intersect));
+                SphereDataObject i = new SphereDataObject(intersect, 0.02);
                 frame.addDataObject(i);
                 spheres.add(i);
             }

@@ -6,7 +6,6 @@ import deformablemesh.geometry.Node3D;
 import deformablemesh.geometry.Triangle3D;
 import org.scijava.java3d.*;
 import org.scijava.vecmath.Color3f;
-import snakeprogram3d.display3d.DataObject;
 
 import java.awt.Color;
 import java.util.ArrayList;

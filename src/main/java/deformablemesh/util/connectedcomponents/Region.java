@@ -3,9 +3,9 @@ package deformablemesh.util.connectedcomponents;
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.Box3D;
 import deformablemesh.gui.Drawable;
+import deformablemesh.meshview.DataObject;
 import deformablemesh.meshview.VolumeDataObject;
 import deformablemesh.util.ColorSuggestions;
-import snakeprogram3d.display3d.DataObject;
 
 import java.awt.Color;
 import java.awt.geom.AffineTransform;

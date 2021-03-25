@@ -4,7 +4,6 @@ import deformablemesh.geometry.Node3D;
 import org.scijava.java3d.*;
 import org.scijava.vecmath.Point3d;
 import org.scijava.vecmath.Vector3d;
-import snakeprogram3d.display3d.DataObject;
 
 import java.util.ArrayList;
 import java.util.Arrays;

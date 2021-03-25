@@ -3,7 +3,6 @@ package deformablemesh.meshview;
 import org.scijava.vecmath.Point3f;
 import org.scijava.vecmath.Vector3f;
 import org.scijava.vecmath.Vector4f;
-import snakeprogram3d.display3d.DataObject;
 
 
 import org.scijava.java3d.Appearance;

@@ -14,7 +14,6 @@ import org.scijava.java3d.Material;
 import org.scijava.java3d.Shape3D;
 import org.scijava.java3d.TransparencyAttributes;
 import org.scijava.vecmath.Color3f;
-import snakeprogram3d.display3d.DataObject;
 
 import java.awt.Color;
 import java.util.List;

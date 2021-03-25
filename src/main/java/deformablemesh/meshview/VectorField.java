@@ -5,7 +5,6 @@ import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Node3D;
 import deformablemesh.util.Vector3DOps;
 import org.scijava.java3d.BranchGroup;
-import snakeprogram3d.display3d.DataObject;
 
 import java.util.ArrayList;
 import java.util.List;

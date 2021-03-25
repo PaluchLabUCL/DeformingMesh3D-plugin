@@ -20,9 +20,6 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import lightgraph.DataSet;
 import lightgraph.Graph;
-import snakeprogram3d.MultipleSnakesStore;
-import snakeprogram3d.Snake;
-import snakeprogram3d.SnakeIO;
 
 import java.awt.Color;
 import java.awt.Image;
@@ -230,62 +227,6 @@ public class SegmentationModel {
     }
 
 
-    public void saveCurvesAsSnakes(File f){
-        Map<Integer, List<List<double[]>>> curves = ringController.getCurves();
-        MultipleSnakesStore store = new MultipleSnakesStore();
-        for(Integer i: curves.keySet()){
-            for(List<double[]> curve: curves.get(i)){
-                Snake snake = new Snake();
-                snake.addCoordinates(
-                    i, curve.stream().map(
-                    point->{
-                            double[] p = stack.getImageCoordinates(point);
-
-                            //snakes also don't account for the scale factor.
-                            p[2] *= getZToYScale();
-
-                            //snakes have an offset.
-                            p[2] -= stack.offsets[2];
-                            return p;
-                        }
-                    ).collect(
-                        Collectors.toList()
-                    )
-                );
-                store.addSnake(snake);
-            }
-        }
-        try {
-            SnakeIO.writeSnakes(new HashMap<>(), store, f.getAbsoluteFile());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    public void loadCurvesFromSnakes(File f) throws Exception {
-        Map<Integer, List<List<double[]>>> target = new TreeMap<>();
-        MultipleSnakesStore snakes = SnakeIO.loadSnakes(f.getAbsolutePath());
-        for(Snake snake: snakes){
-            for(Integer i: snake){
-                if(!target.containsKey(i)){
-                    target.put(i, new ArrayList<>());
-                }
-                target.get(i).add(
-                    snake.getCoordinates(i).stream().map(pt->{
-                        pt[2] += stack.offsets[2];
-                        pt[2] /=getZToYScale();
-                        return stack.getNormalizedCoordinate(pt);
-                    }
-
-                    ).collect(
-                        Collectors.toList()
-                    )
-                );
-            }
-        }
-        ringController.loadCurves(target);
-    }
 
     public double getGamma() {
         return GAMMA;

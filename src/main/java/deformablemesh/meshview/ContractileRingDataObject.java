@@ -12,7 +12,6 @@ import org.scijava.java3d.Transform3D;
 import org.scijava.java3d.TransformGroup;
 import org.scijava.vecmath.Point3d;
 import org.scijava.vecmath.Vector3d;
-import snakeprogram3d.display3d.DataObject;
 
 import java.util.ArrayList;
 import java.util.List;
