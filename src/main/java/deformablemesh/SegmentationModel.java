@@ -56,7 +56,6 @@ public class SegmentationModel {
 
     private double image_weight;
     private int divisions = 2;
-    public SnakeBox snakeBox;
     private RingController ringController;
     private List<Node3D> selectedNodes = new ArrayList<>();
     public ImageEnergyType energyType;
@@ -73,10 +72,7 @@ public class SegmentationModel {
 
         tracker = new MeshTracker();
         stack = new MeshImageStack();
-        snakeBox = new SnakeBox();
-        snakeBox.setScale(stack);
         frameListeners.add(i->syncOriginalStack());
-        frameListeners.add(snakeBox);
 
     }
     public void deformMesh(int count){
@@ -164,8 +160,6 @@ public class SegmentationModel {
                 }
             }
 
-            snakeBox.addRingEnergy(stack.CURRENT, mesh);
-
             mesh.ALPHA=ALPHA;
             mesh.GAMMA=GAMMA;
             mesh.BETA=BETA;
@@ -245,7 +239,6 @@ public class SegmentationModel {
     public void setOriginalPlus(final ImagePlus plus){
         original_plus = plus;
         stack = new MeshImageStack(original_plus);
-        snakeBox.setScale(stack);
         syncOriginalStack();
         notifyFrameListeners();
 
@@ -505,7 +498,6 @@ public class SegmentationModel {
             }
         }
 
-        snakeBox.addRingEnergy(stack.CURRENT, selectedMesh);
 
     }
 
@@ -574,15 +566,6 @@ public class SegmentationModel {
             }
         }
         return es;
-    }
-
-    public double getCurveWeight() {
-
-        return snakeBox.getCurveWeight();
-    }
-
-    public void setCurveWeight(double v){
-        snakeBox.setCurveWeight(v);
     }
 
     public Image createSlice(double[] pos, double[] normal) {

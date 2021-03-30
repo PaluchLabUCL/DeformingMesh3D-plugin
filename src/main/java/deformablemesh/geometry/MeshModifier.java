@@ -2,11 +2,13 @@ package deformablemesh.geometry;
 
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
+import deformablemesh.gui.FurrowInput;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.meshview.CanvasView;
 import deformablemesh.meshview.LineDataObject;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.meshview.SphereDataObject;
+import deformablemesh.meshview.TexturedPlaneDataObject;
 import deformablemesh.ringdetection.FurrowTransformer;
 import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;
@@ -123,6 +125,8 @@ public class MeshModifier {
 
     public void start(){
         frame = new MeshFrame3D();
+
+
         JMenuBar bar = new JMenuBar();
         JMenu menu = new JMenu("file");
         bar.add(menu);
@@ -165,11 +169,35 @@ public class MeshModifier {
         frame.addLights();
 
         furrow = new Furrow3D(new double[]{0,0,0}, new double[]{0, -1, 0});
-        furrow.create3DObject();
-        frame.addDataObject(furrow.getDataObject());
         manager = new StateManager();
         frame.setHud(manager);
         frame.addKeyListener(getKeyListener());
+
+        additionalControls();
+    }
+
+    public void additionalControls(){
+
+        FurrowInput fi = new FurrowInput();
+        fi.addPlaneChangeListener(new FurrowInput.PlaneChangeListener() {
+            @Override
+            public void setNormal(double[] n) {
+                furrow.setDirection(n);
+                syncFurrowView();
+            }
+
+            @Override
+            public void updatePosition(double dx, double dy, double dz) {
+                furrow.move(new double[]{dx, dy, dz});
+                syncFurrowView();
+            }
+        });
+
+        JFrame frame = new JFrame("editor controls");
+        frame.add(fi);
+        frame.pack();
+        frame.setVisible(true);
+
     }
 
     private KeyListener getKeyListener(){
@@ -204,16 +232,32 @@ public class MeshModifier {
 
     }
 
+    public void syncFurrowView(){
+        FurrowTransformer ft = new FurrowTransformer(furrow, mis);
+        int w = mis.getWidthPx();
+        int h = mis.getHeightPx();
+        double[] p0 = ft.getVolumeCoordinates(new double[]{0, 0});
+        double[] p1 = ft.getVolumeCoordinates(new double[]{0, h});
+        double[] p2 = ft.getVolumeCoordinates(new double[]{w, h});
+        double[] p3 = ft.getVolumeCoordinates(new double[]{w, 0});
+        double[] res = {
+                p0[0], p0[1], p0[2],
+                p1[0], p1[1], p1[2],
+                p2[0], p2[1], p2[2],
+                p3[0], p3[1], p3[2]
+        };
+        slice.updateGeometry(res);
+    }
+
     public static void main(String[] args){
 
         EventQueue.invokeLater(()->{
             MeshModifier mod = new MeshModifier();
-            ImagePlus plus = new ImagePlus(Paths.get(args[0]).toAbsolutePath().toString());
-            mod.setImage(plus);
             mod.start();
 
             try {
-
+                ImagePlus plus = new ImagePlus(Paths.get(args[0]).toAbsolutePath().toString());
+                mod.setImage(plus);
                 List<Track> tracks = MeshWriter.loadMeshes(new File(args[1]));
                 DeformableMesh3D mesh = tracks.get(0).getMesh(tracks.get(0).getFirstFrame());
                 mod.setMesh(mesh);
@@ -228,9 +272,18 @@ public class MeshModifier {
 
     }
 
+    TexturedPlaneDataObject slice;
     public void setImage(ImagePlus plus){
         mis = new MeshImageStack(plus);
-
+        if(slice == null){
+            DeformableMesh3D texturedPlaneGeometry = BinaryMeshGenerator.getQuad(
+                    new double[]{0,0,0},
+                    new double[]{1, 0, 0},
+                    new double[]{0, 1, 0}
+            );
+            slice = new TexturedPlaneDataObject(texturedPlaneGeometry, mis);
+            frame.addDataObject(slice);
+        }
     }
 
     public void setMesh(DeformableMesh3D mesh){
@@ -270,7 +323,7 @@ public class MeshModifier {
             if(evt.isControlDown()){
                 //entering drag mode.
                 manager.selectDragMode();
-                furrow.getDataObject().getBranchGroup().setPickable(true);
+                slice.getBranchGroup().setPickable(true);
                 mesh.data_object.getBranchGroup().setPickable(false);
                 for(PickResult result: results) {
                     PickConeRay ray = (PickConeRay)result.getPickShape();
@@ -278,8 +331,7 @@ public class MeshModifier {
                     Point3d origin = new Point3d();
                     ray.getDirection(dir);
                     ray.getOrigin(origin);
-                    furrow.setDirection(new double[]{dir.x, dir.y, dir.z});
-
+                    System.out.println("found? " + result);
                     return;
                 }
 
@@ -289,7 +341,7 @@ public class MeshModifier {
         @Override
         public void updateReleased(PickResult[] results, MouseEvent evt) {
             manager.selectViewMode();
-            furrow.getDataObject().getBranchGroup().setPickable(false);
+            slice.getBranchGroup().setPickable(false);
             mesh.data_object.getBranchGroup().setPickable(true);
             if(dragging!=null && delta !=null){
 
@@ -337,33 +389,28 @@ public class MeshModifier {
 
         @Override
         public void updateDragged(PickResult[] results, MouseEvent evt) {
-            BranchGroup bg = furrow.getDataObject().getBranchGroup();
-            TransformGroup tg = (TransformGroup)bg.getChild(0);
-            Transform3D t = new Transform3D();
-            tg.getTransform(t);
+
+            BranchGroup bg = slice.getBranchGroup();
+
             for(PickResult result: results){
-                if(tg.indexOfChild(result.getObject())>-1){
-                    //drug on furrow.
-                    PickIntersection pick = result.getIntersection(0);
-
-                    Point3d pt = pick.getPointCoordinates();
-                    t.transform(pt);
-                    if( dragging == null ){
-                        dragging = pt;
-                    } else{
-                        delta = new Point3d(
-                                pt.x - dragging.x,
-                                pt.y - dragging.y,
-                                pt.z - dragging.z
-                        );
-                        for(int i = 0; i<selected.size(); i++){
-                            double[] starting = selected.get(i).getCoordinates();
-                            markers.get(i).moveTo(new double[]{
-                                    starting[0] + delta.x, starting[1] + delta.y, starting[2] + delta.z
-                            });
-                        }
-
+                System.out.println(result.getObject() + ", " + bg);
+                PickIntersection pick = result.getIntersection(0);
+                Point3d pt = pick.getPointCoordinates();
+                if( dragging == null ){
+                    dragging = pt;
+                } else{
+                    delta = new Point3d(
+                            pt.x - dragging.x,
+                            pt.y - dragging.y,
+                            pt.z - dragging.z
+                    );
+                    for(int i = 0; i<selected.size(); i++){
+                        double[] starting = selected.get(i).getCoordinates();
+                        markers.get(i).moveTo(new double[]{
+                                starting[0] + delta.x, starting[1] + delta.y, starting[2] + delta.z
+                        });
                     }
+
                 }
             }
 

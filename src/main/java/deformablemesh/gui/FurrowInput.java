@@ -369,7 +369,7 @@ public class FurrowInput extends JPanel {
         frame.setVisible(true);
     }
 
-    interface PlaneChangeListener{
+    public interface PlaneChangeListener{
         void setNormal(double[] n);
         void updatePosition(double dx, double dy, double dz);
     }

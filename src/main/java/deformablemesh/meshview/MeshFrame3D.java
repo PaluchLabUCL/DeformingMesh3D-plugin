@@ -5,7 +5,6 @@ import deformablemesh.SegmentationController;
 import deformablemesh.externalenergies.ExternalEnergy;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Furrow3D;
-import deformablemesh.geometry.SnakeBox;
 import deformablemesh.gui.GuiTools;
 import deformablemesh.gui.RingController;
 import deformablemesh.track.Track;
@@ -72,7 +71,6 @@ public class    MeshFrame3D {
     boolean showingVolume = false;
     VolumeDataObject vdo;
 
-    SnakeBox snakeBox;
     RingController ringController;
 
     DataObject lights;
@@ -457,7 +455,6 @@ public class    MeshFrame3D {
 
     public void setSegmentationController(SegmentationController control){
         segmentationController = control;
-        snakeBox = control.getSnakeBox();
     }
 
     public void syncMesh(int currentFrame){
@@ -583,19 +580,7 @@ public class    MeshFrame3D {
 
     List<ContractileRingDataObject> lines = new ArrayList<>();
 
-    public void updateSnakeBox(){
-        for(ContractileRingDataObject l: lines) {
-            removeDataObject(l);
-        }
-        lines.clear();
-        List<List<double[]>> curves = snakeBox.getCurves();
-        for(List<double[]> pts : curves) {
-            if(pts.size()==0) continue;
-            ContractileRingDataObject snakeline = new ContractileRingDataObject(pts);
-            addDataObject(snakeline, 0, 0, 0);
-            lines.add(snakeline);
-        }
-    }
+
 
 
     public void updateRingController(){

@@ -59,9 +59,6 @@ public class PropertySaver {
                     case "image-weight":
                         control.setWeight(Double.parseDouble(pair[1]));
                         break;
-                    case "curve-weight":
-                        control.setCurveWeight(Double.parseDouble(pair[1]));
-                        break;
                     case "alpha":
                         control.setAlpha(Double.parseDouble(pair[1]));
                         break;
@@ -103,9 +100,7 @@ public class PropertySaver {
             writer.write(String.format("%s\t%s\n","gamma", Double.toHexString(control.getGamma())));
             writer.write(String.format("%s\t%s\n","pressure", Double.toHexString(control.getPressure())));
             writer.write(String.format("%s\t%s\n","image-weight", Double.toHexString(control.getImageWeight())));
-            writer.write(String.format("%s\t%s\n","curve-weight", Double.toHexString(control.getCurveWeight())));
             writer.write(String.format("%s\t%s\n","alpha", Double.toHexString(control.getAlpha())));
-            //writer.write(String.format("%s\t%s\n","normalize", Double.toHexString(control.getNormalizeWeight())));
             writer.write(String.format("%s\t%s\n","steric-weight", Double.toHexString(control.getStericNeighborWeight())));
             writer.write(String.format("%s\t%d\n","divisions", control.getDivisions()));
             writer.write(String.format("%s\t%s\n","beta", Double.toHexString(control.getBeta())));

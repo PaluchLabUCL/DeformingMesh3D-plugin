@@ -166,9 +166,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         SetValue set_divisions = d -> segmentationController.setDivisions((int)d);
         inputs.add(GuiTools.createInputField("divisions", createSavingValue(set_divisions), segmentationController.getDivisions(), this));
 
-        SetValue set_curve_weight = d -> segmentationController.setCurveWeight(d);
-        inputs.add(GuiTools.createInputField("curve weight", createSavingValue(set_curve_weight), segmentationController.getCurveWeight(), this));
-
         SetValue setBeta = d -> segmentationController.setBeta(d);
         inputs.add(GuiTools.createInputField("beta", createSavingValue(setBeta), segmentationController.getBeta(), this));
 
@@ -206,12 +203,9 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         updateValue("gamma", segmentationController.getGamma());
         updateValue("alpha", segmentationController.getAlpha());
         updateValue("pressure", segmentationController.getPressure());
-        updateValue("normalize", segmentationController.getNormalizeWeight());
         updateValue("image weight", segmentationController.getImageWeight());
         updateValue("divisions", segmentationController.getDivisions());
-        updateValue("curve weight", segmentationController.getCurveWeight());
         updateValue("beta", segmentationController.getBeta());
-
     }
 
     public void updateValue(String name, double value){

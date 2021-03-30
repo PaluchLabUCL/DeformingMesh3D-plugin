@@ -9,9 +9,6 @@ import deformablemesh.io.FurrowWriter;
 import deformablemesh.ringdetection.ContractileRingDetector;
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
-import snakeprogram.Snake;
-import snakeprogram.SnakeApplication;
-import snakeprogram.SnakeModel;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -48,8 +45,6 @@ public class RingController implements FrameListener, ListDataListener {
     int currentFrame;
     Slice3DView sliceView;
     HistogramInput histControls = new HistogramInput(this);
-    SnakeModel snakeModel2D;
-    final SnakeBoxController boxController;
     JPanel contentPane;
     FurrowInput furrowInput;
     JFrame parent;
@@ -57,8 +52,6 @@ public class RingController implements FrameListener, ListDataListener {
     public RingController(SegmentationController model){
         this.model = model;
         detector = new ContractileRingDetector();
-        boxController = new SnakeBoxController(model.getSnakeBox());
-        boxController.addListDataListener(this);
     }
 
 
@@ -118,21 +111,6 @@ public class RingController implements FrameListener, ListDataListener {
         initialize.addActionListener((event)->new FurrowInitializer(parent, model, ()->{}).start());
         buttons.add(initialize);
 
-        JButton jiggle = new JButton("jiggle");
-        jiggle.addActionListener((evt)->jiggleFurrow());
-        buttons.add(jiggle);
-        JButton rotate = new JButton("rotate");
-        rotate.addActionListener((evt)->rotateFurrow());
-        buttons.add(rotate);
-
-        JButton snake = new JButton("curve editor");
-        snake.addActionListener((evt)->showSnakeEditor());
-        buttons.add(snake);
-
-        JButton syncs = new JButton("add editor snakes");
-        syncs.addActionListener((evt)->syncEditorSnakes());
-        buttons.add(syncs);
-
         frame = new JLabel("1");
 
         JButton prev = new JButton("prev");
@@ -147,8 +125,6 @@ public class RingController implements FrameListener, ListDataListener {
 
         addAll(buttons, set, initialize, frame, prev, next);
         addAll(main_box, prow, drow, trow, buttons);
-
-        main_box.add(boxController.getControls());
 
         content.add(main_box, BorderLayout.EAST);
 
@@ -201,55 +177,13 @@ public class RingController implements FrameListener, ListDataListener {
         return furrowInput;
     }
 
-    private void jiggleFurrow() {
-        if(model.getMesh()==null) return;
-        submit(() ->{
-            detector.jiggleFurrow(currentFrame, model.getMesh());
-            frameChanged(model.getCurrentFrame());
-        });
-    }
-
-    private void syncEditorSnakes() {
-        if(snakeModel2D==null){
-            return;
-        }
-
-        List<Snake> snakes = snakeModel2D.getSnakes();
-        for(Snake s: snakes) {
-            for(Integer i: s) {
-                List<double[]> pts = s.getCoordinates(i);
-                if(pts.size()>0) {
-                    boxController.addCurve("editor",detector.get3DCoordinatesFromFurrowPlane(pts));
-                }
-            }
-        }
 
 
-
-    }
 
     void syncSliceViewBoxController(){
-
-        sliceView.setCurves(detector.mapTo2D(boxController.getCurves(currentFrame)));
         sliceView.panel.repaint();
     }
 
-    private void showSnakeEditor() {
-        if(snakeModel2D==null){
-            snakeModel2D = new SnakeModel() ;
-            snakeModel2D.getFrame().setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-        }
-        snakeModel2D.loadImage(new ImagePlus("mesh program", detector.getFurrowSlice()));
-        snakeModel2D.getFrame().setVisible(true);
-    }
-
-    public void loadCurves(Map<Integer, List<List<double[]>>> adding){
-        boxController.loadCurves(adding);
-    }
-
-    public Map<Integer, List<List<double[]>>> getCurves(){
-        return boxController.getAllCurves();
-    }
 
     void addAll(Container container, Component ... components){
         for(Component c: components){
@@ -300,8 +234,6 @@ public class RingController implements FrameListener, ListDataListener {
             refreshValues();
             List<double[]> refind = detector.detectFrame(currentFrame);
             if(refind.size()>0){
-                boxController.addCurve("auto",detector.get3DCoordinatesFromFurrowPlane(refind));
-                //sliceView.addCurve(refind);
                 sliceView.panel.repaint();
 
             }
@@ -311,7 +243,6 @@ public class RingController implements FrameListener, ListDataListener {
         currentFrame = frame;
         detector.setFrame(frame);
         this.frame.setText("" + (frame+1));
-        boxController.setFrame(frame);
         refreshFurrow();
         ImageProcessor p = detector.getFurrowSlice();
         if(p!=null){
@@ -398,21 +329,7 @@ public class RingController implements FrameListener, ListDataListener {
         dz.setValue(f.normal[2]);
         furrowInput.setFurrow(f);
     }
-
-    public void scanFurrow(int frame, DeformableMesh3D mesh){
-        detector.scanFurrow(frame, mesh);
-    }
-
-    public void rotateFurrow(){
-        DeformableMesh3D mesh = model.getMesh();
-        if(mesh==null)return;
-        submit(() -> {
-
-                detector.rotateFurrow(currentFrame, mesh);
-                frameChanged(currentFrame);
-        });
-    }
-
+    
     public void setFurrow(double[] dir, double[] pos){
         Furrow3D furrow = detector.getFurrow();
         if(furrow!=null) {

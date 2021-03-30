@@ -124,14 +124,7 @@ public class SegmentationController {
         model.setDivisions(d);
     }
 
-    /**
-     * Causes a mesh to deform/be attracked to curves that have been added from the furrow editing.
-     *
-     * @param d
-     */
-    public void setCurveWeight(double d) {
-        model.setCurveWeight(d);
-    }
+
 
     public double getGamma() {
         return model.getGamma();
@@ -174,10 +167,6 @@ public class SegmentationController {
 
     public int getDivisions() {
         return model.getDivisions();
-    }
-
-    public double getCurveWeight() {
-        return model.getCurveWeight();
     }
 
     /**
@@ -671,6 +660,14 @@ public class SegmentationController {
     }
 
     /**
+     * Overload for convenience.
+     * @param track
+     */
+    public void selectMeshTrack(Track track){
+        submit( () -> selectMeshTrack(track));
+    }
+
+    /**
      * Attempts to select the track that contains the provided mesh.
      *
      * @param mesh
@@ -1131,53 +1128,66 @@ public class SegmentationController {
     }
 
     /**
+     * Extands the track to (frame + 1) provided by copying the deformable mesh at frame
+     * d
+     * @param track
+     * @param frame
+     */
+    public void trackMesh(final Track track, final int frame){
+        final int next = frame + 1;
+        final DeformableMesh3D tracking = track.getMesh(frame);
+        if(tracking==null){
+            return;
+        }
+        final DeformableMesh3D old = track.getMesh(next);
+        final DeformableMesh3D newer = copyMesh(tracking);
+
+
+        actionStack.postAction(new UndoableActions() {
+            @Override
+            public void perform() {
+                submit(() -> {
+                    model.addMeshToTrack(next, newer, track);
+                });
+            }
+
+            @Override
+            public void undo() {
+                submit(()->{
+                    if(old==null){
+                        model.removeMeshFromTrack(next, newer, track);
+                    } else{
+                        model.addMeshToTrack(next, old, track);
+                    }
+                });
+
+            }
+
+            @Override
+            public void redo() {
+                submit(() -> {
+                    model.addMeshToTrack(next, newer, track);
+                });
+            }
+
+            @Override
+            public String getName(){
+                return "track mesh";
+            }
+
+        });
+    }
+    /**
      * Creates a copy of the current mesh, advances a frame and adds it to the current track.
      *
      *
      */
-    public void trackMesh(){
+     public void trackMesh(){
 
         if(model.hasSelectedMesh() && model.hasNextFrame()){
-            actionStack.postAction(new UndoableActions() {
-                final int frame = model.getCurrentFrame();
-                final int next = frame + 1;
-                final DeformableMesh3D old = model.getSelectedMesh(next);
-                final DeformableMesh3D newer = copyMesh(model.getSelectedMesh(frame));
-                Track track = model.getSelectedTrack();
-
-                @Override
-                public void perform() {
-                    System.out.println(frame + " to: " + next);
-                    submit(() -> {
-                            model.addMeshToTrack(next, newer, track);
-                    });
-                }
-
-                @Override
-                public void undo() {
-                    submit(()->{
-                        if(old==null){
-                            model.removeMeshFromTrack(next, newer, track);
-                        } else{
-                            model.addMeshToTrack(next, old, track);
-                        }
-                    });
-
-                }
-
-                @Override
-                public void redo() {
-                    submit(() -> {
-                        model.addMeshToTrack(next, newer, track);
-                    });
-                }
-
-                @Override
-                public String getName(){
-                    return "track mesh";
-                }
-
-            });
+            final int frame = model.getCurrentFrame();
+            Track track = model.getSelectedTrack();
+            trackMesh(track, frame);
             nextFrame();
         }
 
@@ -1470,14 +1480,7 @@ public class SegmentationController {
         setOriginalPlus(plus);
     }
 
-    /**
-     * Contains curves for constraining meshes.
-     *
-     * @return
-     */
-    public SnakeBox getSnakeBox() {
-        return model.snakeBox;
-    }
+
 
     /**
      * @return currently selected mesh.
@@ -1867,7 +1870,6 @@ public class SegmentationController {
         meshFrame3D.setSegmentationController(this);
         //for mesh only updates
         model.addMeshListener(meshFrame3D::syncMesh);
-        model.snakeBox.addFrameListener((i)->meshFrame3D.updateSnakeBox());
 
 
         model.addFrameListener((i)->{
