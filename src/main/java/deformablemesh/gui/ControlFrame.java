@@ -1018,11 +1018,11 @@ public class ControlFrame implements ReadyObserver, FrameListener {
 
         main.add(row, BorderLayout.SOUTH);
         MeshTrackManager manager = new MeshTrackManager();
-        manager.manageMeshTrackes(segmentationController.getAllTracks());
+        manager.manageMeshTrackes(segmentationController, segmentationController.getAllTracks());
         manager.buildGui(dialog, content);
+        manager.setSegmentationController(segmentationController);
         cancel.addActionListener(evt->{
             dialog.dispose();
-
         });
         accept.addActionListener(evt->{
             List<Track> tracks = manager.getTracks();

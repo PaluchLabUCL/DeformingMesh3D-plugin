@@ -5,6 +5,7 @@ import deformablemesh.geometry.Triangle3D;
 import deformablemesh.geometry.WireframeMesh;
 import deformablemesh.track.MeshTracker;
 import deformablemesh.track.Track;
+import javafx.scene.shape.Mesh;
 
 import java.awt.Color;
 import java.io.BufferedInputStream;
@@ -172,7 +173,13 @@ public class MeshWriter {
             e.printStackTrace();
         }
     }
+    static public void saveMesh(String filename, DeformableMesh3D mesh) throws IOException{
+        File output = new File(filename);
+        MeshTracker tracker = new MeshTracker();
+        Track t = tracker.createNewMeshTrack(0, mesh);
+        saveMeshes(output, tracker);
 
+    }
     static public void saveMeshes(File output, MeshTracker tracker) throws IOException {
         try(DataOutputStream dos = new DataOutputStream(
                 new BufferedOutputStream(

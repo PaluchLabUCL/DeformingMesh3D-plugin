@@ -128,11 +128,7 @@ public class RingController implements FrameListener, ListDataListener {
 
         content.add(main_box, BorderLayout.EAST);
 
-        /*
-        SwingJSTerm term = new SwingJSTerm(this);
-        content.add( term.buildUI(), BorderLayout.SOUTH);
-        */
-         sliceView = new Slice3DView();
+        sliceView = new Slice3DView();
         content.add(new JScrollPane(sliceView.panel), BorderLayout.CENTER);
 
         JPanel bottom = new JPanel();
@@ -229,16 +225,6 @@ public class RingController implements FrameListener, ListDataListener {
 
     }
 
-    public void detectCurrentFrame(){
-        submit(() -> {
-            refreshValues();
-            List<double[]> refind = detector.detectFrame(currentFrame);
-            if(refind.size()>0){
-                sliceView.panel.repaint();
-
-            }
-        });
-    }
     public void setFrame(int frame){
         currentFrame = frame;
         detector.setFrame(frame);
@@ -329,7 +315,7 @@ public class RingController implements FrameListener, ListDataListener {
         dz.setValue(f.normal[2]);
         furrowInput.setFurrow(f);
     }
-    
+
     public void setFurrow(double[] dir, double[] pos){
         Furrow3D furrow = detector.getFurrow();
         if(furrow!=null) {

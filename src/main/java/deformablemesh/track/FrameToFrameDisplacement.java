@@ -11,18 +11,46 @@ import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ColorProcessor;
+import lightgraph.Graph;
 
 import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class FrameToFrameDisplacement {
+    List<Track> tracks;
+    final Integer first, last;
+    Map<Integer, Track> lastAdded = new HashMap<>();
+    Map<Track, List<Mapping>> results = new HashMap<>();
+    public FrameToFrameDisplacement(List<Track> tracks){
+        this.tracks = tracks;
+        int min = Integer.MAX_VALUE;
+        int max = -min;
+        for(Track track: tracks){
+            int f = track.getFirstFrame();
+            int l = track.getLastFrame();
+            if(f<min){
+                min = f;
+            }
+            if(l > max){
+                max = l;
+            }
+        }
+        first = min;
+        last = max;
 
+    }
     static double[] centerOfMass(List<DeformableMesh3D> meshes){
         double[] c = new double[3];
         double m = 0;
@@ -79,11 +107,14 @@ public class FrameToFrameDisplacement {
         return ds.get(0).index;
     }
 
-    public static void main(String[] args) throws IOException {
-        List<Track> first = MeshWriter.loadMeshes(new File("C1-short.bmf"));
-        List<Track> second = MeshWriter.loadMeshes(new File("C2-short-second-frame.bmf"));
-        List<DeformableMesh3D> m1 = first.stream().filter(t -> t.containsKey(0)).map(t->t.getMesh(0)).collect(Collectors.toList());
-        List<DeformableMesh3D> m2 = second.stream().filter(t -> t.containsKey(1)).map(t->t.getMesh(1)).collect(Collectors.toList());
+    /**
+     *
+     * @param starting first frame to be tracked.
+     */
+    public void processFrame(int starting){
+        int nextFrame = starting+1;
+        List<DeformableMesh3D> m1 = tracks.stream().filter(t -> t.containsKey(starting)).map(t->t.getMesh(starting)).collect(Collectors.toList());
+        List<DeformableMesh3D> m2 = tracks.stream().filter(t -> t.containsKey(nextFrame)).map(t->t.getMesh( starting+1 )).collect(Collectors.toList());
         System.out.println(m1.size() + " meshes tracking to " + m2.size());
 
         double[] c1 = centerOfMass(m1);
@@ -102,29 +133,156 @@ public class FrameToFrameDisplacement {
                         Arrays.copyOf(m.positions, m.positions.length),
                         Arrays.copyOf(m.connection_index, m.connection_index.length),
                         Arrays.copyOf(m.triangle_index, m.triangle_index.length)
-                    )
-                ).collect(Collectors.toList());
+                )
+        ).collect(Collectors.toList());
 
-        m2.forEach(m->m.translate(delta));
-        List<Mapping> maps = jaccardIndex(m1, m2);
-        MeshTracker tracker = new MeshTracker();
+        dups.forEach(m->m.translate(delta));
+        List<Mapping> maps = jaccardIndex(m1, dups);
+        Map<Integer, Double> bs = new HashMap<>();
+        Map<Integer, Track> currentlyAdding = new HashMap<>();
         for(Mapping m: maps){
-            Track track = tracker.createTrack();
-            track.addMesh(0, m1.get(m.a));
-            track.addMesh(1, dups.get(m.b));
-            System.out.println( track.getName() + "\t" + m.ji);
+            if(m.b == -1){
+                //the mesh in a does not overlap with any mesh in b... at all.
+                if(!lastAdded.containsKey(m.a)){
+                    //the mesh in 'a' started on starting frame.
+                    Track t = createNewTrack();
+                    t.addMesh(starting, m1.get(m.a));
+                    results.put(t, new ArrayList<>());
+                }
+                continue;
+            }
+            if( bs.containsKey(m.b) ){
+                double v = bs.get(m.b);
+                if(v > m.ji){
+                    continue;
+                } else{
+                    System.out.println("Really!!!");
+                    //find the old track and remove m.b
+                    for(Track t: results.keySet()){
+                        if(t.containsMesh(m2.get(m.b))){
+                            t.remove(m2.get(m.b));
+                            bs.put(m.b, m.ji);
+                        }
+                    }
+                }
+            } else{
+                bs.put(m.b, m.ji);
+            }
+            Track t;
+            if(lastAdded.containsKey(m.a)){
+                t = lastAdded.get(m.a);
+            } else{
+                t = createNewTrack();
+                t.addMesh(starting, m1.get(m.a));
+                results.put(t, new ArrayList<>());
+            }
+
+            t.addMesh(nextFrame, m2.get(m.b));
+            currentlyAdding.put(m.b, t);
+            results.get(t).add(m);
         }
-        MeshWriter.saveMeshes(new File("testing-tracking.bmf"), tracker);
+        lastAdded = currentlyAdding;
+        if( bs.size() == maps.size() ){
+            System.out.println("one to one");
+        } else{
+            System.out.println("BORKED");
+        }
+
+
+    }
+    public Track createNewTrack(){
+        int l =(int)( System.currentTimeMillis() % 1000 );
+        int r = l%255;
+        int g = ( l * 549 )%255;
+        int b = ( l * 631 ) % 255;
+        String name = String.format("#%02x%02x%02x", r, g, b);
+        return new Track(name);
     }
 
-    static class Mapping{
+    public void plot(){
+        Graph g = new Graph();
+
+        for(Track t: results.keySet()){
+            List<Mapping> chained = results.get(t);
+            double[] x = new double[chained.size()];
+            double[] y = new double[chained.size()];
+            for(int i = 0; i< chained.size(); i++){
+                x[i] = i;
+                y[i] = chained.get(i).ji;
+            }
+            g.addData(x, y).setLabel(t.getName());
+        }
+
+        g.show(false);
+
+    }
+    public String toString(){
+        StringBuilder builder = new StringBuilder("#frame");
+        int n = 0;
+        for(Track t: results.keySet()){
+            builder.append("\t" + t.name);
+            int len = results.get(t).size();
+            n = len>n ? len : n;
+        }
+
+        builder.append("\n");
+
+        for(int i = 0; i<n; i++){
+            builder.append(i + "");
+            for(Track t: results.keySet()){
+                List<Mapping> mpd = results.get(t);
+                if(mpd.size()>i){
+                    builder.append("\t" + mpd.get(i).ji);
+                } else{
+                    builder.append("\t");
+                }
+            }
+            builder.append("\n");
+        }
+        return builder.toString();
+    }
+    public static void main(String[] args) throws IOException {
+        new ImageJ();
+        List<Track> meshes;
+        String filename;
+        if(args.length == 1) {
+            filename = args[0];
+            meshes = MeshWriter.loadMeshes(new File(filename));
+        } else{
+            filename = ij.IJ.getFilePath("select mesh file");
+            meshes = MeshWriter.loadMeshes(new File(filename));
+        }
+        FrameToFrameDisplacement ftfd = new FrameToFrameDisplacement(meshes);
+        for(int i = ftfd.first; i<=ftfd.last; i++){
+            ftfd.processFrame(i);
+        }
+        ftfd.saveTrack(Paths.get(filename.replace(".bmf", "-tracked.bmf")));
+        System.out.print(ftfd.toString());
+        ftfd.plot();
+    }
+    public void saveTrack(Path file){
+        MeshTracker tracker = new MeshTracker();
+        List<Track> tracks = new ArrayList<>(results.keySet());
+        tracker.addMeshTracks(tracks);
+        try {
+            MeshWriter.saveMeshes(file.toFile(), tracker);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    static class Mapping implements Comparable<Mapping>{
         final int a,b;
         final double ji;
         public Mapping(int a, int b, double ji){
             this.a = a;
             this.b = b;
             this.ji = ji;
+        }
 
+        @Override
+        public int compareTo(Mapping o) {
+            return Double.compare(ji, o.ji);
         }
     }
     public static void displacements(List<DeformableMesh3D> A, List<DeformableMesh3D> B, double[] aToB){
@@ -150,7 +308,7 @@ public class FrameToFrameDisplacement {
                 }
 
             }
-            System.out.println(dex + "maps to " + i);
+            System.out.println(dex + " displacement maps to " + i);
         }
         print2DMatrix(distances);
     }
@@ -183,9 +341,11 @@ public class FrameToFrameDisplacement {
     }
 
     public static double[][] jaccardIndexMatrix(List<DeformableMesh3D> one, List<DeformableMesh3D> two){
+        if(two.size() == 0){
+            return new double[one.size()][0];
+        }
         ImagePlus mos1 = generateMosaicImage(one);
         ImagePlus mos2 = generateMosaicImage(two);
-        new ImageJ();
         mos1.show();
         mos2.show();
 

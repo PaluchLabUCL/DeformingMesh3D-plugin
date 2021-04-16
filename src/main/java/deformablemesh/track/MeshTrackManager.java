@@ -2,6 +2,7 @@ package deformablemesh.track;
 
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
+import deformablemesh.SegmentationController;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Furrow3D;
 import deformablemesh.geometry.ProjectableMesh;
@@ -32,7 +33,10 @@ import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
+import java.awt.Point;
 import java.awt.Shape;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
@@ -132,6 +136,25 @@ public class MeshTrackManager {
         model = new MeshListModel();
 
     }
+
+    public void setSegmentationController( SegmentationController controller){
+        trackTable.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if(e.getClickCount() == 2){
+                    Point click = e.getPoint();
+                    int rowAt = trackTable.rowAtPoint(click);
+                    int columnAt = trackTable.columnAtPoint(click);
+                    controller.toFrame(rowAt);
+
+                    DeformableMesh3D mesh = (DeformableMesh3D)trackTable.getModel().getValueAt(rowAt, columnAt);
+                    System.out.println(mesh);
+                    controller.selectMesh(mesh);
+
+                }
+            }
+        });
+    }
     public void buildJFrameGui(){
         JFrame frame;
         frame = new JFrame();
@@ -145,6 +168,8 @@ public class MeshTrackManager {
 
     public void buildGui(Component parent, JPanel content){
         trackTable = new JTable();
+
+
         trackTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
         trackTable.setCellSelectionEnabled(true);
@@ -471,8 +496,6 @@ public class MeshTrackManager {
             return acceptable.toArray(new String[acceptable.size()]);
 
         }
-
-
         return new String[0];
     }
 
@@ -492,7 +515,7 @@ public class MeshTrackManager {
      *
      * @param tracks
      */
-    public void manageMeshTrackes(List<Track> tracks){
+    public void manageMeshTrackes(SegmentationController controller, List<Track> tracks){
         this.tracks.clear();
         labels.clear();
 
@@ -503,7 +526,9 @@ public class MeshTrackManager {
             for(Integer i: ints){
 
                 DeformableMesh3D mesh = track.getMesh(i);
-                labels.put(mesh, createLabel(mesh));
+                JLabel label = createLabel(mesh);
+                labels.put(mesh, label);
+
                 if(i>rows){
                     rows = i;
                 }
@@ -564,6 +589,8 @@ public class MeshTrackManager {
         g2d.setColor(mesh.getColor());
         g2d.fill(path);
         g2d.dispose();
+
+
         return new JLabel(new ImageIcon(img));
     }
 
@@ -572,7 +599,7 @@ public class MeshTrackManager {
     public static void main(String[] args) throws IOException, InvocationTargetException, InterruptedException {
         MeshTrackManager manager = new MeshTrackManager();
         List<Track> tracks = MeshWriter.loadMeshes(new File("sample.bmf"));
-        manager.manageMeshTrackes(tracks);
+        manager.manageMeshTrackes(new SegmentationController(null), tracks);
         EventQueue.invokeAndWait(()->{
             manager.buildJFrameGui();
         });

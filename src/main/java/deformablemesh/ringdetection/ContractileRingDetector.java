@@ -11,10 +11,6 @@ import deformablemesh.util.astar.PossiblePath;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
-import snakeprogram.InsufficientPointsException;
-import snakeprogram.TwoDContourDeformation;
-import snakeprogram.energies.ImageEnergy;
-import snakeprogram.energies.IntensityEnergy;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -120,75 +116,7 @@ public class ContractileRingDetector implements Iterable<Integer>{
         return binary;
     }
 
-    public List<double[]> detectFrame(int frame){
-        //showSliced(frame);
-        setFrame(frame);
 
-        //create a 2d slice of plane
-
-        double[] center;
-        double v;
-        do {
-            center = threshAndCenter(currentSlice, currentBinary);
-            v = currentBinary.get((int)center[0], (int)center[1]);
-            if(v>0){
-                v=0;
-            }
-        } while(v!=0);
-
-
-        pruneBinaryBlobs(currentBinary);
-
-        List<int[]> starts = getInitialPoints(currentBinary, center);
-        ImageProcessor dup = currentBinary.duplicate();
-        for(int i = 0; i<dup.getWidth()*dup.getHeight(); i++){
-            if(dup.getf(i)==0){
-                dup.setf(i, 255);
-            } else {
-                dup.setf(i, 0);
-            }
-        }
-        if(starts.size()!=4){
-            //"couldn't find all points."
-        }
-
-        List<int[]> path = generateInitialCurve(starts, dup, currentSlice);
-
-
-        List<double[]> refined = refineCurve(currentSlice, path);
-
-
-        return refined;
-    }
-
-    List<double[]> refineCurve(ImageProcessor proc, List<int[]> points){
-        List<double[]> ret = new ArrayList<>();
-
-        points.stream().forEach((w)->ret.add(new double[]{w[0], w[1]}));
-
-        ImageEnergy gradient = new IntensityEnergy(proc, SIGMA);
-        TwoDContourDeformation deformation = new TwoDContourDeformation(ret, gradient);
-        deformation.setAlpha(ALPHA);
-        deformation.setBeta(BETA);
-        deformation.setGamma(GAMMA);
-        deformation.setWeight(WEIGHT);
-        try {
-            deformation.initializeMatrix();
-        } catch(InsufficientPointsException e){
-            e.printStackTrace();
-        }
-        for(int k = 0; k<10; k++){
-            deformation.deformSnake();
-
-            try{
-                deformation.addSnakePoints(1);
-            }catch(Exception e){
-                e.printStackTrace();
-            }
-        }
-
-        return ret;
-    }
 
     /**
      * Generates an a-star based path for transversing the image.

@@ -7,6 +7,7 @@ import ij.ImagePlus;
 
 import java.awt.Color;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -95,6 +96,23 @@ public class ConnectionRemesher {
         return s;
     }
 
+    public Connection3D getShortestConnection(Set<Connection3D> unavailable){
+        double min = Double.MAX_VALUE;
+        Connection3D s = null;
+        for(Connection3D c: connections){
+            if(unavailable.contains(c)){
+                continue;
+            }
+            c.update();
+            double l = c.length;
+            if(l<min){
+                s = c;
+                min = l;
+            }
+        }
+        return s;
+    }
+
     public DeformableMesh3D remesh(DeformableMesh3D original){
         prepareWorkSpace(original);
         double ml = 0;
@@ -173,11 +191,14 @@ public class ConnectionRemesher {
         System.out.println(longOnes.size() + " too long. " + shorties.size() + " too short");
 
         Connection3D ss = getShortestConnection();
-        while(ss.length<minLength){
+
+        Set<Connection3D> nonEligible = new HashSet<>();
+        while(ss!=null && ss.length<minLength){
             if(removeShortConnection(ss)){
-                ss = getShortestConnection();
+                ss = getShortestConnection(nonEligible);
             } else{
-                break;
+                nonEligible.add(ss);
+                ss = getShortestConnection(nonEligible);
             }
         }
 
@@ -415,9 +436,17 @@ public class ConnectionRemesher {
     Connection3D remapConnection(Connection3D c, Node3D replacing, Node3D replacement){
 
         if (c.A.equals(replacing)) {
-            return new Connection3D(replacement, c.B);
+            Connection3D c3d = new Connection3D(replacement, c.B);
+            if(connections.contains(c3d)){
+                System.out.println("re-mapped");
+            }
+            return c3d;
         } else if(c.B.equals(replacing)){
-            return new Connection3D(c.A, replacement);
+            Connection3D c3d = new Connection3D(c.A, replacement);
+            if(connections.contains(c3d)){
+                System.out.println("wrapped");
+            }
+            return c3d;
         }
 
         throw new RuntimeException("Node does not exist to be replaced on connection. " + replacing.index);
@@ -432,6 +461,9 @@ public class ConnectionRemesher {
         for(Triangle3D t: triangles) {
             Node3D opposite = getOpposite(t, con.A, con.B);
             if (nodeToConnection.get(opposite).size() <= 3) {
+                //this fault is also a triangle that is split in three.
+                //the middle node, and three triangles can be removed and
+                // replaced by a single triangle.
                 System.out.println("Cannot remove edge.");
                 return false;
             }
@@ -442,8 +474,30 @@ public class ConnectionRemesher {
         double[] npt = {0.5*(apt[0] + bpt[0]), 0.5*(apt[1] + bpt[1]), 0.5*(apt[2] + bpt[2])};
         con.A.setPosition(npt);
 
+        Set<Node3D> aNeighbors = nodeToConnection.get(con.A).stream().map(
+            c3d ->{
+                if (c3d.A.equals(con.A)) {
+                    return c3d.B;
+                } else{
+                    return c3d.A;
+                }
+            }).collect(Collectors.toSet());
 
         List<Connection3D> mappingConnections = new ArrayList<>(nodeToConnection.get(con.B));
+        int shared = 0;
+        for(Connection3D forMapping: mappingConnections){
+            Node3D other = forMapping.B == con.B ? forMapping.A : forMapping.B;
+            if (aNeighbors.contains(other)) {
+                shared++;
+            }
+        }
+        if(shared != 2){
+            //This is a necking type fault. Where the connection nodes
+            // share another node.
+            //This could be a location to split the mesh.
+            System.out.println("non-removable edge: " + shared);
+            return false;
+        }
         List<Triangle3D> mappingTriangles = new ArrayList<>(nodeToTriangle.get(con.B));
 
 
@@ -461,17 +515,17 @@ public class ConnectionRemesher {
                 adj.add(remapped);
                 triangleEdges.get(remapped).add(edge);
             }
-
             removeTriangle(t3d);
-
         }
-        //go through each connection at the node.
+
         for(Connection3D toMap: mappingConnections){
             if(toMap == con){
                 continue;
             }
             List<Triangle3D> tri = adjacentTriangles.get(toMap);
-
+            if(tri == null ){
+                throw new RuntimeException("attempting to remove unmapped connection");
+            }
             boolean cleanSwap = true;
             Connection3D crossEdge = null;
             for(Triangle3D t: tri){
@@ -534,6 +588,10 @@ public class ConnectionRemesher {
     }
 
     public void addConnection(Connection3D c){
+        if(connections.contains(c)){
+            System.out.println("existing!");
+            //throw new RuntimeException("adding existing connection");
+        }
         connections.add(c);
 
         nodeToConnection.get(c.A).add(c);
@@ -541,7 +599,6 @@ public class ConnectionRemesher {
 
         adjacentTriangles.put(c, new ArrayList<>());
     }
-
     public void removeConnection(Connection3D c){
         connections.remove(c);
         nodeToConnection.get(c.A).remove(c);
