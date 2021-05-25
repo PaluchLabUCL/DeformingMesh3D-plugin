@@ -191,11 +191,7 @@ public class FrameToFrameDisplacement {
 
     }
     public Track createNewTrack(){
-        int l =(int)( System.currentTimeMillis() % 1000 );
-        int r = l%255;
-        int g = ( l * 549 )%255;
-        int b = ( l * 631 ) % 255;
-        String name = String.format("#%02x%02x%02x", r, g, b);
+        String name = ColorSuggestions.getColorName(ColorSuggestions.getSuggestion());
         return new Track(name);
     }
 

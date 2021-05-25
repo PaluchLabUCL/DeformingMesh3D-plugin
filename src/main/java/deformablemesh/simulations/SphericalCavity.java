@@ -519,8 +519,8 @@ public class SphericalCavity {
 
         int nx = 2;
         int ny = 2;
-        int nz = 3;
-        double r = 0.2;
+        int nz = 1;
+        double r = 0.1;
         double deltax = nx==1 ? 1 : 2*r/(nx-1);
         double deltay = ny==1 ? 1 : 2*r/(ny-1);
         double deltaz = nz==1 ? 1 : 2*r/(nz-1);
@@ -531,9 +531,9 @@ public class SphericalCavity {
         for(int i = 0; i<nx; i++){
             for(int j = 0; j<ny; j++){
                 for(int k = 0; k<nz; k++){
-                    if(i==1 && j==1){
-                        continue;
-                    }
+                    //if(i==1 && j==1){
+                    //    continue;
+                    //}
                 //if(i != j || i!=4) continue;
                     int a = i==1 ? 1 : 0;
                     int b = j == 1 ? 1 : 0;
@@ -567,15 +567,15 @@ public class SphericalCavity {
                     //mesh = new NewtonMesh3D(mesh);
                     mesh.setShowSurface(true);
                     mesh.setColor(ColorSuggestions.getSuggestion());
-                    mesh.GAMMA = 100;
+                    mesh.GAMMA = 200;
                     mesh.ALPHA = 0.1;
-                    mesh.BETA = 0;
+                    mesh.BETA = 0.01;
                     mesh.addExternalEnergy(ce);
-                    VolumeConservation vc = new VolumeConservation(mesh, pressure);
-                    vc.setVolume(vc.getVolume()*8);
-                    mesh.addExternalEnergy(vc);
-                    //mesh.addExternalEnergy(new PressureForce(mesh, pressure));
-                    mesh.addExternalEnergy(new TriangleAreaDistributor(null, mesh, pressure*0.01));
+                    //VolumeConservation vc = new VolumeConservation(mesh, pressure);
+                    //vc.setVolume(vc.getVolume()*8);
+                    //mesh.addExternalEnergy(vc);
+                    mesh.addExternalEnergy(new PressureForce(mesh, pressure));
+                    mesh.addExternalEnergy(new TriangleAreaDistributor(null, mesh, pressure*0.001));
                     mesh.reshape();
                     drops.add(mesh);
                     mesh.create3DObject();

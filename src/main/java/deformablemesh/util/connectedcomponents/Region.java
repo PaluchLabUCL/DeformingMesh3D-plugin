@@ -50,7 +50,6 @@ public class Region {
         hy = hy+1;
         hz = hz+1;
         this.pts = pts;
-        System.out.println(pts.size() + ", " + label);
     }
 
     public double[] getSize(){

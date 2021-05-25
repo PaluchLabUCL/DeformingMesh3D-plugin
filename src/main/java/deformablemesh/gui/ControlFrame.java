@@ -26,6 +26,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * GUI commands -> Delegate to segmentation controller. GUI based actions should be funneled through this class
@@ -104,8 +106,8 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         JPanel content = new JPanel();
 
         JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new GridLayout(4, 4));
-
+        buttonPanel.setLayout(new GridLayout(4,4));
+        GridBagConstraints constraints = new GridBagConstraints();
         BoxLayout layout = new BoxLayout(content, BoxLayout.PAGE_AXIS);
         content.setLayout(layout);
 
@@ -134,8 +136,8 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         createButtonAdjustMinimum(buttonPanel);
         createButtonAdjustMaximum(buttonPanel);
 
-        createButtonMeasureVolume(buttonPanel);
-
+        //createButtonMeasureVolume(buttonPanel);
+        createConnectionRemesh(buttonPanel);
         JPanel inputs = new JPanel();
         inputs.setLayout(new GridLayout(4,2,0,0));
         content.add(inputs);
@@ -294,7 +296,61 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             finished();
         });
     }
+    public void createConnectionRemesh(JPanel buttonPanel){
+        JButton action = new JButton("connection remesh");
+        JTextField minValue = new JTextField(3);
 
+        minValue.setMinimumSize( minValue.getPreferredSize() );
+        minValue.setText("0.01");
+        minValue.setHorizontalAlignment(JTextField.RIGHT);
+
+        JTextField maxValue = new JTextField(3);
+        maxValue.setMinimumSize( maxValue.getPreferredSize() );
+        maxValue.setText("0.05");
+        maxValue.setHorizontalAlignment(JTextField.RIGHT);
+        JLabel min = new JLabel("min");
+        JLabel max = new JLabel("max");
+        JPanel p = new JPanel();
+        p.setLayout(new GridBagLayout());
+        GridBagConstraints con = new GridBagConstraints();
+        con.gridx = 1;
+        con.gridy = 1;
+        con.gridwidth = 4;
+        p.add(action, con);
+        con.ipadx = 0;
+        con.insets = new Insets(0, 0, 0, 0);
+        con.gridy += 1;
+        con.gridwidth = 1;
+        con.weightx = 1;
+        p.add(min, con);
+        con.gridx++;
+        con.weightx = 0;
+        p.add(minValue, con);
+        con.gridx++;
+        con.weightx = 1;
+        p.add(max, con);
+
+        con.gridx++;
+        con.weightx = 0;
+        p.add(maxValue, con);
+
+        buttonPanel.add(p);
+
+        action.addActionListener(evt->{
+
+            double mn = Double.parseDouble(minValue.getText());
+            double mx = Double.parseDouble(maxValue.getText());
+            if(mn > mx ){
+                throw new RuntimeException("minimum should be less than max");
+            }else if( mx <= 0 ){
+                throw new RuntimeException("maximum cannot be less than or equal to zero");
+            }
+            setReady(false);
+            segmentationController.reMeshConnections(mn, mx);
+            finished();
+        });
+
+    }
     public void createButtonRemesh(JPanel buttonPanel){
         JButton button = new JButton("remesh");
         buttons.add(button);
@@ -362,20 +418,16 @@ public class ControlFrame implements ReadyObserver, FrameListener {
 
 
     public void createFrameIndicator(JPanel panel){
+        JPanel topBottom = new JPanel(new BorderLayout());
         JLabel l = new JLabel("frame: ");
-
-
-
+        topBottom.add(l, BorderLayout.CENTER);
 
         JPanel sub = new JPanel();
-        sub.add(Box.createHorizontalStrut(15));
         sub.setLayout(new BoxLayout(sub, BoxLayout.LINE_AXIS));
-        sub.add(l);
-        sub.add(Box.createHorizontalGlue());
         sub.add(frameIndicator.getTextField());
         sub.add(frameIndicator.getMaxLabel());
-        sub.add(Box.createHorizontalStrut(15));
-        panel.add(sub);
+        topBottom.add(sub, BorderLayout.SOUTH);
+        panel.add(topBottom);
     }
 
     public void createEnergySelector(JPanel buttonPanel){
@@ -563,7 +615,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         saveAs.addActionListener(actionEvent -> {
             saveAs();
         });
-
         JMenuItem saveMesh = new JMenuItem("save");
         file.add(saveMesh);
         saveMesh.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK));
@@ -638,6 +689,12 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         file.add(newMeshes);
         newMeshes.addActionListener(evt->{
             segmentationController.restartMeshes();
+        });
+        JMenuItem exportFor = new JMenuItem("export for:");
+        exportFor.setToolTipText("For exporting meshes to be used in a larger image.");
+        file.add(exportFor);
+        exportFor.addActionListener(evt->{
+            exportFor();
         });
 
 
@@ -985,6 +1042,41 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         }
     }
 
+    double[] getDimensionsFromTitle(String shortTitle){
+        Pattern p = Pattern.compile("\\(([0-9.]+),([0-9.]+),([0-9.]+),([0-9.]+)\\)");
+        Matcher m = p.matcher(shortTitle);
+        if(m.find()){
+            double ox = Double.parseDouble(m.group(1));
+            double oy = Double.parseDouble(m.group(2));
+            double w = Double.parseDouble(m.group(3));
+            double z = Double.parseDouble(m.group(4));
+        }
+        return new double[]{0, 0, 0, 0};
+
+    }
+    String getTitleFromTitle(String shortTitle){
+        return shortTitle.replaceAll("\\(([0-9.]+),([0-9.]+),([0-9.]+),([0-9.]+)\\)", "");
+
+
+    }
+    public void exportFor(){
+        setReady(false);
+        String shortTitle = segmentationController.getShortImageName();
+        double[] viewBox = getDimensionsFromTitle(shortTitle);
+        String titleGuess = getTitleFromTitle(shortTitle);
+        FileDialog fd = new FileDialog(frame,"File to export mesh too");
+        fd.setFile(titleGuess + ".bmf");
+        fd.setDirectory(OpenDialog.getDefaultDirectory());
+        fd.setMode(FileDialog.SAVE);
+        fd.setVisible(true);
+        if(fd.getFile()==null || fd.getDirectory()==null){
+            finished();
+            return;
+        }
+        File f = new File(fd.getDirectory(),fd.getFile());
+        segmentationController.exportTo(f, viewBox);
+        finished();
+    }
     public void saveAs(){
         setReady(false);
         FileDialog fd = new FileDialog(frame,"File to save mesh too");

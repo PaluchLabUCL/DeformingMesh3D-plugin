@@ -7,6 +7,7 @@ import ij.ImagePlus;
 
 import java.awt.Color;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 /**
@@ -39,6 +40,8 @@ public class ConnectionRemesher {
         frame.setBackgroundColor(new Color(0, 60, 0));
         frame.addLights();
     }
+
+    AtomicBoolean cancelled = new AtomicBoolean(false);
     public void prepareWorkSpace(DeformableMesh3D original){
         for(Node3D node: original.nodes){
             nodeToTriangle.put(node, new ArrayList<>());

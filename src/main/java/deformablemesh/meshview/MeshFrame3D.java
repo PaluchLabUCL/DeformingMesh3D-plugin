@@ -59,6 +59,10 @@ public class    MeshFrame3D {
         return vdo;
     }
 
+    public DataCanvas getCanvas() {
+        return canvas;
+    }
+
     @FunctionalInterface
     public static interface HudDisplay{
         void draw(Graphics2D g);

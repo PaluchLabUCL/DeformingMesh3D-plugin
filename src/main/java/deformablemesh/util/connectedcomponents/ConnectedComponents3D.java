@@ -40,11 +40,8 @@ public class ConnectedComponents3D {
     static public List<Region> getRegions(ImageStack short_threshed){
         ConnectedComponents3D cc3d = new ConnectedComponents3D();
         cc3d.firstPass(short_threshed);
-        System.out.println("second pass");
         cc3d.secondPass(short_threshed);
-        System.out.println("calculating centroids");
 
-        System.out.println(cc3d.log.size());
         return cc3d.log.entrySet().stream().map(e -> new Region(e.getKey(), e.getValue())).collect(Collectors.toList());
     }
     /*
@@ -133,7 +130,6 @@ public class ConnectedComponents3D {
                   search through every mapping for from/to if either appears. add to tomap.
                   move tomap to current and repeate.
             */
-            System.out.println("reducing: " + conjoined.size() + " regions");
             Map<Integer, Integer> mapped = new HashMap<>();
 
             TreeSet<Integer> current = new TreeSet<>();

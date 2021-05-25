@@ -6,6 +6,7 @@ import deformablemesh.meshview.FurrowPlaneDataObject;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.meshview.SphereDataObject;
 import deformablemesh.meshview.TexturedPlaneDataObject;
+import deformablemesh.meshview.VectorField;
 import deformablemesh.util.Vector3DOps;
 import org.scijava.vecmath.Point3d;
 
@@ -415,6 +416,15 @@ public class Furrow3D implements Interceptable{
         return false;
         //return toPlane>=0;
 
+
+    }
+
+    public double[] getClosestPointOnPlane(double[] pt) {
+
+        double[] ri = Vector3DOps.difference(pt, cm);
+        double h = Vector3DOps.dot(ri, normal);
+        //ri - h*normal
+        return Vector3DOps.add(pt, normal, -h);
 
     }
 }

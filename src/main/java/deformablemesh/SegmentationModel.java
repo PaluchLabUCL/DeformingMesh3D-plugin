@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  *
@@ -44,7 +43,7 @@ public class SegmentationModel {
 
     boolean reshape = true;
     volatile boolean stop = false;
-
+    volatile long deformations;
     ImagePlus original_plus;
     ImageStack original_stack;
 
@@ -74,6 +73,9 @@ public class SegmentationModel {
         stack = new MeshImageStack();
         frameListeners.add(i->syncOriginalStack());
 
+    }
+    public long getDeformationCount(){
+        return deformations;
     }
     public void deformMesh(int count){
         stop = false;
@@ -128,7 +130,7 @@ public class SegmentationModel {
     public void deformMeshes(List<DeformableMesh3D> meshes){
 
         stop = false;
-
+        deformations = 0;
         Map<DeformableMesh3D, List<StericMesh>> stericEnergies = new HashMap<>();
 
         if(stericNeighborWeight != 0){
@@ -177,6 +179,7 @@ public class SegmentationModel {
                     break;
                 }
             }
+            deformations++;
             if(stericNeighborWeight!=0) {
                 for (DeformableMesh3D mesh : meshes) {
                     for (StericMesh sm : stericEnergies.get(mesh)) {
@@ -642,7 +645,29 @@ public class SegmentationModel {
         ImagePlus plus = DeformableMesh3DTools.createBinaryRepresentation(stack, original_plus, tracker.getSelectedTrack().getTrack());
         plus.show();
     }
+    public void createEnergyImage(){
+        if(!hasSelectedMesh()) return;
+        List<ExternalEnergy> energies = getExternalEnergies();
+        ImagePlus plus = original_plus.createImagePlus();
+        int w = original_plus.getWidth();
+        int h = original_plus.getHeight();
+        ImageStack newStack = new ImageStack(w, h);
 
+        for(int i = 1; i<=stack.getNSlices(); i++){
+            ImageProcessor proc = new FloatProcessor(w, h);
+            for(int j = 0; j<w; j++){
+                for(int k = 0; k<h; k++){
+                    double[] nc = stack.getNormalizedCoordinate(new double[]{j, k, i});
+                    double e = energies.stream().mapToDouble(ee -> ee.getEnergy(nc)).sum();
+                    proc.setf(j, k, (float)e);
+                }
+            }
+            newStack.addSlice(proc);
+        }
+        plus.setStack(newStack, 1, stack.getNSlices(), 1);
+        plus.show();
+
+    }
     public void createMosaicImage() {
         ImagePlus plus = DeformableMesh3DTools.createMosaicRepresentation(stack, original_plus, tracker.getAllMeshTracks());
         plus.setTitle("mosaic: " + original_plus.getShortTitle());

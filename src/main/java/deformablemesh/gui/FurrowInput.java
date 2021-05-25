@@ -266,7 +266,6 @@ public class FurrowInput extends JPanel {
                 double dy = e.getY() - last.getY();
                 last = e.getPoint();
                 scrollYUnits(dy);
-                notifyDataListeners();
             }
         }
 
@@ -281,6 +280,7 @@ public class FurrowInput extends JPanel {
         scrollOffset += (int)y;
         velocity = 0.0025*y;
         repaint();
+        notifyDataListeners();
     }
 
     /**

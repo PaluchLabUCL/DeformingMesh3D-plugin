@@ -161,4 +161,7 @@ public class TexturedPlaneDataObject extends DeformableMeshDataObject {
     }
 
 
+    public  Shape3D getShape() {
+        return surface_object;
+    }
 }

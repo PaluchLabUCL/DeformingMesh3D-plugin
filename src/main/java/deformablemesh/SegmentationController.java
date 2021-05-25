@@ -383,6 +383,10 @@ public class SegmentationController {
 
 
     public void reMeshConnections(double minConnectionLength, double maxConnectionLength){
+        if(minConnectionLength > maxConnectionLength){
+            System.out.println("Minimum connection length should be less than max connection length");
+            return;
+        }
         main.submit(()->{
             int f = model.getCurrentFrame();
             ConnectionRemesher remesher =  new ConnectionRemesher();
@@ -1814,6 +1818,9 @@ public class SegmentationController {
         showForces(mesh);
     }
 
+    public void createEnergyImage(){
+        model.createEnergyImage();
+    }
     public void showForces(DeformableMesh3D mesh){
         boolean clear = true;
         if(mesh.getExternalEnergies().size()>0){
@@ -1833,6 +1840,16 @@ public class SegmentationController {
         addMeshListener(i -> {
             vf.update();
         });
+    }
+
+    /**
+     * Opens the file f and adds the current meshes to the file. Assumes the current image is a
+     * viewbox *within* the image associated with the provided mesh file.
+     * @param meshFile destination.
+     * @param viewBox The current meshes will be scaled and translated to fit in the
+     */
+    public void exportTo(File meshFile, double[] viewBox) {
+
     }
 
     /**
