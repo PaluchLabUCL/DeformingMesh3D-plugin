@@ -925,43 +925,6 @@ public class SegmentationController {
         }
     }
 
-    public void createForceVectorArray(){
-        DeformableMesh3D mesh = getSelectedMesh();
-        int n = mesh.nodes.size();
-        if(mesh!=null){
-            List<ExternalEnergy> energies = model.getExternalEnergies();
-            final double[] fx = new double[n];
-            final double[] fy = new double[n];
-            final double[] fz = new double[n];
-
-
-
-            for(ExternalEnergy external: energies) {
-                external.updateForces(mesh.positions, fx, fy, fz);
-            }
-
-            for(int i = 0; i<n; i++){
-                Node3D node = mesh.nodes.get(i);
-                double[] pt = node.getCoordinates();
-                double[] f = {fx[i], fy[i], fz[i]};
-                double m = Vector3DOps.normalize(f);
-                if(m<1e-4){
-                    continue;
-                }
-                System.out.println(m + ", " + Arrays.toString(f));
-                Arrow a = new Arrow();
-                a.moveTo(pt[0] + f[0]*m*0.5, pt[1] + f[1]*m*0.5, pt[2] + f[2]*m*0.5);
-                a.pointAlong(f);
-                a.setScale(m);
-                meshFrame3D.addTransientObject(a);
-            }
-
-        }
-
-
-
-    }
-
     public void showTexturedMeshSurface(){
         submit(()->{
 
@@ -1837,9 +1800,6 @@ public class SegmentationController {
             mesh.clearEnergies();
         }
         meshFrame3D.addTransientObject(vf);
-        addMeshListener(i -> {
-            vf.update();
-        });
     }
 
     /**

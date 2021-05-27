@@ -26,9 +26,9 @@ public class MeshImageStack {
     public double[] pixel_dimensions;
     int[] max_dex;
     ImagePlus original;
-
+    int channel = 0;
     public int CURRENT = 0;
-    int FRAMES,SLICES;
+    int FRAMES,SLICES, CHANNELS;
 
     public double MIN_VALUE;
     public double MAX_VALUE;
@@ -47,6 +47,8 @@ public class MeshImageStack {
         this.original=original;
         SLICES = original.getNSlices();
         FRAMES = original.getNFrames();
+        CHANNELS = original.getNChannels();
+
         CURRENT=0;
         int py = original.getHeight();
         int px = original.getWidth();
@@ -176,6 +178,17 @@ public class MeshImageStack {
         }
     }
 
+    public void setChannel(int c){
+        if(c >= 0 && c < CHANNELS ){
+            if(channel != c){
+                channel = c;
+                copyValues();
+            }
+        } else{
+            System.out.println("Channel " + c + " specified is out of range [0, " + ( CHANNELS - 1 ) +" ]");
+        }
+    }
+
     /**
      * Copies the image data from the image stack to the double[][] backing the
      * image data that is used for obtaining values.
@@ -190,7 +203,9 @@ public class MeshImageStack {
         MAX_VALUE=-MIN_VALUE;
 
         for(int i = 0;i<slices; i++){
-            ImageProcessor proc = original.getStack().getProcessor(i+CURRENT*SLICES + 1);
+            //int N = z*channels + i * channels * slices + c;
+            int n = i * CHANNELS + CURRENT*CHANNELS*slices + channel + 1;
+            ImageProcessor proc = original.getStack().getProcessor( n );
             for(int j = 0; j<py; j++){
                 for(int k = 0; k<px; k++){
                     double v = proc.getPixelValue(k,j);

@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Class for creating a frame to view mesh(es).
@@ -106,9 +107,29 @@ public class    MeshFrame3D {
 
     public void createNewChannelVolume(){
         ImagePlus plus = GuiTools.selectOpenImage(frame);
+        if(plus == null){
+            return;
+        }
         Color c = JColorChooser.showDialog(null, "Select Color", Color.WHITE);
+        int channel = 0;
+        if(plus.getNChannels()>1){
+            Object[] values = IntStream.range(1, plus.getNChannels()+1).boxed().toArray();
+            Object option = JOptionPane.showInputDialog(
+                    frame,
+                    "Select Channel to show:",
+                    "Choose Channel",
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    values,
+                    values[0]
+            );
+            if(option == null) return;
+            channel = (Integer)option - 1;
+        }
         if(plus != null && c != null){
-            ChannelVolume cv = new ChannelVolume(new MeshImageStack(plus), c);
+            MeshImageStack stack = new MeshImageStack(plus);
+            stack.setChannel(channel);
+            ChannelVolume cv = new ChannelVolume(stack, c);
             addChannelVolume(cv);
         }
     }
