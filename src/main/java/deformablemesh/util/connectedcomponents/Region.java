@@ -6,6 +6,8 @@ import deformablemesh.gui.Drawable;
 import deformablemesh.meshview.DataObject;
 import deformablemesh.meshview.VolumeDataObject;
 import deformablemesh.util.ColorSuggestions;
+import ij.ImageStack;
+import ij.process.ShortProcessor;
 
 import java.awt.Color;
 import java.awt.geom.AffineTransform;
@@ -318,5 +320,20 @@ public class Region {
         return pts;
     }
 
-
+    ImageStack getLocalBinaryPixels(){
+        double[] size = getSize();
+        int[] sizes = {(int)size[0], (int)size[1], (int)size[2]};
+        ImageStack stack = new ImageStack(sizes[0], sizes[1]);
+        for(int i = 0; i<sizes[2]; i++){
+            stack.addSlice(new ShortProcessor(sizes[0], sizes[1]));
+        }
+        for(int[] pt: pts){
+            stack.getProcessor(pt[2] - lz + 1).set(pt[0]-lx, pt[1]-ly, 1);
+        }
+        return stack;
+    }
+    public List<Region> split(){
+        ImageStack stack = getLocalBinaryPixels();
+        return ConnectedComponents3D.getRegions(stack);
+    }
 }

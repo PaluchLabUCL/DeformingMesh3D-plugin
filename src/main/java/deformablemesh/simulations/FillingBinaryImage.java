@@ -83,8 +83,9 @@ public class FillingBinaryImage {
     }
 
     public static DeformableMesh3D fillBinaryWithMesh(ImagePlus plus, List<int[]> points){
-        MeshImageStack stack = new MeshImageStack(plus);
+        System.out.println("filling binary blob");
 
+        MeshImageStack stack = new MeshImageStack(plus);
         double[] xyz = new double[3];
         for(int[] pt: points){
             xyz[0] += pt[0];
@@ -94,17 +95,20 @@ public class FillingBinaryImage {
         xyz[0] = xyz[0]/points.size();
         xyz[1] = xyz[1]/points.size();
         xyz[2] = xyz[2]/points.size();
-
+        BinaryInterceptible bi = new BinaryInterceptible(points, new MeshImageStack(plus), 1);
         double[] c = stack.getNormalizedCoordinate(xyz);
         double pv = stack.pixel_dimensions[0]*stack.pixel_dimensions[1]*stack.pixel_dimensions[2];
         double r = Math.cbrt(points.size()*pv*3.0/4/Math.PI)/stack.SCALE;
-
-        Sphere sA = new Sphere(c, r);
         //a = new NewtonMesh3D(RayCastMesh.rayCastMesh(sA, sA.getCenter(), 2));
-        DeformableMesh3D mesh = RayCastMesh.rayCastMesh(sA, sA.getCenter(), 2);
+        DeformableMesh3D mesh = RayCastMesh.rayCastMesh(bi, bi.getCenter(), 2);
         mesh.GAMMA = 1000;
         mesh.ALPHA = 1.0;
         mesh.BETA = 0.0;
+
+        ConnectionRemesher remesher =  new ConnectionRemesher();
+        remesher.setMinAndMaxLengths(0.01, 0.025);
+        mesh = remesher.remesh(mesh);
+
         //mesh.reshape();
 
         //double pressure = 1;

@@ -56,7 +56,6 @@ public class SegmentationModel {
     private double image_weight;
     private int divisions = 2;
     private RingController ringController;
-    private List<Node3D> selectedNodes = new ArrayList<>();
     public ImageEnergyType energyType;
 
     Color backgroundColor = Color.WHITE;
@@ -88,14 +87,7 @@ public class SegmentationModel {
             reshape = true;
         }
 
-        if(selectedNodes.size() != 0){
-            //limits the amount of nodes to deform.
-            for(Node3D node: selectedMesh.nodes){
-                if(!selectedNodes.contains(node)){
-                    reshape = true;
-                }
-            }
-        }
+
 
         if(reshape){
             selectedMesh.ALPHA=ALPHA;
@@ -115,12 +107,7 @@ public class SegmentationModel {
             }
             c++;
         }
-        if(selectedNodes.size() != 0) {
-            for (Node3D node : selectedMesh.nodes) {
-                node.setGammaFactor(1.0);
-            }
-            reshape = true;
-        }
+
     }
 
     /**
@@ -153,7 +140,6 @@ public class SegmentationModel {
 
             if(normalize!=0){
                 mesh.addExternalEnergy(new TriangleAreaDistributor(stack, mesh, normalize));
-
             }
 
             if(stericNeighborWeight!=0){
