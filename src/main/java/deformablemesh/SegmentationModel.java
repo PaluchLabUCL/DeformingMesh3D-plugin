@@ -952,7 +952,15 @@ public class SegmentationModel {
     }
 
     public void removeMeshTrack(Track track) {
-        tracker.removeTrack(track);
+        if(track.isEmpty()){
+            tracker.removeTrack(track);
+        }
+        else{
+            List<Integer> frames = new ArrayList<>(track.getTrack().keySet());
+            for(Integer frame: track.getTrack().keySet()){
+                removeMeshFromTrack(frame, track.getMesh(frame), track);
+            }
+        }
     }
 
     public void addMeshTrack(Track track){

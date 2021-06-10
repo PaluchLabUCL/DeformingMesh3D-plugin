@@ -9,12 +9,16 @@ import deformablemesh.gui.RingController;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.meshview.*;
 import deformablemesh.ringdetection.FurrowTransformer;
+import deformablemesh.simulations.FillingBinaryImage;
 import deformablemesh.track.Track;
 import deformablemesh.util.*;
 import deformablemesh.util.actions.ActionStack;
 import deformablemesh.util.actions.UndoableActions;
+import deformablemesh.util.connectedcomponents.ConnectedComponents3D;
+import deformablemesh.util.connectedcomponents.Region;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import lightgraph.DataSet;
@@ -404,6 +408,14 @@ public class SegmentationController {
         return cumulativeStates.incrementAndGet();
     }
 
+    /**
+     * Adds all of the provided meshes to the corresponding track. The tracks and meshes are associated by
+     * order.
+     *
+     * @param tracks
+     * @param frame
+     * @param meshes
+     */
     public void setMeshes(List<Track> tracks, int frame, List<DeformableMesh3D> meshes){
         if(tracks.size() != meshes.size()){
             throw new RuntimeException("tracks and meshes must be a 1 to 1 correspondance");
@@ -521,11 +533,129 @@ public class SegmentationController {
     }
     public void reMeshConnections(double minConnectionLength, double maxConnectionLength){
         int f = model.getCurrentFrame();
-
         Track track = model.getSelectedTrack();
         reMeshConnections(track, f, minConnectionLength, maxConnectionLength);
     }
 
+
+
+    public ImagePlus guessMeshes(int level) {
+
+        MeshImageStack stack = getMeshImageStack();
+
+        int cutoff = 200;
+        int frame = model.getCurrentFrame();
+        //Get the current image stack for this frame/channel.
+        //create a thresholded version.
+        ImageStack currentFrame = getMeshImageStack().getCurrentFrame().getStack();
+        ImageStack threshed = new ImageStack(currentFrame.getWidth(), currentFrame.getHeight());
+        for(int i = 1; i<= currentFrame.size(); i++){
+            ImageProcessor proc = currentFrame.getProcessor(i).convertToShort(false);
+            if(i <= 0 || i>=currentFrame.size()+1){
+                short[] pixels = (short[])proc.getPixels();
+                for(int j = 0; j<pixels.length; j++){
+                    pixels[j] = 0;
+                }
+            } else{
+                proc.threshold(level);
+            }
+            threshed.addSlice(proc);
+        }
+
+        List<Region> regions = ConnectedComponents3D.getRegions(threshed);
+
+        Integer biggest = -1;
+        int size = 0;
+
+
+        List<Region> toRemove = new ArrayList<>();
+        System.out.println(regions.size() + " regions detected");
+        int small = 0;
+        for (Region region : regions) {
+            Integer key = region.getLabel();
+            List<int[]> points = region.getPoints();
+
+            if (points.size() < cutoff) {
+                small++;
+            }
+
+            if (points.size() < cutoff) {
+
+                toRemove.add(region);
+                for (int[] pt : points) {
+                    threshed.getProcessor(pt[2]).set(pt[0], pt[1], 0);
+                }
+            } else {
+                for (int[] pt : points) {
+                    threshed.getProcessor(pt[2]).set(pt[0], pt[1], key);
+                }
+            }
+
+            if (points.size() > size) {
+                size = points.size();
+                biggest = key;
+            }
+        }
+        System.out.println(small + " to small. Biggest: " + biggest + " size of: " + size);
+        for (Region region : toRemove) {
+            regions.remove(region);
+        }
+
+        /*ImageStack growing = prepare(istack, level/2, i);
+        RegionGrowing rg = new RegionGrowing(threshed, growing);
+        rg.setRegions(regions);
+        for(int st = 0; st<5; st++){
+            rg.step();
+        }*/
+        List<DeformableMesh3D> guessed = new ArrayList<>();
+        for (Region region : regions) {
+            int label = region.getLabel();
+            List<int[]> rs = region.getPoints();
+
+            //Collections.sort(rs, (a,b)->Integer.compare(a[2], b[2]));
+            ImagePlus original = getMeshImageStack().original;
+            ImagePlus plus = original.createImagePlus();
+            int w = original.getWidth();
+            int h = original.getHeight();
+            ImageStack new_stack = new ImageStack(w, h);
+
+            for (int dummy = 0; dummy < original.getNSlices(); dummy++) {
+                new_stack.addSlice(new ByteProcessor(w, h));
+            }
+            for (int[] pt : rs) {
+                new_stack.getProcessor(pt[2]).set(pt[0], pt[1], 1);
+            }
+
+            plus.setStack(new_stack);
+            plus.setTitle("label: " + label);
+            plus.show();
+
+            DeformableMesh3D mesh = FillingBinaryImage.fillBinaryWithMesh(plus, rs);
+            mesh.clearEnergies();
+            guessed.add(mesh);
+        }
+
+
+        startNewMeshTracks(guessed);
+
+        //add all of the guessed meshes to new tracks in this frame.
+        return new ImagePlus("threshold", threshed);
+    }
+
+    public void reMeshConnectionsAllMeshes(double minConnectionLength, double maxConnectionLength){
+        int f = model.getCurrentFrame();
+        List<Track> tracks = model.getAllTracks().stream().filter(t -> t.containsKey(f)).collect(Collectors.toList());
+        submit( ()->{
+            List<DeformableMesh3D> remeshed = tracks.stream().map( t->{
+                DeformableMesh3D mesh = t.getMesh(f);
+                ConnectionRemesher remesher =  new ConnectionRemesher();
+                remesher.setMinAndMaxLengths(minConnectionLength, maxConnectionLength);
+                return remesher.remesh(mesh);
+
+            }).collect(Collectors.toList());
+            setMeshes(tracks, f,  remeshed);
+        });
+    }
     /**
      * Takes the currently selected mesh and looks for neighbors. Locates 'touching' faces and adds transient objects
      * That show the touching surface. Also produces curvature histograms, for the whole cell, and the regions touch.
@@ -669,27 +799,6 @@ public class SegmentationController {
                 meshFrame3D.addTransientObject(obj);
             });
         }
-    }
-
-    public void removeMeshTrack(final Track track){
-        actionStack.postAction(new UndoableActions() {
-            @Override
-            public void perform() {
-                model.removeMeshTrack(track);
-            }
-
-            @Override
-            public void undo() {
-                model.addMeshTrack(track);
-            }
-
-            @Override
-            public void redo() {
-                model.removeMeshTrack(track);
-            }
-            public String getName(){return "remove " + track;}
-
-        });
     }
 
     /**
@@ -869,6 +978,46 @@ public class SegmentationController {
         });
     }
 
+
+    public void startNewMeshTracks(List<DeformableMesh3D> meshes){
+
+        actionStack.postAction(new UndoableActions() {
+            final int frame = getCurrentFrame();
+            final List<Track> tracks = new ArrayList<>(meshes.size());
+            final long nextState = newState();
+            final long previousState = currentState.get();
+            @Override
+            public void perform() {
+                submit(()->{
+                    for(DeformableMesh3D mesh: meshes){
+                        Track track = model.startMeshTrack(frame, mesh);
+                        tracks.add(track);
+                    }
+                    currentState.set(nextState);
+                });
+            }
+
+            @Override
+            public void undo() {
+                submit(()->{
+                    tracks.forEach(model::removeMeshTrack);
+                    currentState.set(previousState);
+                });
+            }
+
+            @Override
+            public void redo() {
+                submit(()->{
+                    tracks.forEach(model::addMeshTrack);
+                    currentState.set(nextState);
+                });
+            }
+            @Override
+            public String getName(){
+                return "Added " + tracks.size() + " mesh tracks";
+            }
+        });
+    }
     /**
      * The provided normal and position represent a plane. This transformer is used for transforming between the
      * plane coordinates, and world coordinates.

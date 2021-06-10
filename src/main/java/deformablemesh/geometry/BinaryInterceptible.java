@@ -14,6 +14,9 @@ public class BinaryInterceptible implements Interceptable{
     double[] center;
     List<double[]> edge;
     int label;
+    double[] mins = {Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE};
+    double[] maxs = {-mins[0], -mins[1], -mins[2]};
+
     public BinaryInterceptible(List<int[]> pixels, MeshImageStack stack, int label){
         double[] img = new double[3];
         center = new double[3];
@@ -29,6 +32,11 @@ public class BinaryInterceptible implements Interceptable{
             center[1] += nspace[1];
             center[2] += nspace[2];
 
+            for(int j = 0; j<3; j++){
+                mins[j] = Double.min(mins[j], nspace[j]);
+                maxs[j] = Double.max(maxs[j], nspace[j]);
+            }
+
             if(isEdge(stack, px)){
                 edge.add(nspace);
             }
@@ -36,6 +44,21 @@ public class BinaryInterceptible implements Interceptable{
 
 
         }
+        for(double[] pt: edge){
+            for(int j = 0; j<3; j++){
+                if(pt[j] < mins[j]){
+                    System.out.println("too low");
+                } else if(pt[j] > maxs[j]){
+                    System.out.println("too high");
+                }
+            }
+        }
+
+
+
+
+
+
         center[0] = center[0]/pixels.size();
         center[1] = center[1]/pixels.size();
         center[2] = center[2]/pixels.size();

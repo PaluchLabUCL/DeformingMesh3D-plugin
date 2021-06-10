@@ -78,27 +78,34 @@ public class ConnectedComponents3D {
             Mapping obj2 = (Mapping) obj;
             return obj2.A.equals(A) && obj2.B.equals(B);
         }
+        @Override
+        public String toString(){
+            return "Mapping[" + A + "::" + B +"]";
+        }
     }
     private void add(ConnectedComponents2D cc2d, int slice){
         if(pixels.size() > 0){
+
             ConnectedComponents2D previous = pixels.get(pixels.size() - 1);
             Map<Integer, List<int[]>> regions2D = cc2d.getRegions();
+
             Set<Mapping> finishing = new HashSet<>();
             int free = log.lastKey() + 1;
             Set<Mapping> conjoined = new HashSet<>();
-
 
             for(Integer key: regions2D.keySet()){
                 if(key==0){
                     continue;
                 }
                 TreeSet<Integer> linked = new TreeSet<>();
+
                 for(int[] px2d: regions2D.get(key)){
                     int l = previous.get(px2d[0],px2d[1]);
                     if(l!=0) {
                         linked.add(l);
                     }
                 }
+
                 if(linked.size()==0){
                     //start a new region.
                     //get a valid key value, update cc2d
@@ -112,6 +119,7 @@ public class ConnectedComponents3D {
                         finishing.add(new Mapping(key, i));
                     }
                 } else{
+                    //grabs and removes the first one.
                     Integer bottom = linked.pollFirst();
                     finishing.add(new Mapping(key, bottom));
                     for(Integer i : linked ){
@@ -137,12 +145,18 @@ public class ConnectedComponents3D {
             TreeSet<Integer> checked = new TreeSet<>();
             Deque<Mapping> stack = new ArrayDeque<>(conjoined);
             Deque<Mapping> next = new ArrayDeque<>();
+
+            //stacked is all of the labels from the previous slice that need to be joined.
             while(stack.size()>0){
+
                 Mapping first = stack.pollFirst();
                 current.add(first.A);
                 current.add(first.B);
 
                 while(current.size() > 0) {
+                    //go through the conjoined labels and find any more instances
+                    //of the current mappings. This will create clusters of conjoined labels
+                    //that all need to be mapped together.
                     for (Mapping map : stack) {
                         if (current.contains(map.A)) {
                             toMap.add(map.B);
@@ -152,20 +166,26 @@ public class ConnectedComponents3D {
                             next.add(map);
                         }
                     }
+                    //there are no more conjoined instance of current labels.
                     checked.addAll(current);
                     current.clear();
+
+                    //More labels were added to be conjoined for mapping.
                     current.addAll(toMap);
                     toMap.clear();
 
+                    //reduce the stack to only labels that haven't been checked.
                     stack.clear();
                     stack.addAll(next);
                     next.clear();
                 }
-                //found all of the mappings for the first map.
+                //found all of the mappings for the first map to merge the labels
+                //to the lowest remaining label value.
                 Integer bottom = checked.pollFirst();
                 for(Integer i: checked){
                     mapped.put(i, bottom);
                 }
+                checked.clear();
             }
 
             //shift old pixels that
@@ -229,11 +249,7 @@ public class ConnectedComponents3D {
             for(int[] x: px){
                 stack.getProcessor(x[2]).set(x[0], x[1], key);
             }
-
-
-
         }
-
     }
 
 
@@ -250,7 +266,8 @@ public class ConnectedComponents3D {
         plus = ij.IJ.openImage(base.getAbsolutePath());
         ImageStack threshed = new ImageStack(plus.getWidth(), plus.getHeight());
         for(int i = 1; i<=plus.getNSlices(); i++){
-            threshed.addSlice(plus.getStack().getProcessor(i).convertToShort(false));
+            ImageProcessor proc = plus.getStack().getProcessor(i).convertToShort(false);
+            threshed.addSlice( proc );
         }
         List<Region> regions = ConnectedComponents3D.getRegions(threshed);
 

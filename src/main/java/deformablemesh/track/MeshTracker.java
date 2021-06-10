@@ -85,7 +85,8 @@ public class MeshTracker {
     }
 
     /**
-     * Creates a new track and selects it.
+     * Creates a new track, adds the provided mesh, adds it to the tracked tracks,
+     * and selects it.
      *
      * @param frame
      * @param freshMesh

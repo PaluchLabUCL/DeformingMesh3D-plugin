@@ -87,15 +87,18 @@ public class FillingBinaryImage {
 
         MeshImageStack stack = new MeshImageStack(plus);
         double[] xyz = new double[3];
+
         for(int[] pt: points){
             xyz[0] += pt[0];
             xyz[1] += pt[1];
             xyz[2] += pt[2];
         }
+
         xyz[0] = xyz[0]/points.size();
         xyz[1] = xyz[1]/points.size();
         xyz[2] = xyz[2]/points.size();
         BinaryInterceptible bi = new BinaryInterceptible(points, new MeshImageStack(plus), 1);
+
         double[] c = stack.getNormalizedCoordinate(xyz);
         double pv = stack.pixel_dimensions[0]*stack.pixel_dimensions[1]*stack.pixel_dimensions[2];
         double r = Math.cbrt(points.size()*pv*3.0/4/Math.PI)/stack.SCALE;
@@ -105,9 +108,9 @@ public class FillingBinaryImage {
         mesh.ALPHA = 1.0;
         mesh.BETA = 0.0;
 
-        ConnectionRemesher remesher =  new ConnectionRemesher();
-        remesher.setMinAndMaxLengths(0.01, 0.025);
-        mesh = remesher.remesh(mesh);
+        //ConnectionRemesher remesher =  new ConnectionRemesher();
+        //remesher.setMinAndMaxLengths(0.01, 0.025);
+        //mesh = remesher.remesh(mesh);
 
         //mesh.reshape();
 

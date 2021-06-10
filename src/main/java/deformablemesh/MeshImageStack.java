@@ -425,6 +425,29 @@ public class MeshImageStack {
         return sample;
     }
 
+    /**
+     * Returns a single channel image plus of the current frame.
+     *
+     * @return ImagePlus created by the original image contain one channel,
+     * all of the slices and a single time frame. Duplicate processors.
+     */
+    public ImagePlus getCurrentFrame(){
+        int slices = original.getNSlices();
+        int py = original.getHeight();
+        int px = original.getWidth();
+        ImageStack stack = new ImageStack(px, py);
+
+
+        for(int i = 0;i<slices; i++){
+            int n = i * CHANNELS + CURRENT*CHANNELS*slices + channel + 1;
+            ImageProcessor proc = original.getStack().getProcessor( n ).duplicate();
+            stack.addSlice(proc);
+        }
+        ImagePlus plus = original.createImagePlus();
+        plus.setStack(stack, 1, slices, 1);
+        return plus;
+    }
+
     public double[] getIntensityValues() {
         double[] n = new double[data.length*data[0].length*data[0][0].length];
         final int row = data[0][0].length;

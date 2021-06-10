@@ -296,15 +296,19 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             finished();
         });
     }
+
+    JTextField minValue = new JTextField(3);
+    JTextField maxValue = new JTextField(3);
+
     public void createConnectionRemesh(JPanel buttonPanel){
         JButton action = new JButton("connection remesh");
-        JTextField minValue = new JTextField(3);
+
 
         minValue.setMinimumSize( minValue.getPreferredSize() );
         minValue.setText("0.01");
         minValue.setHorizontalAlignment(JTextField.RIGHT);
 
-        JTextField maxValue = new JTextField(3);
+
         maxValue.setMinimumSize( maxValue.getPreferredSize() );
         maxValue.setText("0.05");
         maxValue.setHorizontalAlignment(JTextField.RIGHT);
@@ -337,20 +341,30 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         buttonPanel.add(p);
 
         action.addActionListener(evt->{
-
-            double mn = Double.parseDouble(minValue.getText());
-            double mx = Double.parseDouble(maxValue.getText());
-            if(mn > mx ){
-                throw new RuntimeException("minimum should be less than max");
-            }else if( mx <= 0 ){
-                throw new RuntimeException("maximum cannot be less than or equal to zero");
-            }
-            setReady(false);
-            segmentationController.reMeshConnections(mn, mx);
-            finished();
+            boolean reMeshAll = ( evt.getModifiers() & ActionEvent.CTRL_MASK ) > 0;
+            connectionRemesh(reMeshAll);
         });
 
     }
+
+    public void connectionRemesh(boolean reMeshAll){
+        double mn = Double.parseDouble(minValue.getText());
+        double mx = Double.parseDouble(maxValue.getText());
+        if(mn > mx ){
+            throw new RuntimeException("minimum should be less than max");
+        }else if( mx <= 0 ){
+            throw new RuntimeException("maximum cannot be less than or equal to zero");
+        }
+        setReady(false);
+
+        if(reMeshAll){
+            segmentationController.reMeshConnectionsAllMeshes(mn, mx);
+        }else{
+            segmentationController.reMeshConnections(mn, mx);
+        }
+        finished();
+    }
+
     public void createButtonRemesh(JPanel buttonPanel){
         JButton button = new JButton("remesh");
         buttons.add(button);

@@ -149,8 +149,22 @@ public class HotKeyDelegate {
         createActionMapKey(
                 KeyStroke.getKeyStroke(KeyEvent.VK_R, 0, true),
                 "REMESH",
-                "Remesh selected mesh",
+                "Raycast selected mesh",
                 accessControl::remeshAction
+        );
+
+        createActionMapKey(
+                KeyStroke.getKeyStroke(KeyEvent.VK_M, 0, true),
+                "CONNECTION_REMESH",
+                "Remesh Connections of selected mesh.",
+                ()->accessControl.connectionRemesh(false)
+        );
+
+        createActionMapKey(
+                KeyStroke.getKeyStroke(KeyEvent.VK_M, KeyEvent.CTRL_DOWN_MASK, true),
+                "CONNECTION_REMESH_ALL",
+                "Remesh Connections of all meshes.",
+                ()->accessControl.connectionRemesh(true)
         );
 
         createActionMapKey(
