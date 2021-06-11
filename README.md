@@ -154,6 +154,15 @@ controls.submit( function(){
 
 ```
 # Changes
+0.39
+- Added connection remesher to control panel.
+- Multi channel support 
+  - Display multiple volumes as channels
+  - Select a single channel from a multi-channel image
+- Steric Energy improvements
+- Exposed auto-detect meshes through javascript
+
+
 0.38
 - Contrast preview dialog matches the clamped values.
 - Removed the normalizer weight from controls, added steric neighbors.
