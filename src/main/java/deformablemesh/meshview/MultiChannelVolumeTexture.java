@@ -98,7 +98,6 @@ public class MultiChannelVolumeTexture extends Texture3D{
     public MultiChannelVolumeTexture(double[][][] double3d, double cl_min, double cl_max, Color3f c){
         super(Texture.BASE_LEVEL, Texture.RGBA, double3d.length, double3d[0].length, double3d[0][0].length);
         textures.add(double3d);
-        System.out.println("new volume");
 
         this.xDim = double3d.length;
         this.yDim = double3d[0].length;

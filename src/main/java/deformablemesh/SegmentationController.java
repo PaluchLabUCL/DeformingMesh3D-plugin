@@ -16,6 +16,7 @@ import deformablemesh.util.actions.ActionStack;
 import deformablemesh.util.actions.UndoableActions;
 import deformablemesh.util.connectedcomponents.ConnectedComponents3D;
 import deformablemesh.util.connectedcomponents.Region;
+import deformablemesh.util.connectedcomponents.RegionGrowing;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ByteProcessor;
@@ -551,14 +552,7 @@ public class SegmentationController {
         ImageStack threshed = new ImageStack(currentFrame.getWidth(), currentFrame.getHeight());
         for(int i = 1; i<= currentFrame.size(); i++){
             ImageProcessor proc = currentFrame.getProcessor(i).convertToShort(false);
-            if(i <= 0 || i>=currentFrame.size()+1){
-                short[] pixels = (short[])proc.getPixels();
-                for(int j = 0; j<pixels.length; j++){
-                    pixels[j] = 0;
-                }
-            } else{
-                proc.threshold(level);
-            }
+            proc.threshold(level);
             threshed.addSlice(proc);
         }
 
@@ -601,12 +595,19 @@ public class SegmentationController {
             regions.remove(region);
         }
 
-        /*ImageStack growing = prepare(istack, level/2, i);
+        ImageStack growing = new ImageStack(currentFrame.getWidth(), currentFrame.getHeight());
+        int nlev = 2*level/3;
+        for(int i = 1; i<= currentFrame.size(); i++){
+            ImageProcessor proc = currentFrame.getProcessor(i).convertToShort(false);
+            proc.threshold(nlev);
+            growing.addSlice(proc);
+        }
         RegionGrowing rg = new RegionGrowing(threshed, growing);
         rg.setRegions(regions);
-        for(int st = 0; st<5; st++){
+        for(int st = 0; st<2; st++){
             rg.step();
-        }*/
+        }
+
         List<DeformableMesh3D> guessed = new ArrayList<>();
         for (Region region : regions) {
             int label = region.getLabel();
@@ -628,7 +629,7 @@ public class SegmentationController {
 
             plus.setStack(new_stack);
             plus.setTitle("label: " + label);
-            plus.show();
+            //plus.show();
 
             DeformableMesh3D mesh = FillingBinaryImage.fillBinaryWithMesh(plus, rs);
             mesh.clearEnergies();
@@ -650,6 +651,7 @@ public class SegmentationController {
                 DeformableMesh3D mesh = t.getMesh(f);
                 ConnectionRemesher remesher =  new ConnectionRemesher();
                 remesher.setMinAndMaxLengths(minConnectionLength, maxConnectionLength);
+
                 return remesher.remesh(mesh);
 
             }).collect(Collectors.toList());

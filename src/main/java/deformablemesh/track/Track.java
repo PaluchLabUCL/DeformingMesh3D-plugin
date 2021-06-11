@@ -35,6 +35,7 @@ public class Track {
 
     public void addMesh(Integer i, DeformableMesh3D mesh){
         mesh.setColor(color);
+        mesh.setShowSurface(showSurface);
         track.put(i, mesh);
         mesh.setSelected(selected);
     }

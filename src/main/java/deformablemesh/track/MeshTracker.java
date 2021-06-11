@@ -95,15 +95,9 @@ public class MeshTracker {
         if(selectedTrack!=null){
             selectedTrack.setSelected(false);
         }
-        System.out.println("getting color: ");
         selectedTrack = new Track(tracks.stream().map(Track::getColor).collect(Collectors.toList()));
-
-        System.out.println("selecting");
         selectedTrack.setSelected(true);
-
-        System.out.println("adding track");
         tracks.add(selectedTrack);
-        System.out.println("adding mesh");
         selectedTrack.addMesh(frame, freshMesh);
         return selectedTrack;
 
