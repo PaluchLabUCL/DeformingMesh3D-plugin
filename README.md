@@ -154,7 +154,7 @@ controls.submit( function(){
 
 ```
 # Changes
-0.39
+0.3.9
 - Added connection remesher to control panel.
 - Multi channel support 
   - Display multiple volumes as channels
@@ -163,13 +163,13 @@ controls.submit( function(){
 - Exposed auto-detect meshes through javascript
 
 
-0.38
+0.3.8
 - Contrast preview dialog matches the clamped values.
 - Removed the normalizer weight from controls, added steric neighbors.
 - Exposed connection remesher in javascript with min/max lengths.
 - Contrast adjustment for displayed channels.
 
-0.37
+0.3.7
 - Added key command actions to 3D display.
 - Added help screen to hud to display key commands.
 - Added mesh export options for wire-frame and shell meshes.
@@ -189,7 +189,7 @@ controls.submit( function(){
 
 * only available through javascript.
 
-0.36
+0.3.6
 
 - javascript available actions improved.
 - surface plots available through javascript interface.
@@ -198,7 +198,7 @@ controls.submit( function(){
 - transformations to look at plane.
 
 
-0.35
+0.3.5
 
 - Initial window size checks monitor size and attempts to be <=80%
 - Mesh initialization zoom keeps cursor location the same.
@@ -213,7 +213,7 @@ controls.submit( function(){
 - Initialization sliders are finer controlled.
 - Can now switch image by selecting open image.
 
-0.34
+0.3.4
 
 - status panel/mesh color display
 - ctrl z /ctrl-shift z undo/redo respectively
