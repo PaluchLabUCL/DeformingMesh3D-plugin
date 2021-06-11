@@ -7,7 +7,7 @@
     
     <groupId>paluchlab</groupId>
 	<artifactId>Deformable_Mesh</artifactId>
-	<version>0.3.8-SNAPSHOT</version>
+	<version>0.3.9</version>
     <name>Deforming Mesh</name>
 	<description>Triangulated surface for deforming in 3D.</description>
 	<licenses>

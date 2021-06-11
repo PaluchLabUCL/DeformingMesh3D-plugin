@@ -5,7 +5,6 @@ import deformablemesh.geometry.Triangle3D;
 import deformablemesh.geometry.WireframeMesh;
 import deformablemesh.track.MeshTracker;
 import deformablemesh.track.Track;
-import javafx.scene.shape.Mesh;
 
 import java.awt.Color;
 import java.io.BufferedInputStream;
