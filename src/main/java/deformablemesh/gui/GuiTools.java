@@ -1,6 +1,7 @@
 package deformablemesh.gui;
 
 import deformablemesh.Deforming3DMesh_Plugin;
+import deformablemesh.SegmentationController;
 import ij.ImagePlus;
 import ij.WindowManager;
 
@@ -37,6 +38,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.text.ParseException;
+import java.util.stream.IntStream;
 
 import static deformablemesh.gui.ControlFrame.instance;
 
@@ -288,5 +290,48 @@ public class GuiTools {
         }
 
         return icon;
+    }
+    static public void selectOpenImage(Window parent, SegmentationController segmentationController){
+
+        String[] imageLabels = WindowManager.getImageTitles();
+
+        if(imageLabels.length==0) return;
+
+        Object[] choices = new Object[imageLabels.length];
+        for(int i = 0; i<choices.length; i++){
+            choices[i] = imageLabels[i];
+        }
+
+        Object option = JOptionPane.showInputDialog(
+                parent,
+                "Choose from open images:",
+                "Choose Open Image",
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                choices,
+                choices[0]
+        );
+        if(option instanceof String) {
+            ImagePlus plus = WindowManager.getImage((String) option);
+            if (plus != null) {
+                int channel = 0;
+                if(plus.getNChannels()>1){
+                    Object[] values = IntStream.range(1, plus.getNChannels()+1).boxed().toArray();
+                    Object channelChoice = JOptionPane.showInputDialog(
+                            parent,
+                            "Select Channel:",
+                            "Choose Channel",
+                            JOptionPane.QUESTION_MESSAGE,
+                            null,
+                            values,
+                            values[0]
+                    );
+                    if(channelChoice == null) return;
+                    channel = (Integer)channelChoice - 1;
+                }
+
+                segmentationController.setOriginalPlus(plus, channel);
+            }
+        }
     }
 }

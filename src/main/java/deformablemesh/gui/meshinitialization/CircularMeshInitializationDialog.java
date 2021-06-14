@@ -10,6 +10,7 @@ import deformablemesh.geometry.Projectable;
 import deformablemesh.geometry.ProjectableMesh;
 import deformablemesh.geometry.RayCastMesh;
 import deformablemesh.geometry.Sphere;
+import deformablemesh.gui.GuiTools;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.util.Vector3DOps;
 import ij.ImagePlus;
@@ -122,6 +123,11 @@ public class CircularMeshInitializationDialog extends JDialog {
             setVisible(false);
             afterClosing();
         });
+        JButton selectOpenImage = new JButton("image");
+        selectOpenImage.setToolTipText("select an open image.");
+        selectOpenImage.addActionListener(evt->{
+            GuiTools.selectOpenImage(this, model);
+        });
 
         row.add(showCursor);
         row.add(showMeshes);
@@ -131,6 +137,7 @@ public class CircularMeshInitializationDialog extends JDialog {
         row.add(Box.createHorizontalGlue());
         row.add(gridView);
         row.add(tabbedView);
+        row.add(selectOpenImage);
         content.add(row, BorderLayout.SOUTH);
 
 
