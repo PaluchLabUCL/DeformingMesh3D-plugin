@@ -1512,12 +1512,16 @@ public class SegmentationController {
         model.stopRunning();
     }
 
+    public void setOriginalPlus(ImagePlus plus){
+        setOriginalPlus(plus, 0);
+    }
+
     /**
      * Causes the provided image to be the main backing image data. The image needs to be 1 channel, with xyz it can
      * also have frames.
      * @param plus
      */
-    public void setOriginalPlus(ImagePlus plus) {
+    public void setOriginalPlus(ImagePlus plus, int channel) {
 
         submit(
 
@@ -1529,6 +1533,7 @@ public class SegmentationController {
                     }
                     int frame = getCurrentFrame();
                     model.setOriginalPlus(plus);
+                    model.stack.setChannel(channel);
                     model.setFrame(frame);
                     if(volumeShowing) {
                         showVolume();
