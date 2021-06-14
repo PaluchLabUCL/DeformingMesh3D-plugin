@@ -23,8 +23,10 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 /**
+ * This used to be a way to initialize a contractile ring. It is becoming a tool for
+ * reviewing segmentations.
  *
- * This will be used to detect a
+ * It stores a time series of planes.
  *
  * Created by msmith on 1/20/14.
  */

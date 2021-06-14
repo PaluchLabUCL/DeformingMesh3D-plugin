@@ -1531,10 +1531,11 @@ public class SegmentationController {
                     if(volumeShowing){
                         meshFrame3D.hideVolume();
                     }
-                    int frame = getCurrentFrame();
+
                     model.setOriginalPlus(plus);
+
                     model.stack.setChannel(channel);
-                    model.setFrame(frame);
+
                     if(volumeShowing) {
                         showVolume();
                     }

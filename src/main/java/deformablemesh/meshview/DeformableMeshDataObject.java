@@ -89,8 +89,8 @@ public class DeformableMeshDataObject implements DataObject {
 
         Color3f specular = new Color3f(1f, 1f, 1f);
         Material mat = new Material(
-                ambient, //ambient.
-                emmisive, //emmisive.
+                ambient,
+                emmisive,
                 difuse,
                 specular,
                 0.1f);
@@ -186,11 +186,17 @@ public class DeformableMeshDataObject implements DataObject {
         r = wires.getColorComponents(r);
         ColoringAttributes c_at = new ColoringAttributes(r[0], r[1], r[2], ColoringAttributes.NICEST);
         c_at.setCapability(ColoringAttributes.ALLOW_COLOR_WRITE);
+        a.setCapability(TransparencyAttributes.ALLOW_MODE_WRITE);
+        a.setCapability(TransparencyAttributes.ALLOW_VALUE_WRITE);
         LineAttributes la = new LineAttributes();
         la.setLineWidth(1);
         a.setColoringAttributes(c_at);
         a.setLineAttributes(la);
-
+        TransparencyAttributes tat = new TransparencyAttributes(
+                TransparencyAttributes.NICEST,
+                0f);
+        tat.setCapability(TransparencyAttributes.ALLOW_VALUE_WRITE);
+        a.setTransparencyAttributes(tat);
         return a;
 
     }
@@ -207,7 +213,9 @@ public class DeformableMeshDataObject implements DataObject {
         wires = color;
         float[] r = new float[3];
         r = wires.getColorComponents(r);
+        float alpha = color.getAlpha() / 255.f;
         mesh_object.getAppearance().getColoringAttributes().setColor(r[0], r[1], r[2]);
+        mesh_object.getAppearance().getTransparencyAttributes().setTransparency(1 - alpha);
     }
 
     public void setShowSurface(boolean showSurface) {

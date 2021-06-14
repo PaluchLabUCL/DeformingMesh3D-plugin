@@ -45,7 +45,6 @@ public class SegmentationModel {
     volatile boolean stop = false;
     volatile long deformations;
     ImagePlus original_plus;
-    ImageStack original_stack;
 
     MeshImageStack stack;
     MeshTracker tracker;
@@ -70,7 +69,6 @@ public class SegmentationModel {
 
         tracker = new MeshTracker();
         stack = new MeshImageStack();
-        frameListeners.add(i->syncOriginalStack());
 
     }
     public long getDeformationCount(){
@@ -228,9 +226,12 @@ public class SegmentationModel {
     public void setOriginalPlus(final ImagePlus plus){
         original_plus = plus;
         stack = new MeshImageStack(original_plus);
-        syncOriginalStack();
-        notifyFrameListeners();
-
+        stack.setFrame(getCurrentFrame());
+        if(stack.CURRENT != getCurrentFrame()){
+            setFrame(stack.CURRENT);
+        } else {
+            notifyFrameListeners();
+        }
     }
 
     public void nextFrame(){
@@ -251,7 +252,7 @@ public class SegmentationModel {
     }
 
     public void setFrame(final int i){
-        if(i>=0&&i<stack.FRAMES&&i != stack.CURRENT) {
+        if( i>=0 && i< stack.FRAMES&&i != stack.CURRENT) {
             stack.setFrame(i);
             notifyFrameListeners();
         }
@@ -264,19 +265,6 @@ public class SegmentationModel {
         if(i!=stack.CURRENT){
             notifyFrameListeners();
         }
-    }
-
-
-    private void syncOriginalStack(){
-        if(stack==null) return;
-
-        int start = stack.CURRENT*stack.SLICES + 1;
-        original_stack = new ImageStack(original_plus.getWidth(),original_plus.getHeight());
-        ImageStack bs = original_plus.getStack();
-        for(int i = 0; i<stack.SLICES; i++){
-            original_stack.addSlice(bs.getSliceLabel(start+i), bs.getProcessor(start + i));
-        }
-
     }
 
     public void setNormalizerWeight(double d) {

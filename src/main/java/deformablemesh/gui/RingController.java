@@ -4,9 +4,12 @@ import deformablemesh.MeshImageStack;
 import deformablemesh.SegmentationController;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Furrow3D;
+import deformablemesh.geometry.Projectable;
+import deformablemesh.geometry.ProjectableMesh;
 import deformablemesh.gui.meshinitialization.FurrowInitializer;
 import deformablemesh.io.FurrowWriter;
 import deformablemesh.ringdetection.ContractileRingDetector;
+import deformablemesh.ringdetection.FurrowTransformer;
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
 
@@ -24,12 +27,15 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Graphics2D;
 import java.awt.GridLayout;
+import java.awt.Shape;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -64,54 +70,33 @@ public class RingController implements FrameListener, ListDataListener {
         return new GuiTools.LocaleNumericTextField(ret, initial);
     }
 
+    /**
+     * All of the data is tied to the display elements! This needs to be refactored out.
+     *
+     */
+    public void deprecatedInitialization(){
+        px = createNumericInputField(0.0);
+        py = createNumericInputField(0.0);
+        pz = createNumericInputField(0.0);
+        dx = createNumericInputField(0);
+        dy = createNumericInputField(1.);
+        dz = createNumericInputField(0);
+        thresh = createNumericInputField(100);
+    }
     public void startUI(){
-
+        deprecatedInitialization();
         JPanel content = new JPanel();
         content.setLayout(new BorderLayout());
 
-        JPanel main_box = new JPanel();
-        main_box.setLayout(new BoxLayout(main_box, BoxLayout.PAGE_AXIS));
-
-        JPanel prow = new JPanel();
-        prow.setLayout(new GridLayout(1, 4));
-
-        JLabel p = new JLabel("position: ");
-        px = createNumericInputField(0);
-        py = createNumericInputField(0);
-        pz = createNumericInputField(0);
-
-        addAll(prow, p, px.getTextField(), py.getTextField(), pz.getTextField());
-
-        JPanel drow = new JPanel();
-        drow.setLayout(new GridLayout(1, 4));
-        JLabel d = new JLabel("direction: ");
-        dx = createNumericInputField(1);
-        dy = createNumericInputField(0);
-        dz = createNumericInputField(0);
-
-        addAll(drow, d, dx.getTextField(), dy.getTextField(), dz.getTextField());
-
-        JPanel trow = new JPanel();
-        trow.setLayout(new GridLayout(1, 2));
-        JLabel t = new JLabel("threshold: ");
-        thresh = createNumericInputField(1500);
-
-        addAll(trow, t, thresh.getTextField());
-
         JPanel buttons = new JPanel();
-        //buttons.setLayout(new BoxLayout(buttons, BoxLayout.LINE_AXIS));
-        buttons.setLayout(new GridLayout(3,3));
-        buttons.setMinimumSize(new Dimension(200, 60));
-        buttons.setPreferredSize(new Dimension(200, 60));
-        buttons.setMaximumSize(new Dimension(400, 60));
-        JButton set = new JButton("set");
-        set.addActionListener((evt) -> setFurrowValues());
+        buttons.setLayout( new BoxLayout(buttons, BoxLayout.PAGE_AXIS));
 
-        JButton initialize = new JButton("initialize...");
+        JButton initialize = new JButton("init furrow");
         initialize.addActionListener((event)->new FurrowInitializer(parent, model, ()->{}).start());
         buttons.add(initialize);
 
         frame = new JLabel("1");
+        buttons.add(frame);
 
         JButton prev = new JButton("prev");
         prev.setMnemonic(KeyEvent.VK_COMMA);
@@ -123,10 +108,7 @@ public class RingController implements FrameListener, ListDataListener {
         next.addActionListener(evt->model.nextFrame());
         buttons.add(next);
 
-        addAll(buttons, set, initialize, frame, prev, next);
-        addAll(main_box, prow, drow, trow, buttons);
-
-        content.add(main_box, BorderLayout.EAST);
+        content.add(buttons, BorderLayout.EAST);
 
         sliceView = new Slice3DView();
         content.add(new JScrollPane(sliceView.panel), BorderLayout.CENTER);
@@ -180,13 +162,6 @@ public class RingController implements FrameListener, ListDataListener {
         sliceView.panel.repaint();
     }
 
-
-    void addAll(Container container, Component ... components){
-        for(Component c: components){
-            container.add(c);
-        }
-    }
-
     public double[] getInputNormal(){
         double[] dir = new double[]{
                 dx.getValue(),
@@ -232,6 +207,36 @@ public class RingController implements FrameListener, ListDataListener {
         refreshFurrow();
         ImageProcessor p = detector.getFurrowSlice();
         if(p!=null){
+
+
+            sliceView.clear();
+
+
+            Furrow3D furrow = detector.getFurrow(frame);
+            if(furrow !=null ) {
+                //manage mesh drawing!
+                List<DeformableMesh3D> meshes = model.getAllTracks().stream().filter(
+                        t->t.containsKey(frame)
+                ).map(t -> t.getMesh(frame)).collect(Collectors.toList());
+
+                List<Drawable> projections = meshes.stream().map(mesh -> {
+                    ProjectableMesh pm = new ProjectableMesh(mesh);
+                    return new Drawable() {
+                        @Override
+                        public void draw(Graphics2D g2d) {
+                            Shape shape = pm.getProjection(
+                                    new FurrowTransformer(
+                                            furrow, model.getMeshImageStack()
+                                    )
+                            );
+                            g2d.setColor(mesh.getColor());
+                            g2d.draw(shape);
+                        }
+                    };
+                }).collect(Collectors.toList());
+                sliceView.addDrawables(projections);
+            }
+
             histControls.refresh(new Histogram(p));
             sliceView.setSlice(p.getBufferedImage());
             detector.setThresh(thresh.getValue());

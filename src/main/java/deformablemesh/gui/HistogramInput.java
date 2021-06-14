@@ -82,7 +82,10 @@ class HistogramInput {
         for(int i = 0; i<255; i++){
             g2d.drawLine(i+border, height, i+border, height-h.bins[i]);
         }
-
+        g2d.setPaint(Color.WHITE);
+        int center = img.getHeight()/2;
+        g2d.drawString(String.format("%3.3f", h.minValue), 0, center);
+        g2d.drawString(String.format("%3.3f", h.maxValue), 200, center);
         g2d.dispose();
         panel.repaint();
     }

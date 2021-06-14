@@ -164,7 +164,12 @@ public class Slice3DView {
         }
         panel.repaint();
     }
-
+    public void addDrawables(List<Drawable> ds){
+        synchronized(drawables){
+            drawables.addAll(ds);
+        }
+        panel.repaint();
+    }
     public void addDrawable(Drawable d){
         synchronized(drawables){
             drawables.add(d);
