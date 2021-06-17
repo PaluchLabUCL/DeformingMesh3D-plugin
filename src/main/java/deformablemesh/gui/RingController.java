@@ -368,5 +368,9 @@ public class RingController implements FrameListener, ListDataListener {
     public void addFrameListener(FrameListener listener){
         listeners.add(listener);
     }
+
+    public double getThresh() {
+        return thresh.getValue();
+    }
 }
 

@@ -1,30 +1,34 @@
 package deformablemesh.externalenergies;
 
+import deformablemesh.geometry.Connection3D;
 import deformablemesh.geometry.CurvatureCalculator;
+import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Node3D;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class SmoothingForce implements ExternalEnergy{
-    double gamma;
+    double magnitude;
     CurvatureCalculator calc;
-    Map<Node3D, Set<Node3D>> neighbors = new HashMap<>();
-
+    public SmoothingForce(DeformableMesh3D mesh, double magnitude){
+        this.magnitude = magnitude;
+        calc = new CurvatureCalculator(mesh);
+    }
     @Override
     public void updateForces(double[] positions, double[] fx, double[] fy, double[] fz) {
-        //go through the curvatures, and smooth according to neighbors.
+        //x, y, z, Kappa, nx, ny, nz.
         List<double[]> curvatures = calc.calculateCurvature();
         for(int i = 0; i<fx.length; i++){
             double[] row = curvatures.get(i);
-            fx[i] += -row[0];
-            fy[i] += -row[1];
-            fz[i] += -row[2];
+            double f = row[3]*magnitude;
+            fx[i] += -row[4]*f;
+            fy[i] += -row[5]*f;
+            fz[i] += -row[6]*f;
         }
-
-
     }
 
     @Override

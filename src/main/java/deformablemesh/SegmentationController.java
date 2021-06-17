@@ -1160,8 +1160,9 @@ public class SegmentationController {
     }
 
     /**
-     * There are 4 types of energy based on the image.
-     * @param selectedItem
+     * The type of image energy that will be used.
+     *
+     * @param selectedItem enum to select which image energy will be created.
      */
     public void setImageEnergyType(ImageEnergyType selectedItem) {
         model.setImageEnergyType(selectedItem);
@@ -1799,6 +1800,13 @@ public class SegmentationController {
     }
 
     /**
+     *
+     * @return currently selected mesh track.
+     */
+    public Track getSelectedMeshTrack(){
+        return model.getSelectedTrack();
+    }
+    /**
      * Returns the short image name based on the full image title with the image name extension removed.
      *
      * @return
@@ -1820,7 +1828,7 @@ public class SegmentationController {
     }
 
     /**
-     * Turns on an image energy that trys to normalize triangles.
+     * Turns on an image energy that tries to normalize triangles.
      *
      * @param d
      */

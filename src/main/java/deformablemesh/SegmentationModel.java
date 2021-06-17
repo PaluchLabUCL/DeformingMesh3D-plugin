@@ -225,9 +225,10 @@ public class SegmentationModel {
 
     public void setOriginalPlus(final ImagePlus plus){
         original_plus = plus;
+        int cf = getCurrentFrame();
         stack = new MeshImageStack(original_plus);
-        stack.setFrame(getCurrentFrame());
-        if(stack.CURRENT != getCurrentFrame()){
+        stack.setFrame(cf);
+        if(stack.CURRENT != cf){
             setFrame(stack.CURRENT);
         } else {
             notifyFrameListeners();
@@ -252,7 +253,7 @@ public class SegmentationModel {
     }
 
     public void setFrame(final int i){
-        if( i>=0 && i< stack.FRAMES&&i != stack.CURRENT) {
+        if( i>=0 && i< stack.FRAMES && i != stack.CURRENT ) {
             stack.setFrame(i);
             notifyFrameListeners();
         }
@@ -413,14 +414,15 @@ public class SegmentationModel {
             case PerpendicularGradient:
                 erg = new PerpendicularGradientEnergy(stack, mesh, getImageWeight());
                 break;
+            case SmoothingForce:
+                erg = new SmoothingForce(mesh, getImageWeight());
+            case None:
             default:
                 erg = new ExternalEnergy(){
-
                     @Override
                     public void updateForces(double[] positions, double[] fx, double[] fy, double[] fz) {
                         return;
                     }
-
                     @Override
                     public double getEnergy(double[] pos) {
                         return 0;
@@ -431,6 +433,11 @@ public class SegmentationModel {
         return erg;
     }
 
+    /**
+     * The energy type will be used to decide which image energy is add during deformations.
+     *
+     * @param i
+     */
     public void setImageEnergyType(ImageEnergyType i){
         energyType = i;
     }

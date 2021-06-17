@@ -65,6 +65,15 @@ public class BinaryInterceptible implements Interceptable{
     }
 
     boolean isEdge(MeshImageStack stack, int[] pt){
+        if(
+                pt[0] == 0 || pt[0] == stack.getWidthPx() - 1
+                || pt[1] == 0 || pt[1] == stack.getHeightPx() - 1
+                || pt[2] == 0 || pt[2] == stack.getNSlices() - 1
+        ) {
+            //edge of the image is an edge.
+            return true;
+        }
+
         for(int i = 0; i<3; i++){
             for(int j = 0; j<3; j++){
                 for(int k = 0; k<3; k++){

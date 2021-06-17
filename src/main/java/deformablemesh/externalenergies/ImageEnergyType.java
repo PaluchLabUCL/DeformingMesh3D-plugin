@@ -5,7 +5,7 @@ package deformablemesh.externalenergies;
  */
 public enum ImageEnergyType {
     PerpendicularIntensity("⟂ Max Intensity"), PerpendicularGradient("⟂ Max Gradient"),
-    None("No Energy");
+    None("No Energy"), SmoothingForce("curvature smoothing");
 
     String title;
     ImageEnergyType(String t){

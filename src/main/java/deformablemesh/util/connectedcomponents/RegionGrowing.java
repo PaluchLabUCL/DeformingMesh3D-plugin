@@ -22,7 +22,7 @@ public class RegionGrowing{
         slices = labels.getSize();
         labelPixels = new ArrayList<>();
         constraintPixels = new ArrayList<>();
-        for(int i = 1; i<labels.size(); i++){
+        for(int i = 1; i<=labels.size(); i++){
             labelPixels.add((short[]) labels.getProcessor(i).getPixels());
             constraintPixels.add((short[]) constraints.getProcessor(i).getPixels());
         }

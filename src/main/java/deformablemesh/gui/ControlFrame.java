@@ -876,17 +876,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         JMenuItem imprt = new JMenuItem("import meshes");
         tools.add(imprt);
         imprt.addActionListener(actionEvent -> {
-            setReady(false);
-            FileDialog fd = new FileDialog(frame,"File to load mesh from");
-            fd.setMode(FileDialog.LOAD);
-            fd.setVisible(true);
-            if(fd.getFile()==null || fd.getDirectory()==null){
-                finished();
-                return;
-            }
-            File f = new File(fd.getDirectory(),fd.getFile());
-            segmentationController.importMeshes(f);
-            finished();
+            importMeshes();
         });
 
         JMenuItem trackManager = new JMenuItem("Manage Tracks");
@@ -962,6 +952,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
     public void selectOpenImage(){
         GuiTools.selectOpenImage(frame, segmentationController);
     }
+
     public void nextFrameAction(){
         if(ready) {
             setReady(false);
@@ -1085,7 +1076,25 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         segmentationController.saveMeshes(f);
         finished();
     }
-
+    public void importMeshes(){
+        /**
+         * "matching" the same frame.
+         * "relative" the first import mesh frame is the aligned to the current select frame.
+         *
+         */
+        Object[] types = {"matching", "relative", "select", "bundled"};
+        setReady(false);
+        FileDialog fd = new FileDialog(frame,"File to load mesh from");
+        fd.setMode(FileDialog.LOAD);
+        fd.setVisible(true);
+        if(fd.getFile()==null || fd.getDirectory()==null){
+            finished();
+            return;
+        }
+        File f = new File(fd.getDirectory(),fd.getFile());
+        segmentationController.importMeshes(f);
+        finished();
+    }
     private void buildTrackManager() {
 
         JDialog dialog = new JDialog(frame, true);

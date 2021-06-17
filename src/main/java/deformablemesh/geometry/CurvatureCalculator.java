@@ -419,6 +419,11 @@ public class CurvatureCalculator {
         return new double[]{normal[0], normal[1], normal[2], dot};
     }
 
+    /**
+     * Calculates the curvature and normal at each point.
+     *
+     * @return x, y, z, Kappa, nx, ny, nz
+     */
     public List<double[]> calculateCurvature(){
         List<double[]> values = new ArrayList<>();
 

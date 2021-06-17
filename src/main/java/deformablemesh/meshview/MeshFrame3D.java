@@ -129,6 +129,7 @@ public class    MeshFrame3D {
         if(plus != null && c != null){
             MeshImageStack stack = new MeshImageStack(plus);
             stack.setChannel(channel);
+            stack.setFrame(segmentationController.getCurrentFrame());
             ChannelVolume cv = new ChannelVolume(stack, c);
             addChannelVolume(cv);
         }
