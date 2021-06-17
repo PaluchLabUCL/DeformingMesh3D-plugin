@@ -111,7 +111,12 @@ public class MeshTracker {
     }
 
     public void removeTrack(Track track){
-        tracks.remove(track);
+        int i = tracks.indexOf(track);
+        if(i == -1){
+            i = 0;
+        } else {
+            tracks.remove(i);
+        }
         if(selectedTrack==track) {
             selectedTrack.setSelected(false);
             if (tracks.size() > 0) {
@@ -121,6 +126,7 @@ public class MeshTracker {
                 selectedTrack=null;
             }
         }
+
     }
 
     public void addTrack(Track track){
