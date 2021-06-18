@@ -3,6 +3,7 @@ package deformablemesh.geometry;
 import deformablemesh.ringdetection.FurrowTransformer;
 import deformablemesh.util.Vector3DOps;
 
+import java.awt.Color;
 import java.awt.Shape;
 import java.awt.geom.Path2D;
 import java.util.ArrayList;
@@ -86,6 +87,11 @@ public class ProjectableMesh implements Projectable{
         return ret;
     }
 
+    /**
+     * Gets a continuous path version of the projected shape.
+     * @param transformer the plane the projections are made onto.
+     * @return A continuous path in normalized coordinates.
+     */
     public Shape continuousPaths(FurrowTransformer transformer){
         Path2D ret = new Path2D.Double();
         Furrow3D furrow = transformer.getFurrow();
@@ -130,9 +136,10 @@ public class ProjectableMesh implements Projectable{
 
                 double[] ptA = getIntersectionPlaneCoordinates(furrow, first);
                 double[] ptB = getIntersectionPlaneCoordinates(furrow, b);
-
-                ret.moveTo(ptA[0], ptA[1]);
-                ret.lineTo(ptB[0], ptB[1]);
+                double[] pxA = transformer.getPlaneCoordinates(ptA);
+                double[] pxB = transformer.getPlaneCoordinates(ptB);
+                ret.moveTo(pxA[0], pxA[1]);
+                ret.lineTo(pxB[0], pxB[1]);
 
                 triangles.remove(triangle);
             } else{
@@ -148,7 +155,8 @@ public class ProjectableMesh implements Projectable{
                     int other = dex==0?1:0;
                     b = otras.get(other);
                     double[] ptB = getIntersectionPlaneCoordinates(furrow, b);
-                    ret.lineTo(ptB[0], ptB[1]);
+                    double[] pxB = transformer.getPlaneCoordinates(ptB);
+                    ret.lineTo(pxB[0], pxB[1]);
                     triangles.remove(test);
                     if(first==b){
                         //finished the loop.
@@ -242,4 +250,11 @@ public class ProjectableMesh implements Projectable{
     }
 
 
+    public Color getColor() {
+        return mesh.getColor();
+    }
+
+    public DeformableMesh3D getMesh() {
+        return mesh;
+    }
 }

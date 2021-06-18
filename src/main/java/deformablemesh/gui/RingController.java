@@ -23,6 +23,7 @@ import javax.swing.JTextField;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
@@ -31,6 +32,10 @@ import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.Shape;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,6 +60,8 @@ public class RingController implements FrameListener, ListDataListener {
     FurrowInput furrowInput;
     JFrame parent;
     List<FrameListener> listeners = new ArrayList<>();
+    List<ProjectableMesh> selectableMeshes = new ArrayList<>();
+
     public RingController(SegmentationController model){
         this.model = model;
         detector = new ContractileRingDetector();
@@ -122,7 +129,7 @@ public class RingController implements FrameListener, ListDataListener {
 
 
         contentPane = content;
-
+        activateSliceViewMouseListener();
     }
 
     public JPanel getContentPane(JFrame parent){
@@ -155,7 +162,39 @@ public class RingController implements FrameListener, ListDataListener {
         return furrowInput;
     }
 
+    public void activateSliceViewMouseListener(){
+        sliceView.addMouseListener( new MouseAdapter(){
+            @Override
+            public void mouseClicked(MouseEvent e) {
 
+                Furrow3D furrow = getFurrow();
+
+                if(furrow == null) return;
+
+                FurrowTransformer t = new FurrowTransformer(
+                        furrow, model.getMeshImageStack()
+                );
+
+                Point2D pt = sliceView.getScaledLocation(e.getPoint());
+
+                DeformableMesh3D mesh = model.getSelectedMesh();
+                for(ProjectableMesh m: selectableMeshes){
+
+                    if(m.getMesh() == mesh){
+                        continue;
+                    }
+
+                    Shape s = m.continuousPaths(t);
+
+                    if(s.contains(pt)){
+                        model.selectMesh(m.getMesh());
+                        sliceView.repaint();
+                        break;
+                    }
+                }
+            }
+        });
+    }
 
 
     void syncSliceViewBoxController(){
@@ -207,30 +246,35 @@ public class RingController implements FrameListener, ListDataListener {
         refreshFurrow();
         ImageProcessor p = detector.getFurrowSlice();
         if(p!=null){
-
-
             sliceView.clear();
-
-
             Furrow3D furrow = detector.getFurrow(frame);
             if(furrow !=null ) {
                 //manage mesh drawing!
-                List<DeformableMesh3D> meshes = model.getAllTracks().stream().filter(
+                List<ProjectableMesh> meshes = model.getAllTracks().stream().filter(
                         t->t.containsKey(frame)
-                ).map(t -> t.getMesh(frame)).collect(Collectors.toList());
+                ).map(
+                        t -> t.getMesh(frame)
+                ).map(ProjectableMesh::new).collect(Collectors.toList());
+                selectableMeshes.clear();
+                selectableMeshes.addAll(meshes);
 
-                List<Drawable> projections = meshes.stream().map(mesh -> {
-                    ProjectableMesh pm = new ProjectableMesh(mesh);
+                List<Drawable> projections = meshes.stream().map(pm -> {
                     return new Drawable() {
                         @Override
                         public void draw(Graphics2D g2d) {
-                            Shape shape = pm.getProjection(
-                                    new FurrowTransformer(
-                                            furrow, model.getMeshImageStack()
-                                    )
+                            FurrowTransformer ft = new FurrowTransformer(
+                                    furrow, model.getMeshImageStack()
                             );
-                            g2d.setColor(mesh.getColor());
-                            g2d.draw(shape);
+                            Shape shape = pm.getProjection( ft );
+
+                            DeformableMesh3D selected = model.getSelectedMesh();
+                            if(pm.getMesh() == selected){
+                                g2d.setColor(Color.WHITE);
+                                g2d.draw(shape);
+                            }else{
+                                g2d.setColor(pm.getColor());
+                                g2d.draw(shape);
+                            }
                         }
                     };
                 }).collect(Collectors.toList());
@@ -276,6 +320,7 @@ public class RingController implements FrameListener, ListDataListener {
     public void loadImage(MeshImageStack stack){
         detector.setImageStack(stack);
     }
+
     public void submit(Runnable r){
         model.submit(r::run);
     }

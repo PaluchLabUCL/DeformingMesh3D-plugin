@@ -9,11 +9,15 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.Point;
 import java.awt.Shape;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Path2D;
+import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
@@ -114,7 +118,9 @@ public class Slice3DView {
         resize();
     }
 
-
+    public Point2D getScaledLocation(Point p){
+        return new Point2D.Double(p.x/zoom, p.y/zoom);
+    }
 
     public void setBinary(Image b){
         binary = b;
@@ -272,5 +278,13 @@ public class Slice3DView {
         for(MouseWheelListener l: ml){
             panel.removeMouseWheelListener(l);
         }
+    }
+
+    public void addMouseListener(MouseListener mouseListener) {
+        panel.addMouseListener(mouseListener);
+    }
+
+    public void repaint() {
+        panel.repaint();
     }
 }
