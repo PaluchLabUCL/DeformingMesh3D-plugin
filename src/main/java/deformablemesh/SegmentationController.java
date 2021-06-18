@@ -6,6 +6,7 @@ import deformablemesh.geometry.*;
 import deformablemesh.gui.FrameListener;
 import deformablemesh.gui.PropertySaver;
 import deformablemesh.gui.RingController;
+import deformablemesh.io.ImportType;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.meshview.*;
 import deformablemesh.ringdetection.FurrowTransformer;
@@ -1622,36 +1623,34 @@ public class SegmentationController {
 
     }
 
+
     /**
      * Opens the meshfile and adds all of the meshes to the current meshes.
      *
      * @param f
+     * @param type
      */
-    public void importMeshes(File f){
+    public void importMeshes(File f, ImportType type){
         boolean relative = true;
         submit(()->{
             int i = getCurrentFrame();
             int n = getNFrames();
 
             List<Track> imports = MeshWriter.loadMeshes(f);
-            if(relative){
-                for(Track t: imports) {
-                    if (t.size() == 0 || t.size() == n) {
-                        continue; //the track is the duration of the movie. don't change.
-                    }
-
-                    int first = t.getFirstFrame();
-                    Map<Integer, DeformableMesh3D> shifted = new HashMap<>();
-                    int shift = i - first;
-                    for (Integer frame : t.getTrack().keySet()) {
-                        DeformableMesh3D mesh = t.getMesh(frame);
-                        shifted.put(frame + shift, t.getMesh(frame));
-                        t.remove(mesh);
-                    }
-                    for (Integer frame : shifted.keySet()) {
-                        t.addMesh(frame, shifted.get(frame));
-                    }
-                }
+            switch(type){
+                case aligned:
+                    //use them as they are.
+                    break;
+                case relative:
+                    relateImports(imports);
+                    break;
+                case lumped:
+                    lumpImports(imports);
+                    break;
+                case select:
+                    selectImports(imports);
+                default:
+                    break;
             }
 
             long nextState = newState();
@@ -1690,6 +1689,85 @@ public class SegmentationController {
                 }
             });
         });
+    }
+
+    /**
+     * Groups all of the meshes into the current frame and creates new tracks as necessary.
+     *
+     * @param imports
+     */
+    public void lumpImports(List<Track> imports) {
+        Integer current = getCurrentFrame();
+        List<Track> bonusTracks = new ArrayList<>();
+
+        for(Track track: imports){
+            if(track.size() == 1){
+                DeformableMesh3D mesh = track.getMesh(track.getFirstFrame());
+                track.remove(mesh);
+                track.addMesh(current, mesh);
+            } else{
+                Integer key = track.containsKey(current) ? current : track.getFirstFrame();
+                DeformableMesh3D mesh = track.getMesh(key);
+                track.remove(mesh);
+                //go through remaining meshes and create a new track for them.
+                for(Map.Entry<Integer, DeformableMesh3D> entry: track.getTrack().entrySet()){
+                    if(!current.equals(entry.getKey())) {
+                        track.remove(entry.getValue());
+                        Track bonus = new Track(track.getName() + "-" + entry.getKey());
+                        bonus.addMesh(current, entry.getValue());
+                        bonusTracks.add(bonus);
+                    }
+                }
+                track.addMesh(current, mesh);
+            }
+
+
+        }
+        imports.addAll(bonusTracks);
+    }
+
+    /**
+     * Finds the earliest mesh frame, aligns that to the current frame
+     * @param imports
+     */
+    public void relateImports(List<Track> imports) {
+        int min = imports.stream().map(Track::getFirstFrame).mapToInt(i -> i).min().orElseGet(()->0);
+
+        int current = getCurrentFrame();
+        int shift = current - min;
+        for(Track track: imports){
+            Map<Integer, DeformableMesh3D> replacements = new HashMap<>();
+            for(Map.Entry<Integer, DeformableMesh3D> entry: track.getTrack().entrySet()){
+                track.remove(entry.getValue());
+                Integer target = entry.getKey() + shift;
+                replacements.put(target, entry.getValue());
+            }
+            replacements.forEach((key, value)->track.addMesh(key, value));
+        }
+
+    }
+
+    /**
+     * Reduces the provided meshes to only meshes in the currently selected frame.
+     *
+     * @param imports list of tracks that will be modified to only have tracks with meshes in the
+     *                current frame.
+     */
+    public void selectImports(List<Track> imports) {
+        Integer frame = getCurrentFrame();
+        List<Track> toRemove = new ArrayList<>();
+        for(Track track: imports){
+            if(track.containsKey(frame)){
+                for(Map.Entry<Integer, DeformableMesh3D> entries : track.getTrack().entrySet()){
+                    if(!frame.equals(entries.getKey())){
+                        track.remove(entries.getValue());
+                    }
+                }
+            } else{
+                toRemove.add(track);
+            }
+        }
+        imports.removeAll(toRemove);
     }
 
     /**

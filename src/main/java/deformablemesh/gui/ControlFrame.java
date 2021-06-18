@@ -3,6 +3,7 @@ package deformablemesh.gui;
 import deformablemesh.SegmentationController;
 import deformablemesh.externalenergies.ImageEnergyType;
 import deformablemesh.gui.meshinitialization.CircularMeshInitializationDialog;
+import deformablemesh.io.ImportType;
 import deformablemesh.meshview.HotKeyDelegate;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.track.MeshTrackManager;
@@ -1082,7 +1083,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
          * "relative" the first import mesh frame is the aligned to the current select frame.
          *
          */
-        Object[] types = {"matching", "relative", "select", "bundled"};
         setReady(false);
         FileDialog fd = new FileDialog(frame,"File to load mesh from");
         fd.setMode(FileDialog.LOAD);
@@ -1092,7 +1092,19 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             return;
         }
         File f = new File(fd.getDirectory(),fd.getFile());
-        segmentationController.importMeshes(f);
+        Object[] types = ImportType.values();
+        Object channelChoice = JOptionPane.showInputDialog(
+                frame,
+                "Select Channel:",
+                "Choose Channel",
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                types,
+                types[0]
+        );
+        if(channelChoice != null){
+            segmentationController.importMeshes(f, (ImportType)channelChoice);
+        }
         finished();
     }
     private void buildTrackManager() {

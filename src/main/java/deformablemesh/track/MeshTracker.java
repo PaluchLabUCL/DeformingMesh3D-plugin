@@ -119,8 +119,14 @@ public class MeshTracker {
         }
         if(selectedTrack==track) {
             selectedTrack.setSelected(false);
+            int next = i - 1;
+
+            if(track.size() <= next){
+                next = tracks.size() - 1;
+            }
+
             if (tracks.size() > 0) {
-                selectedTrack = tracks.get(0);
+                selectedTrack = tracks.get(next);
                 selectedTrack.setSelected(true);
             } else{
                 selectedTrack=null;

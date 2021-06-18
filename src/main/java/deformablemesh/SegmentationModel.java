@@ -958,6 +958,7 @@ public class SegmentationModel {
 
     public void addMeshTrack(Track track){
         tracker.addTrack(track);
+        notifyMeshListeners();
     }
 
 

@@ -51,6 +51,7 @@ class HistogramInput {
                 int i = e.getX() - border;
                 if(i>=0&&i<255) {
                     rc.setThreshold(gram.getValue(i));
+                    panel.repaint();
                 }
             }
 
