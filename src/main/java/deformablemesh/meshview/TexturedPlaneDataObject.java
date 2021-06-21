@@ -38,7 +38,9 @@ public class TexturedPlaneDataObject extends DeformableMeshDataObject {
         surface_object.setAppearance(createTexturedSurface());
         branch_group.removeChild(mesh_object);
     }
-
+    public MeshImageStack getMeshImageStack(){
+        return stack;
+    }
     public void setTextureData(MeshImageStack stack){
         this.stack = stack;
         int w = stack.getWidthPx();

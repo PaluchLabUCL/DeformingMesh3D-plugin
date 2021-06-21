@@ -64,20 +64,28 @@ public class BinaryInterceptible implements Interceptable{
         center[2] = center[2]/pixels.size();
     }
 
+
+    /**
+     * Image to be check. int[] pt is in px,px, slice coordinates. px are 0 based indexes
+     * and slice is 1 based.
+     *
+     * @param stack reference values.
+     * @param pt px, py, slice z points that represent the pixels in the stack.
+     * @return
+     */
     boolean isEdge(MeshImageStack stack, int[] pt){
         if(
                 pt[0] == 0 || pt[0] == stack.getWidthPx() - 1
                 || pt[1] == 0 || pt[1] == stack.getHeightPx() - 1
-                || pt[2] == 0 || pt[2] == stack.getNSlices() - 1
+                || pt[2] == 1 || pt[2] == stack.getNSlices()
         ) {
             //edge of the image is an edge.
             return true;
         }
-
-        for(int i = 0; i<3; i++){
-            for(int j = 0; j<3; j++){
-                for(int k = 0; k<3; k++){
-                    if(stack.getValue(pt[0] + i -1, pt[1] + j - 1, pt[2] + k - 1)!=label){
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                for (int k = 0; k < 3; k++) {
+                    if (stack.getValue(pt[0] + i - 1, pt[1] + j - 1, pt[2] + k - 2) != label) {
                         return true;
                     }
                 }

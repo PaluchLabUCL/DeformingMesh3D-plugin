@@ -190,4 +190,13 @@ public class MeshTracker {
     }
 
 
+    public void selectMeshTrack(Track track) {
+        if(selectedTrack!=null){
+            selectedTrack.setSelected(false);
+        }
+        if(tracks.contains(track)){
+            selectedTrack = track;
+            track.setSelected(true);
+        }
+    }
 }

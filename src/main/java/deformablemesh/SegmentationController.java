@@ -905,7 +905,7 @@ public class SegmentationController {
      * @param track
      */
     public void selectMeshTrack(Track track){
-        submit( () -> selectMeshTrack(track));
+        submit( () -> model.selectMeshTrack(track));
     }
 
     /**

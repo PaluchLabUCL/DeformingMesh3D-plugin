@@ -61,12 +61,24 @@ public class RingController implements FrameListener, ListDataListener {
     JFrame parent;
     List<FrameListener> listeners = new ArrayList<>();
     List<ProjectableMesh> selectableMeshes = new ArrayList<>();
+    boolean furrowShowing;
 
     public RingController(SegmentationController model){
         this.model = model;
         detector = new ContractileRingDetector();
     }
 
+    public void showFurrow(){
+        furrowShowing = true;
+        setFurrowValues();
+    }
+
+    public void hideFurrow(){
+        furrowShowing = false;
+        getFurrow().removeDataObject();
+
+        frameChanged(model.getCurrentFrame());
+    }
 
     public GuiTools.LocaleNumericTextField createNumericInputField(double initial){
         JTextField ret = new JTextField();
@@ -97,7 +109,17 @@ public class RingController implements FrameListener, ListDataListener {
 
         JPanel buttons = new JPanel();
         buttons.setLayout( new BoxLayout(buttons, BoxLayout.PAGE_AXIS));
-
+        JButton showFurrowButton = new JButton("show");
+        showFurrowButton.addActionListener(evt->{
+            if(showFurrowButton.getText().equals("show")){
+                showFurrowButton.setText("hide");
+                showFurrow();
+            } else{
+                showFurrowButton.setText("show");
+                hideFurrow();
+            }
+        });
+        buttons.add(showFurrowButton);
         JButton initialize = new JButton("init furrow");
         initialize.addActionListener((event)->new FurrowInitializer(parent, model, ()->{}).start());
         buttons.add(initialize);
@@ -198,7 +220,7 @@ public class RingController implements FrameListener, ListDataListener {
 
 
     void syncSliceViewBoxController(){
-        sliceView.panel.repaint();
+        sliceView.  repaint();
     }
 
     public double[] getInputNormal(){
@@ -281,7 +303,7 @@ public class RingController implements FrameListener, ListDataListener {
                 sliceView.addDrawables(projections);
             }
 
-            histControls.refresh(new Histogram(p));
+            histControls.refresh(p);
             sliceView.setSlice(p.getBufferedImage());
             detector.setThresh(thresh.getValue());
             ImageProcessor b = detector.createBinarySlice();
@@ -295,6 +317,7 @@ public class RingController implements FrameListener, ListDataListener {
         ImageProcessor b = detector.createBinarySlice();
         sliceView.setBinary(b.getBufferedImage());
     }
+
     public void refreshValues(){
         final double[] dir = new double[]{
                 dx.getValue(),
@@ -416,6 +439,10 @@ public class RingController implements FrameListener, ListDataListener {
 
     public double getThresh() {
         return thresh.getValue();
+    }
+
+    public boolean isFurrowShowing() {
+        return furrowShowing;
     }
 }
 

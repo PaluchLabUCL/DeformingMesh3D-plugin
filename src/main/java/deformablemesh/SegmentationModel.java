@@ -965,6 +965,11 @@ public class SegmentationModel {
     public void removeFrameListener(FrameListener listener) {
         frameListeners.remove(listener);
     }
+
+    public void selectMeshTrack(Track track) {
+        tracker.selectMeshTrack(track);
+        notifyMeshListeners();
+    }
 }
 
 

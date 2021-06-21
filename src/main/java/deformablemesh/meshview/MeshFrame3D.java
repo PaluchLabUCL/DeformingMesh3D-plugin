@@ -619,10 +619,10 @@ public class    MeshFrame3D {
             });
         }
 
-        if(ringController.getFurrow()!=null) {
+        if(ringController.getFurrow()!=null && ringController.isFurrowShowing()) {
             Furrow3D furrow = ringController.getFurrow();
             if(furrow.getDataObject()==null){
-                furrow.create3DObject();
+                furrow.createTexturedPlane3DObject(segmentationController.getMeshImageStack());
             }
             observeObject(ringController, ringController.getFurrow().getDataObject());
 

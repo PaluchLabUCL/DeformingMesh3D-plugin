@@ -7,6 +7,7 @@ import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.meshview.SphereDataObject;
 import deformablemesh.meshview.TexturedPlaneDataObject;
 import deformablemesh.meshview.VectorField;
+import deformablemesh.ringdetection.FurrowTransformer;
 import deformablemesh.util.Vector3DOps;
 import org.scijava.vecmath.Point3d;
 
@@ -30,9 +31,9 @@ public class Furrow3D implements Interceptable{
     public double[] up;
 
     //double[] line;
-    FurrowPlaneDataObject object;
-
-
+    TexturedPlaneDataObject slice;
+    FurrowPlaneDataObject object2;
+    boolean showPlane = false;
     /**
      * Creates a 3D furrow based on the center and direction.
      *
@@ -45,13 +46,31 @@ public class Furrow3D implements Interceptable{
     }
 
     public void create3DObject(){
+        showPlane = true;
+        slice = null;
 
-        object = new FurrowPlaneDataObject(cm, normal);
+        object2 = new FurrowPlaneDataObject(cm, normal);
+
+    }
+
+    public void createTexturedPlane3DObject(MeshImageStack mis){
+        showPlane = false;
+        object2 = null;
+        DeformableMesh3D texturedPlaneGeometry = BinaryMeshGenerator.getQuad(
+                new double[]{0,0,0},
+                new double[]{1, 0, 0},
+                new double[]{0, 1, 0}
+        );
+        slice = new TexturedPlaneDataObject(texturedPlaneGeometry, mis);
 
     }
 
     public DataObject getDataObject(){
-        return object;
+        if(showPlane){
+            return object2;
+        } else{
+            return slice;
+        }
     }
 
     public List<List<Triangle3D>> splitMesh(List<Triangle3D> triangles){
@@ -321,9 +340,28 @@ public class Furrow3D implements Interceptable{
         cm[1] += displacement[1];
         cm[2] += displacement[2];
 
-        if(object!=null){
-            object.updatePosition(cm,normal);
-        }
+        updateGeometry();
+
+    }
+
+    private void updateSliceGeometry() {
+        if(!showPlane) return;
+        MeshImageStack mis = slice.getMeshImageStack();
+
+        int w = mis.getWidthPx();
+        int h = mis.getHeightPx();
+        FurrowTransformer ft = new FurrowTransformer(this, mis);
+        double[] p0 = ft.getVolumeCoordinates(new double[]{0, 0});
+        double[] p1 = ft.getVolumeCoordinates(new double[]{0, h});
+        double[] p2 = ft.getVolumeCoordinates(new double[]{w, h});
+        double[] p3 = ft.getVolumeCoordinates(new double[]{w, 0});
+        double[] res = {
+                p0[0], p0[1], p0[2],
+                p1[0], p1[1], p1[2],
+                p2[0], p2[1], p2[2],
+                p3[0], p3[1], p3[2]
+        };
+        slice.updateGeometry(res);
     }
 
 
@@ -332,9 +370,8 @@ public class Furrow3D implements Interceptable{
         double s = Math.sin(theta);
         normal[0] = c*normal[0] - s*normal[1];
         normal[1] = s*normal[0] + c*normal[1];
-        if(object!=null){
-            object.updatePosition(cm,normal);
-        }
+
+        updateGeometry();
     }
 
     public void rotateNormalY(double theta){
@@ -342,9 +379,8 @@ public class Furrow3D implements Interceptable{
         double s = Math.sin(theta);
         normal[0] = c*normal[0] + s*normal[2];
         normal[2] = -s*normal[0] + c*normal[2];
-        if(object!=null){
-            object.updatePosition(cm,normal);
-        }
+
+        updateGeometry();
     }
 
 
@@ -354,20 +390,24 @@ public class Furrow3D implements Interceptable{
         cm[1] = original[1];
         cm[2] = original[2];
 
-        if(object!=null){
-            object.updatePosition(cm,normal);
-        }
+        updateGeometry();
 
     }
-
+    public void updateGeometry(){
+        if(showPlane){
+            if(object2!=null){
+                object2.updatePosition(cm,normal);
+            }
+        } else{
+            updateSliceGeometry();
+        }
+    }
     public void setDirection(double[] dir) {
         normal[0]=dir[0];
         normal[1]=dir[1];
         normal[2]=dir[2];
-        if(object!=null){
-            object.updatePosition(cm,normal);
-        }
 
+        updateGeometry();
     }
 
     /**
@@ -426,5 +466,9 @@ public class Furrow3D implements Interceptable{
         //ri - h*normal
         return Vector3DOps.add(pt, normal, -h);
 
+    }
+
+    public void removeDataObject() {
+        slice = null;
     }
 }
