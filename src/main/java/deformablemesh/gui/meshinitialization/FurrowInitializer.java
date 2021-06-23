@@ -111,7 +111,7 @@ public class FurrowInitializer extends JDialog {
     private JPanel createHorizontalMidPlaneSelectionPanel(){
         double[] hPos = {0,0,0};
         double[] zDir = {0,0,1};
-        SlicePicker xyPicker  = new SlicePicker(model, zDir, hPos );
+        SlicePicker xyPicker  = new SlicePicker(model.getMeshImageStack(), zDir, hPos );
         JPanel horizontal = xyPicker.buildView();
         xyPicker.setLabel("pick x-y points. Slider adjusts z.");
         initializer.addPicker(xyPicker);
@@ -123,7 +123,7 @@ public class FurrowInitializer extends JDialog {
 
         double[] hPos = {0,0,0};
         double[] yDir = {0,-1,0};
-        SlicePicker xzPicker  = new SlicePicker(model, yDir, hPos );
+        SlicePicker xzPicker  = new SlicePicker(model.getMeshImageStack(), yDir, hPos );
         JPanel horizontal = xzPicker.buildView();
         xzPicker.setLabel("pick x-z points. Slider adjusts y.");
         initializer.addPicker(xzPicker);
@@ -135,7 +135,7 @@ public class FurrowInitializer extends JDialog {
 
         double[] hPos = {0,0,0};
         double[] xDir = {1,0,0};
-        SlicePicker yzPicker  = new SlicePicker(model, xDir, hPos );
+        SlicePicker yzPicker  = new SlicePicker(model.getMeshImageStack(), xDir, hPos );
         yzPicker.rotateView();
         JPanel horizontal = yzPicker.buildView();
         yzPicker.setLabel("pick z-y points. Slider adjusts x position");

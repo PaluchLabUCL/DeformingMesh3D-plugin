@@ -1,5 +1,6 @@
 package deformablemesh.gui.meshinitialization;
 
+import deformablemesh.MeshImageStack;
 import deformablemesh.SegmentationController;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Projectable;
@@ -23,7 +24,7 @@ import java.util.Map;
  */
 public class SlicePicker{
     Slice3DView view;
-    SegmentationController model;
+    MeshImageStack stack;
     double[] pos;
     double[] normal;
     Rectangle2D bounds;
@@ -35,12 +36,12 @@ public class SlicePicker{
     ThreeDCursor cursor;
 
     JScrollPane scroll;
-    public SlicePicker(SegmentationController m, double[] normal, double[] center){
+    public SlicePicker(MeshImageStack s, double[] normal, double[] center){
 
-        model = m;
+        stack = s;
         pos = center;
         this.normal = normal;
-        transformer = model.createFurrowTransform(pos, normal);
+        transformer = stack.createFurrowTransform(pos, normal);
         cursor = new ThreeDCursor(0,0,0);
         cursor.setVisible(false);
     }
@@ -69,11 +70,11 @@ public class SlicePicker{
         pos[1] = f*normal[1];
         pos[2] = f*normal[2];
         cursor.toPosition(f, normal);
-        transformer = model.createFurrowTransform(pos, normal);
+        transformer = stack.createFurrowTransform(pos, normal);
         for(int i = 0; i<transpose; i++){
             transformer.rotatePiOver2();
         }
-        view.setSlice(model.createSlice(transformer));
+        view.setSlice(stack.createSlice(transformer));
         view.panel.repaint();
 
     }
@@ -86,12 +87,12 @@ public class SlicePicker{
         container.setLayout(new BorderLayout());
         view = new Slice3DView();
 
-        transformer = model.createFurrowTransform(pos, normal);
+        transformer = stack.createFurrowTransform(pos, normal);
         for(int i = 0; i<transpose; i++){
             transformer.rotatePiOver2();
         }
 
-        Image img = model.createSlice(transformer);
+        Image img = stack.createSlice(transformer);
 
         view.setSlice(img);
         bounds = new Rectangle2D.Double(0, 0, img.getWidth(view.panel), img.getHeight(view.panel));

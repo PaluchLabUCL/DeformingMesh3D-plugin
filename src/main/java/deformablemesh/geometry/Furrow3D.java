@@ -347,7 +347,10 @@ public class Furrow3D implements Interceptable{
     private void updateSliceGeometry() {
 
         if(showPlane) return;
-
+        if(slice==null){
+            System.out.println("slice is null!");
+            return;
+        }
         MeshImageStack mis = slice.getMeshImageStack();
 
         int w = mis.getWidthPx();

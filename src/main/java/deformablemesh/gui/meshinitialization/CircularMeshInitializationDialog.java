@@ -1,5 +1,6 @@
 package deformablemesh.gui.meshinitialization;
 
+import deformablemesh.MeshImageStack;
 import deformablemesh.SegmentationController;
 import deformablemesh.SegmentationModel;
 import deformablemesh.geometry.Box3D;
@@ -10,6 +11,7 @@ import deformablemesh.geometry.Projectable;
 import deformablemesh.geometry.ProjectableMesh;
 import deformablemesh.geometry.RayCastMesh;
 import deformablemesh.geometry.Sphere;
+import deformablemesh.gui.FrameListener;
 import deformablemesh.gui.GuiTools;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.util.Vector3DOps;
@@ -32,8 +34,10 @@ import java.util.stream.Collectors;
  *
  * Created by melkor on 11/18/15.
  */
-public class CircularMeshInitializationDialog extends JDialog {
-    SegmentationController model;
+public class CircularMeshInitializationDialog extends JDialog implements FrameListener {
+    SegmentationController segmentationController;
+    MeshImageStack stack;
+
     Initializer initializer;
     Runnable callback;
     JCheckBox showMeshes;
@@ -48,12 +52,15 @@ public class CircularMeshInitializationDialog extends JDialog {
 
     public CircularMeshInitializationDialog(JFrame owner, SegmentationController model, Runnable callback){
         super(owner, false);
-        this.model = model;
+        this.segmentationController = model;
+        this.stack = model.getMeshImageStack();
+        model.addFrameListener(this);
+
         this.callback = callback;
         initializer = new Initializer();
-        cursor = new ThreeDCursor(model.getNormalizedImageWidth(), model.getNormalizedImageHeight(), model.getNormalizedImageDepth());
-        cursor.addNotification(initializer::repaint);
 
+        cursor = new ThreeDCursor(stack.getNormalizedImageWidth(), stack.getNormalizedImageHeight(), stack.getNormalizedImageDepth());
+        cursor.addNotification(initializer::repaint);
     }
 
     public void start(){
@@ -78,12 +85,8 @@ public class CircularMeshInitializationDialog extends JDialog {
         add.addActionListener(evt->{
             createMesh();
         });
-
-        JButton finish = new JButton("finish");
-        finish.addActionListener((evt)->{
-            finish();
-        });
-
+        JButton start = new JButton("start mesh");
+        start.addActionListener(this::startMesh);
         showMeshes = new JCheckBox("show meshes");
         showMeshes.setSelected(true);
         showMeshes.addActionListener((evt)->{
@@ -126,14 +129,14 @@ public class CircularMeshInitializationDialog extends JDialog {
         JButton selectOpenImage = new JButton("image");
         selectOpenImage.setToolTipText("select an open image.");
         selectOpenImage.addActionListener(evt->{
-            GuiTools.selectOpenImage(this, model);
+            GuiTools.selectOpenImage(this, segmentationController);
         });
 
         row.add(showCursor);
         row.add(showMeshes);
         row.add(cancel);
         row.add(add);
-        row.add(finish);
+
         row.add(Box.createHorizontalGlue());
         row.add(gridView);
         row.add(tabbedView);
@@ -192,6 +195,12 @@ public class CircularMeshInitializationDialog extends JDialog {
 
         showMeshes();
         setVisible(true);
+
+    }
+
+    private void startMesh(ActionEvent actionEvent) {
+
+
 
     }
 
@@ -254,7 +263,7 @@ public class CircularMeshInitializationDialog extends JDialog {
         }
 
         CompositeInterceptables collectionOfSpheres = new CompositeInterceptables(spheres);
-        Box3D bounds = model.getBounds();
+        Box3D bounds = segmentationController.getBounds();
         double[] com = new double[3];
         double v1 = 0;
         for(Sphere s: spheres){
@@ -294,9 +303,9 @@ public class CircularMeshInitializationDialog extends JDialog {
         List<Interceptable> system = new ArrayList<>(2);
         system.add(collectionOfSpheres);
         system.add(bounds);
-        DeformableMesh3D mesh = RayCastMesh.rayCastMesh(system, com, model.getDivisions());
+        DeformableMesh3D mesh = RayCastMesh.rayCastMesh(system, com, segmentationController.getDivisions());
         mesh.create3DObject();
-        model.initializeMesh(mesh);
+        segmentationController.initializeMesh(mesh);
         initializer.clear();
         showMeshes();
     }
@@ -305,10 +314,10 @@ public class CircularMeshInitializationDialog extends JDialog {
 
         double[] hPos = {0,0,0};
         double[] zDir = {0,0,1};
-        SlicePicker xyPicker  = new SlicePicker(model, zDir, hPos );
+        SlicePicker xyPicker  = new SlicePicker(stack, zDir, hPos );
         JPanel horizontal = xyPicker.buildView();
         xyPicker.setLabel("pick x-y points. Slider adjusts z.");
-        xyPicker.setLength(model.getNormalizedImageDepth());
+        xyPicker.setLength(stack.getNormalizedImageDepth());
         initializer.addPicker(xyPicker);
 
         return horizontal;
@@ -318,10 +327,10 @@ public class CircularMeshInitializationDialog extends JDialog {
 
         double[] hPos = {0,0,0};
         double[] yDir = {0,-1,0};
-        SlicePicker xzPicker  = new SlicePicker(model, yDir, hPos );
+        SlicePicker xzPicker  = new SlicePicker(stack, yDir, hPos );
         JPanel horizontal = xzPicker.buildView();
         xzPicker.setLabel("pick x-z points. Slider adjusts y.");
-        xzPicker.setLength(model.getNormalizedImageHeight());
+        xzPicker.setLength(stack.getNormalizedImageHeight());
         initializer.addPicker(xzPicker);
 
         return horizontal;
@@ -331,10 +340,10 @@ public class CircularMeshInitializationDialog extends JDialog {
 
         double[] hPos = {0,0,0};
         double[] xDir = {1,0,0};
-        SlicePicker yzPicker  = new SlicePicker(model, xDir, hPos );
+        SlicePicker yzPicker  = new SlicePicker(stack, xDir, hPos );
         yzPicker.rotateView();
         JPanel horizontal = yzPicker.buildView();
-        yzPicker.setLength(model.getNormalizedImageWidth());
+        yzPicker.setLength(stack.getNormalizedImageWidth());
         yzPicker.setLabel("pick z-y points. Slider adjusts x position");
         initializer.addPicker(yzPicker);
 
@@ -343,7 +352,8 @@ public class CircularMeshInitializationDialog extends JDialog {
 
     public void afterClosing(){
         callback.run();
-        model.clearTransientObjects();
+        segmentationController.clearTransientObjects();
+        segmentationController.removeFrameListener(this);
         dispose();
 
     }
@@ -370,6 +380,16 @@ public class CircularMeshInitializationDialog extends JDialog {
             frame.setVisible(true);
         });
     }
+
+    @Override
+    public void frameChanged(int i) {
+        if(segmentationController.getMeshImageStack() == stack){
+            //do nothing, the stack is managed by the controller.
+        } else{
+            stack.setFrame( segmentationController.getCurrentFrame());
+        }
+    }
+
     class Initializer implements MouseListener, MouseMotionListener {
         SphereModifier dragging;
         Map<JPanel, SlicePicker> pickers = new HashMap<>();
@@ -403,7 +423,7 @@ public class CircularMeshInitializationDialog extends JDialog {
                     origin = new double[]{x, y};
                     working = new Sphere(center, 0.000001);
                     addProjectable(working, Color.RED);
-                    model.addTransientObject(working.createDataObject());
+                    segmentationController.addTransientObject(working.createDataObject());
                 } else{
                     //finish.
                     spheres.add(working);
@@ -503,7 +523,7 @@ public class CircularMeshInitializationDialog extends JDialog {
         }
 
         void clear(){
-            model.clearTransientObjects();
+            segmentationController.clearTransientObjects();
             for(SlicePicker p: pickers.values()){
                 p.clear();
             }
@@ -542,13 +562,13 @@ public class CircularMeshInitializationDialog extends JDialog {
     void showMeshes(){
 
         if(showMeshes.isSelected()) {
-            model.submit(()->{
-                final List<DeformableMesh3D> meshes = model.getAllTracks().stream(
+            segmentationController.submit(()->{
+                final List<DeformableMesh3D> meshes = segmentationController.getAllTracks().stream(
 
                 ).filter(
-                        t -> t.containsKey(model.getCurrentFrame())
+                        t -> t.containsKey(segmentationController.getCurrentFrame())
                 ).map(
-                        t -> t.getMesh(model.getCurrentFrame())
+                        t -> t.getMesh(segmentationController.getCurrentFrame())
                 ).collect(Collectors.toList());
 
                 for (final DeformableMesh3D mesh : meshes) {

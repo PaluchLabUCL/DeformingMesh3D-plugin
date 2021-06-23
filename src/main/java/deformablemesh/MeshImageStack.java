@@ -1,10 +1,15 @@
 package deformablemesh;
 
 import deformablemesh.geometry.Box3D;
+import deformablemesh.geometry.Furrow3D;
+import deformablemesh.ringdetection.FurrowTransformer;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.io.FileInfo;
+import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
+
+import java.awt.Image;
 
 import static deformablemesh.geometry.DeformableMesh3D.ORIGIN;
 
@@ -332,6 +337,69 @@ public class MeshImageStack {
      */
     public double getValue(int x, int y, int z){
         return data[z][y][x];
+
+    }
+
+    public Image createSlice(FurrowTransformer transformer) {
+
+        int xcounts = transformer.getXCounts();
+        int ycounts = transformer.getYCounts();
+        ImageProcessor proc = new FloatProcessor(xcounts, ycounts);
+        double[] pt = new double[2];
+
+        for (int i = 0; i < xcounts; i++) {
+            for (int j = 0; j < ycounts; j++) {
+
+                pt[0] = i;
+                pt[1] = j;
+                double v = getInterpolatedValue(transformer.getVolumeCoordinates(pt));
+                try {
+                    proc.setf(i, j, (float) v);
+                } catch(Exception e){
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return proc.getBufferedImage();
+
+    }
+
+    public Image createSlice(double[] pos, double[] normal) {
+        FurrowTransformer transformer = new FurrowTransformer(new Furrow3D(pos, normal), this);
+        return createSlice(transformer);
+    }
+
+    /**
+     * Normalized length of the image along the z-axis.
+     *
+     * @return
+     */
+    public double getNormalizedImageDepth(){
+        return offsets[2]*2;
+    }
+
+    /**
+     * Normalized length of the image along the x-axis.
+     *
+     * @return
+     */
+    public double getNormalizedImageWidth(){
+        return offsets[0]*2;
+    }
+
+    /**
+     * Normalized length of the image along the y-axis.
+     *
+     * @return
+     */
+    public double getNormalizedImageHeight(){
+        return offsets[1]*2;
+    }
+
+    public FurrowTransformer createFurrowTransform(double[] pos, double[] normal){
+
+        return new FurrowTransformer(new Furrow3D(pos, normal), this);
 
     }
 

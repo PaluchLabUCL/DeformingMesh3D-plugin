@@ -95,13 +95,10 @@ public class TexturedPlaneDataObject extends DeformableMeshDataObject {
         double longest = xf > yf ?
                 zf > xf ? zf : xf :
                 zf > yf ? zf : yf;
-        System.out.println(xf + ", " + yf + ", " + zf);
 
         xf = longest/xf;
         yf = longest/yf;
         zf = longest/zf;
-        System.out.println( "scaled " + xf + ", " + yf + ", " + zf);
-        System.out.println( "offset: " + (offsets[0]*xf) + ", " + (offsets[1]*yf) + ", " + (offsets[2]*zf));
         Vector4f xPlane = new Vector4f((float)xf, 0, 0, (float)(offsets[0]*xf));
         Vector4f yPlane = new Vector4f(0, -(float)yf, 0, (float)(offsets[1]*yf));
         Vector4f zPlane = new Vector4f(0, 0, (float) zf, (float)(offsets[2]*zf));

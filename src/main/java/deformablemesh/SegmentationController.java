@@ -1030,7 +1030,7 @@ public class SegmentationController {
      * @return for transforming coordinates.
      */
     public FurrowTransformer createFurrowTransform(double[] pos, double[] normal) {
-        return model.createFurrowTransform(pos, normal);
+        return getMeshImageStack().createFurrowTransform(pos, normal);
     }
 
     /**
@@ -1043,7 +1043,7 @@ public class SegmentationController {
      * @return
      */
     public Image createSlice(double[] pos, double[] normal) {
-        return model.createSlice(pos, normal);
+        return getMeshImageStack().createSlice(pos, normal);
     }
 
     /**
@@ -1054,7 +1054,7 @@ public class SegmentationController {
      * @return
      */
     public Image createSlice(FurrowTransformer transformer){
-        return model.createSlice(transformer);
+        return getMeshImageStack().createSlice(transformer);
     }
 
     /**
@@ -2298,32 +2298,7 @@ public class SegmentationController {
     }
 
 
-    /**
-     * Normalized length of the image along the z-axis.
-     *
-     * @return
-     */
-    public double getNormalizedImageDepth(){
-        return model.stack.offsets[2]*2;
-    }
 
-    /**
-     * Normalized length of the image along the x-axis.
-     *
-     * @return
-     */
-    public double getNormalizedImageWidth(){
-        return model.stack.offsets[0]*2;
-    }
-
-    /**
-     * Normalized length of the image along the y-axis.
-     *
-     * @return
-     */
-    public double getNormalizedImageHeight(){
-        return model.stack.offsets[1]*2;
-    }
 
     /**
      * Adds a new frame listener that gets notified whenever: nextFrame, previousFrame, setFrame, or the backing imageplus is changed.

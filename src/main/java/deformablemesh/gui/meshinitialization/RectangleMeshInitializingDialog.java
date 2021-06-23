@@ -100,7 +100,7 @@ public class RectangleMeshInitializingDialog extends JDialog {
 
         double[] hPos = {0,0,0};
         double[] zDir = {0,0,1};
-        SlicePicker xyPicker  = new SlicePicker(model, zDir, hPos );
+        SlicePicker xyPicker  = new SlicePicker(model.getMeshImageStack(), zDir, hPos );
         JPanel horizontal = xyPicker.buildView();
         xyInitializer = new Initializer(xyPicker);
 
@@ -131,7 +131,7 @@ public class RectangleMeshInitializingDialog extends JDialog {
         double[] vPos = new double[]{0,0,0};
         double[] yDir = new double[]{0, 1, 0};
 
-        SlicePicker xzPicker = new SlicePicker(model, yDir, vPos );
+        SlicePicker xzPicker = new SlicePicker(model.getMeshImageStack(), yDir, vPos );
         JPanel vertical = xzPicker.buildView();
 
         xzInitializer = new Initializer(xzPicker);

@@ -552,45 +552,6 @@ public class SegmentationModel {
         return es;
     }
 
-    public Image createSlice(double[] pos, double[] normal) {
-
-        FurrowTransformer transformer = new FurrowTransformer(new Furrow3D(pos, normal), stack);
-
-        return createSlice(transformer);
-
-    }
-
-    public Image createSlice(FurrowTransformer transformer) {
-
-        int xcounts = transformer.getXCounts();
-        int ycounts = transformer.getYCounts();
-        ImageProcessor proc = new FloatProcessor(xcounts, ycounts);
-        double[] pt = new double[2];
-
-        for (int i = 0; i < xcounts; i++) {
-            for (int j = 0; j < ycounts; j++) {
-
-                pt[0] = i;
-                pt[1] = j;
-                double v = stack.getInterpolatedValue(transformer.getVolumeCoordinates(pt));
-                try {
-                    proc.setf(i, j, (float) v);
-                } catch(Exception e){
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        return proc.getBufferedImage();
-
-    }
-
-    public FurrowTransformer createFurrowTransform(double[] pos, double[] normal){
-
-        return new FurrowTransformer(new Furrow3D(pos, normal), stack);
-
-    }
-
 
 
     public void setMeshes(List<Track> meshes) {
