@@ -1207,6 +1207,57 @@ public class SegmentationController {
         }
     }
 
+    public void deformPartialMesh(){
+        DeformableMesh3D mesh = model.getSelectedMesh(getCurrentFrame());
+        Furrow3D furrow = model.getRingController().getFurrow();
+        if(furrow == null || mesh == null){
+            return;
+        }
+
+
+        List<List<Node3D>> frontBack = furrow.splitNodes(mesh.nodes);
+
+        long nextState = newState();
+        long oldState = currentState.get();
+        actionStack.postAction(new UndoableActions(){
+            final double[] positions = Arrays.copyOf(mesh.positions, mesh.positions.length);
+            double[] newPositions;
+            @Override
+            public void perform() {
+                main.submit(() -> {
+                    model.deformSelectedNodes(mesh, frontBack.get(0));
+                    newPositions = Arrays.copyOf(mesh.positions, mesh.positions.length);
+                    currentState.set(nextState);
+                });
+
+            }
+
+            @Override
+            public void undo() {
+                main.submit(()->{
+                    mesh.setPositions(positions);
+                    currentState.set(oldState);
+                });
+            }
+
+            @Override
+            public void redo() {
+                main.submit(()->{
+                    mesh.setPositions(newPositions);
+                    currentState.set(nextState);
+                });
+            }
+
+            @Override
+            public String getName(){
+                return "deform submesh";
+            }
+
+        });
+
+
+    }
+
     public void showTexturedMeshSurface(){
         submit(()->{
 

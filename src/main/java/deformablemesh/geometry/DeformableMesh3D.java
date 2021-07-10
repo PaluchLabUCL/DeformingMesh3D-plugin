@@ -1017,4 +1017,129 @@ public class DeformableMesh3D{
     public List<ExternalEnergy> getExternalEnergies() {
         return new ArrayList<>(energies);
     }
+
+    /**
+     * Creates a mesh consisting of all the provided nodes, and their immediate neighbors. If the mesh is deformed
+     * through update, then the neighboring nodes that were added to the sub mesh will be reset to their original position.
+     *
+     * @param nodes selected nodes that will be deformable in the sub mesh.
+     *
+     * @return a new mesh with the selected nodes and any nodes that share an edge or triangle.
+     */
+    public DeformableMesh3D createSubMesh(List<Node3D> nodes) {
+        Set<Node3D> selectedNodes = new HashSet<>(nodes);
+        Set<Node3D> orphanedNeighbors = new HashSet<>();
+
+        Set<Triangle3D> triToInclude = new HashSet<>();
+        Set<Connection3D> connection3DS = new HashSet<>();
+
+        for(Connection3D con: connections){
+            HashSet<Node3D> orphans = new HashSet<>();
+            if(!selectedNodes.contains(con.A)){
+                orphans.add(con.A);
+            }
+            if(!selectedNodes.contains(con.B)){
+                orphans.add(con.B);
+            }
+
+            if(orphans.size()==2){
+                continue;
+            } else{
+                connection3DS.add(con);
+                orphanedNeighbors.addAll(orphans);
+            }
+
+        }
+
+        for(Triangle3D triangle: triangles){
+            Set<Node3D> orphans = new HashSet<>();
+            if( !selectedNodes.contains(triangle.A) ){
+                orphans.add(triangle.A);
+            }
+            if( !selectedNodes.contains(triangle.B) ){
+                orphans.add(triangle.B);
+            }
+            if( !selectedNodes.contains(triangle.C) ){
+                orphans.add(triangle.C);
+            }
+            if(orphans.size()==3){
+                continue;
+            } else {
+                orphanedNeighbors.addAll(orphans);
+                triToInclude.add(triangle);
+            }
+
+        }
+
+        for(Connection3D con: connections){
+            //when 1 node of a triangle is added, the other two nodes share a connection
+            //that will not be added.
+            if(orphanedNeighbors.contains(con.A) && orphanedNeighbors.contains(con.B)){
+                connection3DS.add(con);
+            }
+        }
+
+
+        Map<Integer, Integer> packingMap = new HashMap<>();
+        double[] newPositionBuffer = new double[ ( nodes.size() + orphanedNeighbors.size() ) * 3];
+
+        int i = 0;
+        for(Node3D node: nodes ){
+            packingMap.put(node.index, i);
+            newPositionBuffer[3*i] = positions[node.index*3];
+            newPositionBuffer[3*i + 1] = positions[node.index*3 + 1];
+            newPositionBuffer[3*i + 2] = positions[node.index*3 + 2];
+            i++;
+        }
+
+        int[] frozen = new int[orphanedNeighbors.size()];
+        double[] fixedPositions = new double[orphanedNeighbors.size()*3];
+        int iFrozen = 0;
+        for(Node3D orphan: orphanedNeighbors){
+            packingMap.put(orphan.index, i);
+            newPositionBuffer[3*i] = positions[orphan.index*3];
+            newPositionBuffer[3*i + 1] = positions[orphan.index*3 + 1];
+            newPositionBuffer[3*i + 2] = positions[orphan.index*3 + 2];
+
+            frozen[iFrozen] = i;
+            fixedPositions[3*iFrozen] = positions[orphan.index*3];
+            fixedPositions[3*iFrozen + 1] = positions[orphan.index*3 + 1];
+            fixedPositions[3*iFrozen + 2] = positions[orphan.index*3 + 2];
+            iFrozen++;
+
+            i++;
+        }
+
+        int[] connectionIndexes = new int[connection3DS.size()*2];
+        int k = 0;
+        for(Connection3D con: connection3DS){
+            connectionIndexes[2*k] = packingMap.get(con.A.index);
+            connectionIndexes[2*k + 1] = packingMap.get(con.B.index);
+            k++;
+        }
+
+        int[] triangleIndexes = new int[triToInclude.size()*3];
+        int j = 0;
+        for(Triangle3D tri: triToInclude){
+            triangleIndexes[3*j] = packingMap.get(tri.A.index);
+            triangleIndexes[3*j + 1] = packingMap.get(tri.B.index);
+            triangleIndexes[3*j + 2] = packingMap.get(tri.C.index);
+            j++;
+        }
+
+
+
+        return new DeformableMesh3D(newPositionBuffer, connectionIndexes, triangleIndexes){
+            @Override
+            public void update(){
+                super.update();
+                for(int i = 0; i<frozen.length; i++){
+                    int dex = frozen[i];
+                    positions[3*dex] = fixedPositions[3*i];
+                    positions[3*dex + 1] = fixedPositions[3*i + 1];
+                    positions[3*dex + 2] = fixedPositions[3*i + 2];
+                }
+            }
+        };
+    }
 }

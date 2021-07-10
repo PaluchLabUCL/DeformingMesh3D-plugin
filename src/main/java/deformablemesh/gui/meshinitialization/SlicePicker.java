@@ -62,7 +62,15 @@ public class SlicePicker{
         view.addDrawable(cursor.getDrawable(transformer));
         this.cursor = cursor;
     }
+    public void refreshSlice(){
+        transformer = stack.createFurrowTransform(pos, normal);
+        for(int i = 0; i<transpose; i++){
+            transformer.rotatePiOver2();
+        }
+        view.setSlice(stack.createSlice(transformer));
+        view.panel.repaint();
 
+    }
     public void setSliderValue(int v){
         double f = (0.0001*v - 0.5)*length;
 

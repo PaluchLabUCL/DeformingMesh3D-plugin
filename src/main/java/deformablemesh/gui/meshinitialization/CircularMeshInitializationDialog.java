@@ -121,7 +121,7 @@ public class CircularMeshInitializationDialog extends JDialog implements FrameLi
             }
             setView(tabs);
         });
-        JButton cancel = new JButton("cancel");
+        JButton cancel = new JButton("close");
         cancel.addActionListener((evt)->{
             setVisible(false);
             afterClosing();
@@ -388,6 +388,10 @@ public class CircularMeshInitializationDialog extends JDialog implements FrameLi
         } else{
             stack.setFrame( segmentationController.getCurrentFrame());
         }
+        initializer.refreshSlices();
+        initializer.clearProjectableMeshes();
+        showMeshes();
+
     }
 
     class Initializer implements MouseListener, MouseMotionListener {
@@ -399,6 +403,12 @@ public class CircularMeshInitializationDialog extends JDialog implements FrameLi
         List<SphereModifier> modifiers = new ArrayList<>();
         Sphere working;
         public Initializer(){
+        }
+
+        public void refreshSlices(){
+            for(SlicePicker p: pickers.values()){
+                p.refreshSlice();
+            }
         }
 
         public void addPicker(SlicePicker picker){
@@ -550,6 +560,7 @@ public class CircularMeshInitializationDialog extends JDialog implements FrameLi
             }
             meshMap.clear();
         }
+
     }
 
     void showCursor(){

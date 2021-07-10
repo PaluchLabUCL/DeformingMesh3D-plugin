@@ -175,6 +175,46 @@ public class SegmentationModel {
 
     }
 
+    public void deformSelectedNodes(DeformableMesh3D mesh, List<Node3D> nodes){
+        if(mesh==null || nodes.size()==0){
+            GuiTools.errorMessage("No mesh to deform!");
+        }
+
+        DeformableMesh3D subMesh =mesh.createSubMesh(nodes);
+
+        stop = false;
+        List<ExternalEnergy> energies = getExternalEnergies(mesh);
+
+
+        if(reshape){
+            subMesh.ALPHA=ALPHA;
+            subMesh.GAMMA=GAMMA;
+            subMesh.BETA=BETA;
+            subMesh.reshape();
+            reshape=false;
+        }
+        int c = 0;
+        int count = Integer.MAX_VALUE;
+
+        while(!stop&&c<count){
+            subMesh.update();
+            if(hardBoundaries){
+                subMesh.confine(getBounds());
+            }
+            c++;
+        }
+
+        for(int i = 0; i<nodes.size(); i++){
+            int n = nodes.get(i).index;
+            mesh.positions[3*n] = subMesh.positions[3*i];
+            mesh.positions[3*n + 1] = subMesh.positions[3*i + 1];
+            mesh.positions[3*n + 2] = subMesh.positions[3*i + 2];
+
+        }
+
+        mesh.resetPositions();
+
+    }
 
     public void stopRunning(){
         stop = true;
@@ -416,6 +456,7 @@ public class SegmentationModel {
                 break;
             case SmoothingForce:
                 erg = new SmoothingForce(mesh, getImageWeight());
+                break;
             case None:
             default:
                 erg = new ExternalEnergy(){
@@ -486,7 +527,6 @@ public class SegmentationModel {
     }
 
     public List<ExternalEnergy> getExternalEnergies( DeformableMesh3D selectedMesh){
-        System.out.println(image_weight + ", " + pressure);
         List<ExternalEnergy> energies = new ArrayList<>();
         //mesh.PRESSURE = pressure;
         if(image_weight!=0) {
@@ -500,7 +540,6 @@ public class SegmentationModel {
         if(normalize!=0){
             energies.add(new TriangleAreaDistributor(stack, selectedMesh, normalize));
         }
-
         if(stericNeighborWeight!=0){
             List<StericMesh> segs = generateStericEnergies(selectedMesh);
             energies.addAll(segs);
@@ -678,6 +717,7 @@ public class SegmentationModel {
     public Box3D getBounds(){
         return stack.getLimits();
     }
+
 
 
     public void measureAllVolumes() {
