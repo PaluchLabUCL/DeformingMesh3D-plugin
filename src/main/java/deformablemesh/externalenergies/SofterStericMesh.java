@@ -79,8 +79,15 @@ public class SofterStericMesh extends StericMesh {
                 boolean borked = false;
                 for (RotatedIntersection inter : intersections) {
                     if (inter.dot > 0) {
+
                         //We've crossed the origin, so the last intersection determines
                         // the penetration.
+                        if(inter.dot < -penetration){
+                            penetration = inter.dot;
+                            //It's closer to leave out this way. 2 possibilties:
+                            //  - The mesh is inverted.
+                            //  - The mesh crosses the intersected mesh.
+                        }
                         break;
                     } else {
 
@@ -142,6 +149,7 @@ public class SofterStericMesh extends StericMesh {
                 break;
             }
         }
+
         return getNormal(best);
     }
 
