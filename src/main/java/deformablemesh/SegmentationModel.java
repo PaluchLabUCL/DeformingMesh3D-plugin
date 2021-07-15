@@ -175,44 +175,35 @@ public class SegmentationModel {
 
     }
 
-    public void deformSelectedNodes(DeformableMesh3D mesh, List<Node3D> nodes){
-        if(mesh==null || nodes.size()==0){
+    /**
+     * Deforms the provided mesh using the prepared energies and values. Will reshape each iteration.
+     *
+     * @param mesh
+     */
+    public void deformMesh(DeformableMesh3D mesh){
+        if(mesh==null){
             GuiTools.errorMessage("No mesh to deform!");
         }
 
-        DeformableMesh3D subMesh =mesh.createSubMesh(nodes);
 
         stop = false;
         List<ExternalEnergy> energies = getExternalEnergies(mesh);
 
-
-        if(reshape){
-            subMesh.ALPHA=ALPHA;
-            subMesh.GAMMA=GAMMA;
-            subMesh.BETA=BETA;
-            subMesh.reshape();
-            reshape=false;
-        }
+        energies.forEach(mesh::addExternalEnergy);
+        mesh.ALPHA=ALPHA;
+        mesh.GAMMA=GAMMA;
+        mesh.BETA=BETA;
+        mesh.reshape();
         int c = 0;
         int count = Integer.MAX_VALUE;
 
         while(!stop&&c<count){
-            subMesh.update();
+            mesh.update();
             if(hardBoundaries){
-                subMesh.confine(getBounds());
+                mesh.confine(getBounds());
             }
             c++;
         }
-
-        for(int i = 0; i<nodes.size(); i++){
-            int n = nodes.get(i).index;
-            mesh.positions[3*n] = subMesh.positions[3*i];
-            mesh.positions[3*n + 1] = subMesh.positions[3*i + 1];
-            mesh.positions[3*n + 2] = subMesh.positions[3*i + 2];
-
-        }
-
-        mesh.resetPositions();
 
     }
 

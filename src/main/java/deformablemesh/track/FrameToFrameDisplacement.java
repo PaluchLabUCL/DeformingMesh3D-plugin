@@ -16,6 +16,7 @@ import lightgraph.Graph;
 import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -311,6 +312,7 @@ public class FrameToFrameDisplacement {
 
 
     static public ImagePlus generateMosaicImage(List<DeformableMesh3D> meshes){
+
         int w = 128;
         int h = 128;
         int d = 128;
@@ -336,14 +338,14 @@ public class FrameToFrameDisplacement {
         return mos;
     }
 
+
     public static double[][] jaccardIndexMatrix(List<DeformableMesh3D> one, List<DeformableMesh3D> two){
         if(two.size() == 0){
             return new double[one.size()][0];
         }
         ImagePlus mos1 = generateMosaicImage(one);
         ImagePlus mos2 = generateMosaicImage(two);
-        mos1.show();
-        mos2.show();
+
 
         ImageStack stackA = mos1.getStack();
         ImageStack stackB = mos2.getStack();

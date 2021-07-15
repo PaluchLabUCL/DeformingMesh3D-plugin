@@ -429,8 +429,13 @@ public class MeshImageStack {
     }
 
 
-
-
+    /**
+     * Returns x, y, z in (px, px, slice) indexes of the backing data array.
+     * The z index is in slices, but 0 indexed compared to the 1 indexed method in the
+     * ImagePlus.
+     * @param r x, y, z in normalized coordinates.
+     * @return closest double representation to the provided point in image coordinate space.
+     */
     public double[] getImageCoordinates(double[] r) {
         double[] ret = new double[3];
 

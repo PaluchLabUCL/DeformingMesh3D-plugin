@@ -53,8 +53,6 @@ public class SegmentationController {
     MeshFrame3D meshFrame3D;
 
     AtomicLong lastSaved = new AtomicLong(-1);
-    AtomicLong currentState = new AtomicLong(0);
-    AtomicLong cumulativeStates = new AtomicLong(0);
     ExceptionThrowingService main = new ExceptionThrowingService();
 
     /**
@@ -389,6 +387,7 @@ public class SegmentationController {
         return model.stack;
     }
 
+
     public void reMeshConnections(Track track, int frame, double minConnectionLength, double maxConnectionLength){
         if(minConnectionLength > maxConnectionLength){
             System.out.println("Minimum connection length should be less than max connection length");
@@ -406,9 +405,7 @@ public class SegmentationController {
         });
     }
 
-    private long newState(){
-        return cumulativeStates.incrementAndGet();
-    }
+
 
     /**
      * Adds all of the provided meshes to the corresponding track. The tracks and meshes are associated by
@@ -422,8 +419,6 @@ public class SegmentationController {
         if(tracks.size() != meshes.size()){
             throw new RuntimeException("tracks and meshes must be a 1 to 1 correspondance");
         }
-        long nextState = newState();
-        long oldState = currentState.get();
 
 
         actionStack.postAction(new UndoableActions(){
@@ -438,7 +433,6 @@ public class SegmentationController {
                     for(int i = 0; i<tcks.size(); i++){
                         model.addMeshToTrack(f, newer.get(i), tcks.get(i));
                     }
-                    currentState.set(nextState);
                 });
             }
 
@@ -456,7 +450,6 @@ public class SegmentationController {
                         }
 
                     }
-                    currentState.set(oldState);
                 });
             }
 
@@ -467,7 +460,6 @@ public class SegmentationController {
                         for(int i = 0; i<tcks.size(); i++){
                             model.addMeshToTrack(f, newer.get(i), tcks.get(i));
                         }
-                        currentState.set(nextState);
                     });
                 });
             }
@@ -489,9 +481,6 @@ public class SegmentationController {
      */
     public void setMesh(Track track, int frame, DeformableMesh3D mesh){
 
-        long newState = newState();
-        long oldState = currentState.get();
-
         actionStack.postAction(new UndoableActions(){
 
             final DeformableMesh3D old = track.getMesh(frame);
@@ -503,7 +492,6 @@ public class SegmentationController {
             public void perform() {
                 submit(() -> {
                     model.addMeshToTrack(f, newer, track);
-                    currentState.set(newState);
                 });
             }
 
@@ -515,7 +503,6 @@ public class SegmentationController {
                     } else{
                         model.addMeshToTrack(f, old, track);
                     }
-                    currentState.set(oldState);
                 });
             }
 
@@ -523,7 +510,6 @@ public class SegmentationController {
             public void redo() {
                 submit(() -> {
                     model.addMeshToTrack(f, newer, track);
-                    currentState.set(newState);
                 });
             }
 
@@ -533,6 +519,7 @@ public class SegmentationController {
             }
         });
     }
+
     public void reMeshConnections(double minConnectionLength, double maxConnectionLength){
         int f = model.getCurrentFrame();
         Track track = model.getSelectedTrack();
@@ -859,8 +846,6 @@ public class SegmentationController {
      * @param mesh
      */
     public void startNewMeshTrack(int frame, DeformableMesh3D mesh){
-        long nextState = newState();
-        long oldState = currentState.get();
 
         actionStack.postAction(new UndoableActions(){
             DeformableMesh3D m = mesh;
@@ -870,7 +855,6 @@ public class SegmentationController {
             public void perform() {
                 submit(()->{
                     track = model.startMeshTrack(f, m);
-                    currentState.set(nextState);
                 });
             }
 
@@ -878,7 +862,6 @@ public class SegmentationController {
             public void undo() {
                 submit( ()->{
                     model.removeMeshFromTrack(f, m, track);
-                    currentState.set(oldState);
                 });
             }
 
@@ -886,7 +869,6 @@ public class SegmentationController {
             public void redo() {
                 submit(()->{
                     model.addMeshToTrack(f, m, track);
-                    currentState.set(nextState);
                 });
             }
             @Override
@@ -930,8 +912,6 @@ public class SegmentationController {
      * @param m
      */
     public void addMesh(int frame, DeformableMesh3D m){
-        long oldState = currentState.get();
-        long nextState = newState();
 
         actionStack.postAction(new UndoableActions(){
 
@@ -949,7 +929,6 @@ public class SegmentationController {
                     } else {
                         model.addMeshToTrack(f, newer, track);
                     }
-                    currentState.set(nextState);
                 });
             }
 
@@ -961,7 +940,6 @@ public class SegmentationController {
                     } else{
                         model.addMeshToTrack(f, old, track);
                     }
-                    currentState.set(oldState);
                 });
 
             }
@@ -970,7 +948,6 @@ public class SegmentationController {
             public void redo() {
                 submit(() -> {
                     model.addMeshToTrack(f, newer, track);
-                    currentState.set(nextState);
                 });
             }
 
@@ -987,8 +964,6 @@ public class SegmentationController {
         actionStack.postAction(new UndoableActions() {
             final int frame = getCurrentFrame();
             final List<Track> tracks = new ArrayList<>(meshes.size());
-            final long nextState = newState();
-            final long previousState = currentState.get();
             @Override
             public void perform() {
                 submit(()->{
@@ -996,7 +971,6 @@ public class SegmentationController {
                         Track track = model.startMeshTrack(frame, mesh);
                         tracks.add(track);
                     }
-                    currentState.set(nextState);
                 });
             }
 
@@ -1004,7 +978,6 @@ public class SegmentationController {
             public void undo() {
                 submit(()->{
                     tracks.forEach(model::removeMeshTrack);
-                    currentState.set(previousState);
                 });
             }
 
@@ -1012,7 +985,6 @@ public class SegmentationController {
             public void redo() {
                 submit(()->{
                     tracks.forEach(model::addMeshTrack);
-                    currentState.set(nextState);
                 });
             }
             @Override
@@ -1208,7 +1180,10 @@ public class SegmentationController {
     }
 
     public void deformPartialMesh(){
-        DeformableMesh3D mesh = model.getSelectedMesh(getCurrentFrame());
+        Track track = getSelectedMeshTrack();
+        int frame = getCurrentFrame();
+
+        DeformableMesh3D mesh = track.getMesh(frame);
         Furrow3D furrow = model.getRingController().getFurrow();
         if(furrow == null || mesh == null){
             return;
@@ -1216,18 +1191,36 @@ public class SegmentationController {
 
 
         List<List<Node3D>> frontBack = furrow.splitNodes(mesh.nodes);
+        List<Node3D> nodes = frontBack.get(1);
 
-        long nextState = newState();
-        long oldState = currentState.get();
+        if(nodes.size()==0){
+            return;
+        }
         actionStack.postAction(new UndoableActions(){
             final double[] positions = Arrays.copyOf(mesh.positions, mesh.positions.length);
             double[] newPositions;
             @Override
             public void perform() {
                 main.submit(() -> {
-                    model.deformSelectedNodes(mesh, frontBack.get(0));
+                    model.removeMeshFromTrack(frame, mesh, track);
+                    DeformableMesh3D subMesh =mesh.createSubMesh(nodes);
+                    subMesh.create3DObject();
+                    subMesh.setShowSurface(true);
+                    meshFrame3D.addDataObject(subMesh.data_object);
+                    model.deformMesh(subMesh);
+
+                    for(int i = 0; i<nodes.size(); i++){
+                        int n = nodes.get(i).index;
+                        mesh.positions[3*n] = subMesh.positions[3*i];
+                        mesh.positions[3*n + 1] = subMesh.positions[3*i + 1];
+                        mesh.positions[3*n + 2] = subMesh.positions[3*i + 2];
+
+                    }
+                    mesh.resetPositions();
+                    model.addMeshToTrack(frame, mesh, track);
+                    model.selectMeshTrack(track);
+                    meshFrame3D.removeDataObject(subMesh.data_object);
                     newPositions = Arrays.copyOf(mesh.positions, mesh.positions.length);
-                    currentState.set(nextState);
                 });
 
             }
@@ -1236,7 +1229,6 @@ public class SegmentationController {
             public void undo() {
                 main.submit(()->{
                     mesh.setPositions(positions);
-                    currentState.set(oldState);
                 });
             }
 
@@ -1244,7 +1236,6 @@ public class SegmentationController {
             public void redo() {
                 main.submit(()->{
                     mesh.setPositions(newPositions);
-                    currentState.set(nextState);
                 });
             }
 
@@ -1284,8 +1275,6 @@ public class SegmentationController {
             }
         }
         if(meshes.size()>0){
-            long nextState = newState();
-            long oldState = currentState.get();
 
             final List<double[]> allPositions = new ArrayList<>();
             final List<double[]> newPositions = new ArrayList<>();
@@ -1300,7 +1289,6 @@ public class SegmentationController {
                         for(DeformableMesh3D mesh: meshes){
                             newPositions.add(Arrays.copyOf(mesh.positions, mesh.positions.length));
                         }
-                        currentState.set(nextState);
                     });
 
                 }
@@ -1311,7 +1299,6 @@ public class SegmentationController {
                         for(int i = 0; i<meshes.size(); i++){
                             meshes.get(i).setPositions(allPositions.get(i));
                         }
-                        currentState.set(oldState);
                     });
                 }
 
@@ -1322,7 +1309,6 @@ public class SegmentationController {
                         for(int i = 0; i<meshes.size(); i++){
                             meshes.get(i).setPositions(newPositions.get(i));
                         }
-                        currentState.set(nextState);
                     });
 
                 }
@@ -1392,8 +1378,6 @@ public class SegmentationController {
      * @param count number of iterations, if less than zero, it continues to deform until stopped.
      */
     public void deformMesh(final int count){
-        long nextState = newState();
-        long oldState = currentState.get();
         actionStack.postAction(new UndoableActions(){
             final DeformableMesh3D mesh = model.getSelectedMesh(model.getCurrentFrame());
             final double[] positions = Arrays.copyOf(mesh.positions, mesh.positions.length);
@@ -1403,7 +1387,6 @@ public class SegmentationController {
                 main.submit(() -> {
                     model.deformMesh(count);
                     newPositions = Arrays.copyOf(mesh.positions, mesh.positions.length);
-                    currentState.set(nextState);
                 });
 
             }
@@ -1412,7 +1395,6 @@ public class SegmentationController {
             public void undo() {
                 main.submit(()->{
                     mesh.setPositions(positions);
-                    currentState.set(oldState);
                 });
             }
 
@@ -1420,7 +1402,6 @@ public class SegmentationController {
             public void redo() {
                 main.submit(()->{
                     mesh.setPositions(newPositions);
-                    currentState.set(nextState);
                 });
             }
 
@@ -1622,8 +1603,12 @@ public class SegmentationController {
     public void saveMeshes(File f) {
         submit(()->{
             model.saveMeshes(f);
-            lastSaved.set(currentState.get());
+            lastSaved.set(getCurrentState());
         });
+    }
+
+    public long getCurrentState(){
+        return actionStack.getCurrentState();
     }
 
     /**
@@ -1634,16 +1619,13 @@ public class SegmentationController {
     public void loadMeshes(File f) {
         submit(()->{
             List<Track> replacements = MeshWriter.loadMeshes(f);
-            long nextState = newState();
-            long prevState = currentState.get();
             actionStack.postAction(new UndoableActions(){
                 final List<Track> old = new ArrayList<>(model.getAllTracks());
                 @Override
                 public void perform() {
                     submit(()->{
                         model.setMeshes(replacements);
-                        lastSaved.set(nextState);
-                        currentState.set(nextState);
+                        lastSaved.set(actionStack.getCurrentState());
                     });
 
                 }
@@ -1652,7 +1634,6 @@ public class SegmentationController {
                 public void undo() {
                     submit(()->{
                         model.setMeshes(old);
-                        currentState.set(prevState);
                     });
                 }
 
@@ -1660,7 +1641,6 @@ public class SegmentationController {
                 public void redo() {
                     submit(()->{
                         model.setMeshes(replacements);
-                        currentState.set(nextState);
                     });
                 }
 
@@ -1704,8 +1684,6 @@ public class SegmentationController {
                     break;
             }
 
-            long nextState = newState();
-            long oldState = currentState.get();
             actionStack.postAction(new UndoableActions(){
                 final List<Track> old = new ArrayList<>(model.getAllTracks());
                 @Override
@@ -1713,7 +1691,6 @@ public class SegmentationController {
                     submit(()->{
                         imports.addAll(old);
                         model.setMeshes(imports);
-                        currentState.set(nextState);
                     });
 
                 }
@@ -1722,7 +1699,6 @@ public class SegmentationController {
                 public void undo() {
                     submit(()->{
                         model.setMeshes(old);
-                        currentState.set(oldState);
                     });
                 }
 
@@ -1730,7 +1706,6 @@ public class SegmentationController {
                 public void redo() {
                     submit(()->{
                         model.setMeshes(imports);
-                        currentState.set(nextState);
                     });
                 }
 
@@ -2195,7 +2170,7 @@ public class SegmentationController {
      * @return
      */
     public boolean getMeshModified() {
-        return lastSaved.get() != currentState.get();
+        return lastSaved.get() != actionStack.getCurrentState();
     }
 
     public void saveParameters(File f) {

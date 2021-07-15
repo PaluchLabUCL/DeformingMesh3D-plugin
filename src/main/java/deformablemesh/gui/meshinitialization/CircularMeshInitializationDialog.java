@@ -3,8 +3,13 @@ package deformablemesh.gui.meshinitialization;
 import deformablemesh.MeshImageStack;
 import deformablemesh.SegmentationController;
 import deformablemesh.SegmentationModel;
+import deformablemesh.externalenergies.PerpendicularGradientEnergy;
+import deformablemesh.externalenergies.PerpendicularIntensityEnergy;
+import deformablemesh.externalenergies.PressureForce;
 import deformablemesh.geometry.Box3D;
 import deformablemesh.geometry.CompositeInterceptables;
+import deformablemesh.geometry.ConnectionRemesher;
+import deformablemesh.geometry.CurvatureCalculator;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Interceptable;
 import deformablemesh.geometry.Projectable;
@@ -14,8 +19,12 @@ import deformablemesh.geometry.Sphere;
 import deformablemesh.gui.FrameListener;
 import deformablemesh.gui.GuiTools;
 import deformablemesh.meshview.MeshFrame3D;
+import deformablemesh.simulations.FillingBinaryImage;
 import deformablemesh.util.Vector3DOps;
 import ij.ImagePlus;
+import ij.ImageStack;
+import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,12 +43,11 @@ import java.util.stream.Collectors;
  *
  * Created by melkor on 11/18/15.
  */
-public class CircularMeshInitializationDialog extends JDialog implements FrameListener {
+public class CircularMeshInitializationDialog implements FrameListener {
     SegmentationController segmentationController;
     MeshImageStack stack;
 
     Initializer initializer;
-    Runnable callback;
     JCheckBox showMeshes;
     ThreeDCursor cursor;
     JCheckBox showCursor;
@@ -49,14 +57,12 @@ public class CircularMeshInitializationDialog extends JDialog implements FrameLi
     JPanel content;
     JPanel host;
     JComponent showing;
-
-    public CircularMeshInitializationDialog(JFrame owner, SegmentationController model, Runnable callback){
-        super(owner, false);
+    Runnable closeCallback = ()->{};
+    public CircularMeshInitializationDialog(SegmentationController model){
         this.segmentationController = model;
         this.stack = model.getMeshImageStack();
         model.addFrameListener(this);
 
-        this.callback = callback;
         initializer = new Initializer();
 
         cursor = new ThreeDCursor(stack.getNormalizedImageWidth(), stack.getNormalizedImageHeight(), stack.getNormalizedImageDepth());
@@ -121,20 +127,26 @@ public class CircularMeshInitializationDialog extends JDialog implements FrameLi
             }
             setView(tabs);
         });
-        JButton cancel = new JButton("close");
-        cancel.addActionListener((evt)->{
-            setVisible(false);
+        JButton close = new JButton("close");
+        close.addActionListener(evt->{
             afterClosing();
         });
+
+        JButton clear = new JButton("clear");
+        clear.addActionListener(evt->{
+            clearSpheres();
+        });
+
         JButton selectOpenImage = new JButton("image");
         selectOpenImage.setToolTipText("select an open image.");
         selectOpenImage.addActionListener(evt->{
-            GuiTools.selectOpenImage(this, segmentationController);
+            //GuiTools.selectOpenImage(this, segmentationController);
         });
 
         row.add(showCursor);
         row.add(showMeshes);
-        row.add(cancel);
+        row.add(close);
+        row.add(clear);
         row.add(add);
 
         row.add(Box.createHorizontalGlue());
@@ -156,52 +168,16 @@ public class CircularMeshInitializationDialog extends JDialog implements FrameLi
         tabs = new JTabbedPane();
 
 
-        setContentPane(content);
-
-
-        pack();
 
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        Dimension size = getSize();
-
-
-        if(size.width>=0.8*screenSize.width || size.height>=0.8*screenSize.height){
-            int nw = (int)(size.width*0.8);
-            int nh = (int)(size.height*0.8);
-
-            if(nw>size.width){
-                nw = size.width;
-            }
-            if(nh>size.height){
-                nh = size.height;
-            }
-            setSize(nw, nh);
-        }
-
-
-        setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
-        addWindowListener(new WindowListener(){
-
-            public void windowOpened(WindowEvent e) {}
-            public void windowClosing(WindowEvent e) {
-                afterClosing();
-            }
-            public void windowClosed(WindowEvent e) {}
-            public void windowIconified(WindowEvent e) {}
-            public void windowDeiconified(WindowEvent e) {}
-            public void windowActivated(WindowEvent e) {}
-            public void windowDeactivated(WindowEvent e) {}
-        });
-
         showMeshes();
-        setVisible(true);
-
     }
 
     private void startMesh(ActionEvent actionEvent) {
+    }
 
-
-
+    public void setCloseCallback( Runnable r){
+        closeCallback = r;
     }
 
     public void setView(JComponent panel){
@@ -215,18 +191,43 @@ public class CircularMeshInitializationDialog extends JDialog implements FrameLi
         showing = panel;
         content.add(panel);
 
-        content.invalidate();
-        validate();
+        content.validate();
+        content.repaint();
     }
 
 
 
     public void finish(){
         createMesh();
-        setVisible(false);
         afterClosing();
     }
 
+
+    public DeformableMesh3D fillSpheresWithMesh(List<Sphere> spheres,DeformableMesh3D mesh, double min, double max){
+
+        ConnectionRemesher mesher = new ConnectionRemesher();
+        mesher.setMinAndMaxLengths(min, max);
+        mesh = mesher.remesh(mesh);
+
+        ImagePlus binaryPlus = getBinaryImage(spheres, stack);
+        MeshImageStack mis = new MeshImageStack(binaryPlus);
+        PressureForce pf = new PressureForce(mesh, 1.0);
+        PerpendicularGradientEnergy pie = new PerpendicularGradientEnergy(mis, mesh, 1.0);
+        mesh.ALPHA = 1.0;
+        mesh.BETA = 0.1;
+        mesh.GAMMA = 1000;
+
+        mesh.addExternalEnergy(pf);
+        mesh.addExternalEnergy(pie);
+
+        mesh.reshape();
+        for(int i = 0; i<25; i++){
+            mesh.update();
+        }
+
+        return mesh;
+
+    }
     public static DeformableMesh3D createMeshFromSpheres(List<Sphere> spheres, int divisions){
         if(spheres.size()==0){
             return null;
@@ -253,7 +254,43 @@ public class CircularMeshInitializationDialog extends JDialog implements FrameLi
 
         List<Interceptable> system = new ArrayList<>(2);
         system.add(collectionOfSpheres);
+
         return RayCastMesh.rayCastMesh(system, com, divisions);
+    }
+
+    static ImagePlus getBinaryImage(List<Sphere> spheres, MeshImageStack stack){
+        int w = stack.getWidthPx();
+        int h = stack.getHeightPx();
+        int d = stack.getNSlices();
+        ImagePlus plus = new ImagePlus();
+        ImageStack imgStack = new ImageStack(w, h);
+        double[] pt = new double[3];
+        for(int i = 0; i < d; i++){
+            int n = w*h;
+            pt[2] = i;
+            short[] px = new short[n];
+            for(int j = 0; j<n; j++){
+                pt[0] = j%w;
+                pt[1] = j/w;
+
+                short contained = spheres.stream().anyMatch(
+                        sphere -> sphere.contains(stack.getNormalizedCoordinate(pt))
+                )? (short)1 : (short)0;
+
+
+                px[j] = contained;
+            }
+            ImageProcessor slice = new ShortProcessor(w, h);
+            slice.setPixels(px);
+            imgStack.addSlice(slice);
+        }
+        plus.setStack(imgStack,1, 1, stack.getNSlices());
+
+        return plus;
+    }
+    private void clearSpheres(){
+        initializer.clear();
+        segmentationController.clearTransientObjects();
     }
 
     private void createMesh(){
@@ -304,7 +341,9 @@ public class CircularMeshInitializationDialog extends JDialog implements FrameLi
         system.add(collectionOfSpheres);
         system.add(bounds);
         DeformableMesh3D mesh = RayCastMesh.rayCastMesh(system, com, segmentationController.getDivisions());
-        mesh.create3DObject();
+        //mesh = fillSpheresWithMesh(spheres, mesh, 0.01, 0.025);
+        //mesh.create3DObject();
+
         segmentationController.initializeMesh(mesh);
         initializer.clear();
         showMeshes();
@@ -351,11 +390,9 @@ public class CircularMeshInitializationDialog extends JDialog implements FrameLi
     }
 
     public void afterClosing(){
-        callback.run();
+        closeCallback.run();
         segmentationController.clearTransientObjects();
         segmentationController.removeFrameListener(this);
-        dispose();
-
     }
 
     public static void main(String[] args){
@@ -373,7 +410,7 @@ public class CircularMeshInitializationDialog extends JDialog implements FrameLi
             controls.showVolume();
             JFrame frame = new JFrame("test");
             JButton d = new JButton("dialog");
-            d.addActionListener((evt)->new CircularMeshInitializationDialog(frame, new SegmentationController(model), ()->{}).start());
+            d.addActionListener((evt)->new CircularMeshInitializationDialog(new SegmentationController(model)).start());
             frame.add(d);
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.pack();
@@ -392,6 +429,10 @@ public class CircularMeshInitializationDialog extends JDialog implements FrameLi
         initializer.clearProjectableMeshes();
         showMeshes();
 
+    }
+
+    public JPanel getContent() {
+        return content;
     }
 
     class Initializer implements MouseListener, MouseMotionListener {
@@ -566,7 +607,7 @@ public class CircularMeshInitializationDialog extends JDialog implements FrameLi
     void showCursor(){
 
         cursor.setVisible(showCursor.isSelected());
-        repaint();
+        content.repaint();
     }
 
 

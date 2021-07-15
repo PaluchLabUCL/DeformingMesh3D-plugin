@@ -276,8 +276,13 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         if(!segmentationController.hasOriginalPlus()){
             return;
         }
-        setReady(false);
-        new CircularMeshInitializationDialog(frame, segmentationController, this::finished).start();
+        CircularMeshInitializationDialog dialog = new CircularMeshInitializationDialog(segmentationController);
+        dialog.start();
+        tabbedPane.add("initializer", dialog.getContent());
+        tabbedPane.setSelectedComponent(dialog.getContent());
+        dialog.setCloseCallback( () ->{
+            tabbedPane.remove(dialog.getContent());
+        });
     }
     public void createButtonInitializeMesh2(JPanel panel){
         final JButton prompt_mesh = new JButton("initialize mesh...");

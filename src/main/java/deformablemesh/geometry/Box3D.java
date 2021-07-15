@@ -17,7 +17,7 @@ public class Box3D implements Interceptable{
     public double[] low;
     public double[] high;
     List<AxisPlane> planes = new ArrayList<>();
-
+    final static Box3D empty = new Box3D(0, 0, 0, 0, 0, 0);
     public Box3D(double[] center, double width, double length, double height){
         low = new double[]{
                 center[0] - 0.5*width,
@@ -98,14 +98,50 @@ public class Box3D implements Interceptable{
 
     }
 
+    double[] overlap( double a0, double a1, double b0, double b1){
+        if(a0 < b0){
+            if(b0 < a1){
+                //there is overlap.
+                if(b1 < a1){
+                    return new double[]{b0, b1};
+                } else{
+                    return new double[]{b0, a1};
+                }
+            } else{
+                return new double[] { 0, 0 };
+            }
+        } else{
+            if(a0 < b1){
+                //overlap
+                if(a1 < b1){
+                    //contained
+                    return new double[]{a0, a1};
+                } else{
+                    return new double[]{a0, b1};
+                }
+            } else{
+                return new double[]{ 0, 0};
+            }
+        }
+
+    }
+
     public boolean intersects(Box3D other){
         for(int i = 0; i<3; i++){
-            if(
-                    other.high[i]<low[i] || high[i]<other.low[i]){
-                return true;
+            double[] ol = overlap(low[i], high[i], other.low[i], other.high[i]);
+            if(ol[1] - ol[0] <= 0){
+                return false;
             }
         }
         return true;
+    }
+
+    public Box3D getIntersectingBox(Box3D other){
+        double[] xl = overlap(low[0], high[0], other.low[0], other.high[0]);
+        double[] yl = overlap(low[1], high[1], other.low[1], other.high[1]);
+        double[] zl = overlap(low[2], high[2], other.low[2], other.high[2]);
+
+        return new Box3D(xl[0], yl[0], zl[0], xl[1], yl[1], zl[1]);
     }
 
     public boolean contains(Box3D boundingBox) {
@@ -115,6 +151,10 @@ public class Box3D implements Interceptable{
             }
         }
         return true;
+    }
+
+    public double getVolume() {
+        return (high[0] - low[0])*(high[1]-low[1])*(high[2] - low[2]);
     }
 }
 
