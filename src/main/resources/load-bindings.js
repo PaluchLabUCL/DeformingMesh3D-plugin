@@ -9,7 +9,8 @@ var WireframeMesh = Java.type("deformablemesh.geometry.WireframeMesh");
 var Color = Java.type("java.awt.Color");
 var ArrayList = Java.type("java.util.ArrayList");
 var Track = Java.type("deformablemesh.track.Track");
-
+var File = Java.type("java.io.File");
+var ImageEnergyType = Java.type("deformablemesh.externalenergies.ImageEnergyType");
 //var Graph = Java.type("lightgraph.Graph");
 var ImageStack = Java.type("ij.ImageStack");
 var ColorProcessor = Java.type("ij.process.ColorProcessor");

@@ -43,7 +43,7 @@ public class SegmentationModel {
 
     boolean reshape = true;
     volatile boolean stop = false;
-    volatile long deformations;
+    volatile int deformations;
     ImagePlus original_plus;
 
     MeshImageStack stack;
@@ -94,16 +94,16 @@ public class SegmentationModel {
             selectedMesh.reshape();
             reshape=false;
         }
-        int c = 0;
+        deformations = 0;
         if(count<0){
             count = Integer.MAX_VALUE;
         }
-        while(!stop&&c<count){
+        while(!stop&&deformations<count){
             selectedMesh.update();
             if(hardBoundaries){
                 selectedMesh.confine(getBounds());
             }
-            c++;
+            deformations++;
         }
 
     }
@@ -194,15 +194,15 @@ public class SegmentationModel {
         mesh.GAMMA=GAMMA;
         mesh.BETA=BETA;
         mesh.reshape();
-        int c = 0;
+        deformations = 0;
         int count = Integer.MAX_VALUE;
 
-        while(!stop&&c<count){
+        while(!stop&&deformations<count){
             mesh.update();
             if(hardBoundaries){
                 mesh.confine(getBounds());
             }
-            c++;
+            deformations++;
         }
 
     }

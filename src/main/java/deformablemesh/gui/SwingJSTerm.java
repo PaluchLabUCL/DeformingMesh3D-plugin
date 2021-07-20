@@ -67,10 +67,10 @@ public class SwingJSTerm {
     SegmentationController controls;
     int commandIndex;
     String[] historyTemp = new String[1];
-    JButton previous = new JButton("previous");
-    JButton next = new JButton("next");
+    JButton previous;
+    JButton next;
 
-    SwingJSTerm(SegmentationController controls){
+    public SwingJSTerm(SegmentationController controls){
 
         NashornScriptEngineFactory factory = new NashornScriptEngineFactory();
         engine = factory.getScriptEngine();
@@ -102,6 +102,9 @@ public class SwingJSTerm {
     }
 
     JPanel buildUI(){
+        previous = new JButton("previous");
+        next = new JButton("next");
+
         JPanel root = new JPanel();
         root.setLayout(new BoxLayout(root, BoxLayout.PAGE_AXIS));
         //root.setLayout(new BorderLayout());
@@ -247,6 +250,15 @@ public class SwingJSTerm {
         }
         frame.setVisible(true);
     }
+
+    public void evaluateHeadless(String s){
+        try{
+            engine.eval(s);
+        } catch (ScriptException e) {
+            e.printStackTrace();
+        }
+    }
+
     private void evaluateExpression(String s){
         String[] lines = s.split("\n");
 

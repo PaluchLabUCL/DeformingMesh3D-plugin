@@ -136,11 +136,9 @@ public class CircularMeshInitializationDialog implements FrameListener {
         clear.addActionListener(evt->{
             clearSpheres();
         });
-
-        JButton selectOpenImage = new JButton("image");
-        selectOpenImage.setToolTipText("select an open image.");
-        selectOpenImage.addActionListener(evt->{
-            //GuiTools.selectOpenImage(this, segmentationController);
+        JButton binary = new JButton("binary image");
+        binary.addActionListener(evt->{
+            createAndShowBinaryImage();
         });
 
         row.add(showCursor);
@@ -148,11 +146,11 @@ public class CircularMeshInitializationDialog implements FrameListener {
         row.add(close);
         row.add(clear);
         row.add(add);
+        row.add(binary);
 
         row.add(Box.createHorizontalGlue());
         row.add(gridView);
         row.add(tabbedView);
-        row.add(selectOpenImage);
         content.add(row, BorderLayout.SOUTH);
 
 
@@ -195,8 +193,6 @@ public class CircularMeshInitializationDialog implements FrameListener {
         content.repaint();
     }
 
-
-
     public void finish(){
         createMesh();
         afterClosing();
@@ -228,6 +224,16 @@ public class CircularMeshInitializationDialog implements FrameListener {
         return mesh;
 
     }
+
+    public void createAndShowBinaryImage(){
+        List<Sphere> spheres = initializer.getSpheres();
+        if(spheres.size()==0){
+            return;
+        }
+        ImagePlus bin = getBinaryImage(spheres, stack);
+        bin.show();
+    }
+
     public static DeformableMesh3D createMeshFromSpheres(List<Sphere> spheres, int divisions){
         if(spheres.size()==0){
             return null;
@@ -474,7 +480,9 @@ public class CircularMeshInitializationDialog implements FrameListener {
                     origin = new double[]{x, y};
                     working = new Sphere(center, 0.000001);
                     addProjectable(working, Color.RED);
-                    segmentationController.addTransientObject(working.createDataObject());
+                    if(segmentationController.has3DViewer()) {
+                        segmentationController.addTransientObject(working.createDataObject());
+                    }
                 } else{
                     //finish.
                     spheres.add(working);

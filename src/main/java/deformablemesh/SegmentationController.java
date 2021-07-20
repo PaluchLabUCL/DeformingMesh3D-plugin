@@ -1044,7 +1044,9 @@ public class SegmentationController {
      *
      */
     public void clearTransientObjects(){
-        submit( ()->meshFrame3D.clearTransients());
+        if(meshFrame3D != null) {
+            submit(() -> meshFrame3D.clearTransients());
+        }
     }
 
     /**
@@ -1560,7 +1562,8 @@ public class SegmentationController {
         submit(
 
                 ()->{
-                    boolean volumeShowing = meshFrame3D.volumeShowing();
+
+                    boolean volumeShowing = meshFrame3D!=null && meshFrame3D.volumeShowing();
 
                     if(volumeShowing){
                         meshFrame3D.hideVolume();
@@ -2173,6 +2176,14 @@ public class SegmentationController {
         return lastSaved.get() != actionStack.getCurrentState();
     }
 
+    /**
+     * Gets the current number of deformations that have occurred.
+     *
+     * @return
+     */
+    public int getDeformationSteps(){
+        return model.deformations;
+    }
     public void saveParameters(File f) {
         submit(()->{
             PropertySaver.saveProperties(this, f);
@@ -2263,6 +2274,10 @@ public class SegmentationController {
      */
     public void exportTo(File meshFile, double[] viewBox) {
 
+    }
+
+    public boolean has3DViewer() {
+        return meshFrame3D != null;
     }
 
     /**
