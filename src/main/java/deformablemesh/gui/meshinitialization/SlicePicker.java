@@ -277,7 +277,7 @@ public class SlicePicker{
     public void addProjectableMesh(ProjectableMesh pm, DeformableMesh3D mesh) {
         Drawable d = g->{
             if(mesh.isSelected()){
-                g.setColor(Color.GREEN);
+                g.setColor(Color.WHITE);
             } else{
                 g.setColor(mesh.getColor());
             }

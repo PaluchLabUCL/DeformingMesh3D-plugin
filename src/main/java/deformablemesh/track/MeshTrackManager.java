@@ -45,6 +45,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -100,10 +101,14 @@ public class MeshTrackManager {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            if(columnIndex>0)
-                return tracks.get(columnIndex-1).getMesh(rowIndex);
-            else
-                return Integer.toString(rowIndex+1);
+            if(columnIndex>0) {
+                if(columnIndex > tracks.size()){
+                    return nullLabel;
+                }
+                return tracks.get(columnIndex - 1).getMesh(rowIndex);
+            } else {
+                return Integer.toString(rowIndex + 1);
+            }
         }
     }
 
@@ -382,6 +387,11 @@ public class MeshTrackManager {
         }
     }
 
+    /**
+     * Unique names are required for the mesh track manager, maybe test when started.
+     *
+     * @param example
+     */
     private void moveToTrack(String example) {
         Track destination = null;
         for(Track t: tracks){
@@ -516,29 +526,49 @@ public class MeshTrackManager {
      * @param tracks
      */
     public void manageMeshTrackes(SegmentationController controller, List<Track> tracks){
-        this.tracks.clear();
-        labels.clear();
-
+        List<Track> newTracks = new ArrayList<>();
+        if(!controller.getMeshModified()){
+            return;
+        }
+        Map<DeformableMesh3D, JLabel> newLabels = new HashMap<>();
         int rows = 0;
         for(Track track: tracks){
             Track replacement = new Track(track.name, track.color);
+            replacement.setShowSurface(track.getShowSurface());
+            if(track.isSelected()){
+                replacement.setSelected(true);
+            }
             Set<Integer> ints = track.getTrack().keySet();
             for(Integer i: ints){
 
                 DeformableMesh3D mesh = track.getMesh(i);
                 JLabel label = createLabel(mesh);
-                labels.put(mesh, label);
+                newLabels.put(mesh, label);
 
                 if(i>rows){
                     rows = i;
                 }
+                //this sets the show surface property of the mesh.
+                //since this mesh is in two tracks, it can be inconsistent.
                 replacement.addMesh(i, mesh);
             }
-            this.tracks.add(replacement);
+            newTracks.add(replacement);
         }
+        newTracks.sort(
+                Comparator.comparingInt(
+                        Track::getFirstFrame
+                ).thenComparingInt(
+                        Track::getLastFrame)
+        );
         model.rows = rows+1;
 
-        shapeTable();
+        EventQueue.invokeLater(()->{
+            this.tracks.clear();
+            this.tracks.addAll(newTracks);
+            labels.clear();
+            labels.putAll(newLabels);
+            shapeTable();
+        });
 
     }
 

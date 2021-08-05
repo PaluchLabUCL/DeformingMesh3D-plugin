@@ -4,6 +4,7 @@ import deformablemesh.externalenergies.ExternalEnergy;
 import deformablemesh.externalenergies.ImageEnergyType;
 import deformablemesh.geometry.*;
 import deformablemesh.gui.FrameListener;
+import deformablemesh.gui.GuiTools;
 import deformablemesh.gui.PropertySaver;
 import deformablemesh.gui.RingController;
 import deformablemesh.io.ImportType;
@@ -1058,25 +1059,6 @@ public class SegmentationController {
         model.calculateVolume();
     }
 
-    /**
-     *
-     * @see deformablemesh.util.MeshAnalysis#createOutput(double)
-     * TODO rename.
-     */
-    public void createOutput() {
-        model.createOutput();
-    }
-
-    /**
-     * TODO remove
-     * @Deprecated
-     * @see deformablemesh.util.MeshAnalysis
-     */
-    public void calculateActinIntensity() {
-
-        model.calculateActinIntensity();
-
-    }
 
     /**
      * Iterates over all of the messes and performs the calculation. (a bit intense.)
@@ -1179,6 +1161,46 @@ public class SegmentationController {
         if(model.hasSelectedMesh()) {
             deformMesh(-1);
         }
+    }
+
+    public void splitMesh(){
+        Track track = getSelectedMeshTrack();
+        int frame = getCurrentFrame();
+
+        DeformableMesh3D mesh = track.getMesh(frame);
+        Furrow3D furrow = model.getRingController().getFurrow();
+        if(furrow == null || mesh == null){
+            return;
+        }
+        InterceptingMesh3D im = new InterceptingMesh3D(mesh);
+        Furrow3D reversed = new Furrow3D(furrow.cm,
+                new double[]{-furrow.normal[0], -furrow.normal[1], -furrow.normal[2]}
+        );
+
+        List<List<Node3D>> nodes = furrow.splitNodes(mesh.nodes);
+
+        clearMeshFromTrack(track, frame, mesh);
+        List<DeformableMesh3D> splits = new ArrayList<>();
+        for(List<Node3D> side: nodes){
+            List<Interceptable> interceptables = Arrays.asList(reversed, furrow, im);
+            if(side.size()==0){
+                continue;
+            }
+            double[] c = new double[3];
+            for(Node3D n: side){
+                double[] xyz = n.getCoordinates();
+                c[0] += xyz[0];
+                c[1] += xyz[1];
+                c[2] += xyz[2];
+            }
+            c[0] = c[0]/side.size();
+            c[1] = c[1]/side.size();
+            c[2] = c[2]/side.size();
+            DeformableMesh3D a = RayCastMesh.rayCastMesh(interceptables, c, 2);
+            splits.add(a);
+        }
+        startNewMeshTracks(splits);
+
     }
 
     public void deformPartialMesh(){
@@ -2125,6 +2147,7 @@ public class SegmentationController {
             submit(model::measureSelectedMesh);
         }
     }
+
 
     /**
      * Creates a text window with the current furrow values, position in image units and normal.

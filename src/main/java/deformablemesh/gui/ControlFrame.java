@@ -383,18 +383,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         });
     }
 
-
-    public void createButtonOutput(JPanel buttonPanel){
-        JButton output = new JButton("output");
-        buttons.add(output);
-        buttonPanel.add(output);
-        output.addActionListener(event -> {
-            setReady(false);
-            segmentationController.createOutput();
-            finished();
-        });
-    }
-
     public void createButtonClearTransients(JPanel buttonPanel){
         JButton clearTransients = new JButton("clear transient objects");
         buttons.add(clearTransients);
@@ -1113,13 +1101,19 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         finished();
     }
     private void buildTrackManager() {
-
-        JDialog dialog = new JDialog(frame, true);
+        final String managerTitle = "manage tracks";
+        int n = tabbedPane.getTabCount();
+        for(int i = 0; i<n; i++){
+            String title = tabbedPane.getTitleAt(i);
+            if(managerTitle.equals(title)){
+                return;
+            }
+        }
         JPanel main = new JPanel();
         JPanel content = new JPanel();
         main.setLayout(new BorderLayout());
         JButton accept = new JButton("accept");
-        JButton cancel = new JButton("cancel");
+        JButton cancel = new JButton("close");
         JPanel row = new JPanel();
         row.setLayout(new GridLayout(1, 3));
         row.add(Box.createRigidArea(new Dimension(100,30)));
@@ -1130,22 +1124,27 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         main.add(row, BorderLayout.SOUTH);
         MeshTrackManager manager = new MeshTrackManager();
         manager.manageMeshTrackes(segmentationController, segmentationController.getAllTracks());
-        manager.buildGui(dialog, content);
+        manager.buildGui(frame, content);
         manager.setSegmentationController(segmentationController);
-        cancel.addActionListener(evt->{
-            dialog.dispose();
-        });
+
         accept.addActionListener(evt->{
+            //TODO remove this, but the action needs to be done at the end of each track change.
             List<Track> tracks = manager.getTracks();
             segmentationController.setMeshTracks(tracks);
-            dialog.dispose();
         });
 
+        final FrameListener fl = i -> manager.manageMeshTrackes(segmentationController, segmentationController.getAllTracks());
+        segmentationController.addMeshListener(fl);
+
         main.add(content, BorderLayout.CENTER);
-        dialog.setContentPane(main);
-        dialog.pack();
-        dialog.setVisible(true);
-        dialog.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+        tabbedPane.add(main, managerTitle);
+        cancel.addActionListener(evt->{
+            tabbedPane.remove(main);
+            segmentationController.removeMeshListener(fl);
+        });
+
+
     }
 
     /**

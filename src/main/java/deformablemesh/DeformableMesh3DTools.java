@@ -1401,8 +1401,7 @@ public class DeformableMesh3DTools {
                 timeStack.addSlice(out.getProcessor(j));
             }
         }
-        plus.setStack(timeStack);
-        plus.setDimensions(1, n, frames.size());
+        plus.setStack(timeStack, 1, n, frames.size());
         return plus;
     }
 

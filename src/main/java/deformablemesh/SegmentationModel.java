@@ -373,10 +373,6 @@ public class SegmentationModel {
         ringController.writeFurrows(f, stack);
     }
 
-    public void createOutput() {
-        new MeshAnalysis(getSelectedTrack().getTrack(), ringController.getFurrows(), stack).createOutput(cortex_thickness);
-    }
-
     public void notifyMeshListeners() {
         int i = getCurrentFrame();
         for(FrameListener listener: meshListeners){

@@ -2,6 +2,7 @@ package deformablemesh.track;
 
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
+import deformablemesh.geometry.Box3D;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.InterceptingMesh3D;
 import deformablemesh.io.MeshWriter;
@@ -384,9 +385,29 @@ public class FrameToFrameDisplacement {
         return ji;
     }
 
+    public static double[][] boundingBoxJaccardIndexMatrix(List<DeformableMesh3D> one, List<DeformableMesh3D> two){
+        if(two.size() == 0){
+            return new double[one.size()][0];
+        }
+
+        double[][] ji = new double[one.size()][two.size()];
+
+        for(int a = 0; a<one.size(); a++){
+            for(int b = 0; b<two.size(); b++){
+                Box3D bA = one.get(a).getBoundingBox();
+                Box3D bB = two.get(b).getBoundingBox();
+                Box3D is = bA.getIntersectingBox(bB);
+                double va = bA.getVolume();
+                double vb = bB.getVolume();
+                double vis = is.getVolume();
+                ji[a][b] = vis / (va + vb - vis);
+            }
+        }
+        return ji;
+    }
     public static List<Mapping> jaccardIndex(List<DeformableMesh3D> one, List<DeformableMesh3D> two){
 
-        double[][] ji = jaccardIndexMatrix(one, two);
+        double[][] ji = boundingBoxJaccardIndexMatrix(one, two);
         List<Mapping> mappings = new ArrayList<>();
 
         for(int i = 0; i<ji.length; i++){

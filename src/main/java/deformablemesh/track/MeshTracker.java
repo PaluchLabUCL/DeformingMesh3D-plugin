@@ -51,7 +51,7 @@ public class MeshTracker {
     }
 
     public List<Track> getAllMeshTracks(){
-        return Collections.unmodifiableList(tracks);
+        return new ArrayList<>(tracks);
     }
 
     public boolean hasSelectedTrack() {
@@ -111,15 +111,22 @@ public class MeshTracker {
     }
 
     public void removeTrack(Track track){
+
         int i = tracks.indexOf(track);
         if(i == -1){
+            //doesn't contain track.
             i = 0;
         } else {
             tracks.remove(i);
         }
         if(selectedTrack==track) {
             selectedTrack.setSelected(false);
+            //if the selected track is the 0th track or not contained.
             int next = i - 1;
+
+            if(next < 0 ){
+                next = 0;
+            }
 
             if(track.size() <= next){
                 next = tracks.size() - 1;

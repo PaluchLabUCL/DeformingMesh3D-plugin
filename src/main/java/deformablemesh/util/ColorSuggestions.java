@@ -128,16 +128,27 @@ public class ColorSuggestions {
         }
     }
 
-    public static Color fromNameOrSuggestion(String name){
+    public static Color fromNameOrSuggestion(String fullName){
+        String name;
+        if(fullName.contains("-")){
+            name = fullName.split("-")[0];
 
+        } else{
+            name = fullName;
+        }
         //name is just the html code.
         if('#'==name.charAt(0)){
-            return new Color(Integer.parseInt(name.substring(1), 16));
+            try{
+                Color c = new Color(Integer.parseInt(name.substring(1), 16));
+                return c;
+            } catch(Exception e){
+                //fail through.
+            }
+
         }
 
         int dex = names.indexOf(name);
         if(dex<0){
-
             return getSuggestion();
         } else{
             return colors.get(dex);

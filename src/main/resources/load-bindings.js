@@ -15,6 +15,7 @@ var ImageEnergyType = Java.type("deformablemesh.externalenergies.ImageEnergyType
 var ImageStack = Java.type("ij.ImageStack");
 var ColorProcessor = Java.type("ij.process.ColorProcessor");
 var ImageStack = Java.type("ij.ImageStack");
+var MeshAnalysis = Java.type("deformablemesh.util.MeshAnalysis");
 
 function echo(obj){
     terminal.echo(obj);

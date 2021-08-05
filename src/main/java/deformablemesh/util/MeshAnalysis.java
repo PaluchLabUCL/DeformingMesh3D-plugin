@@ -7,6 +7,8 @@ import deformablemesh.geometry.Furrow3D;
 import deformablemesh.geometry.Triangle3D;
 import deformablemesh.gui.GuiTools;
 import deformablemesh.track.Track;
+import lightgraph.DataSet;
+import lightgraph.Graph;
 
 import java.awt.EventQueue;
 import java.util.ArrayList;
@@ -130,6 +132,55 @@ public class MeshAnalysis {
     }
 
     /**
+     * Plots the number of meshes over time.
+     *
+     * @param tracks
+     * @param mis
+     */
+    public static void plotMeshesOverTime(List<Track> tracks, MeshImageStack mis){
+        double[] ret = new double[mis.getNFrames()];
+        double[] frame = new double[mis.getNFrames()];
+        for(int i = 0; i<mis.getNFrames(); i++){
+            frame[i] = i;
+            int s = 0;
+            for(Track t: tracks){
+                if(t.containsKey(i)){
+                    s++;
+                }
+            }
+
+            ret[i] = s;
+        }
+        Graph plot = new Graph();
+        plot.addData(frame, ret);
+        plot.show(false, "Number of cells vs time");
+    }
+
+    /**
+     * Creates a plot of the volumes over time. Tracked cells are connected.
+     * @param tracks
+     * @param mis
+     */
+    public static void plotVolumesOverTime(List<Track> tracks, MeshImageStack mis){
+        Graph volumePlot = new Graph();
+
+        for(Track t: tracks){
+            DataSet d2 = null;
+            for(int i = 0; i<mis.getNFrames(); i++){
+                if(t.containsKey(i)){
+                    DeformableMesh3D mesh = t.getMesh(i);
+                    double volume = mesh.calculateVolume()*Math.pow(mis.SCALE, 3);
+                    if(d2 == null){
+                        d2 = volumePlot.addData(new double[0], new double[0]);
+                    }
+                    d2.addPoint(i, volume);
+                }
+            }
+        }
+        volumePlot.show(false, "Volumes per Frame");
+    }
+
+    /**
      * Generates a text window with the time series for all of the tracks provided.
      *
      * @param tracks
@@ -151,7 +202,7 @@ public class MeshAnalysis {
                 double v;
                 if(t.containsKey(i)){
                     DeformableMesh3D mes = t.getMesh(i);
-                    v = DeformableMesh3DTools.calculateVolume(new double[]{0, 0, 1}, mes.positions, mes.triangles);
+                    v = mes.calculateVolume();
                     v*=factor;
                 } else{
                     v = -1;
