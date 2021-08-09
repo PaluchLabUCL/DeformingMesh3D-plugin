@@ -19,11 +19,13 @@ import deformablemesh.util.actions.UndoableActions;
 import deformablemesh.util.connectedcomponents.ConnectedComponents3D;
 import deformablemesh.util.connectedcomponents.Region;
 import deformablemesh.util.connectedcomponents.RegionGrowing;
+import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
+import ij.process.LUT;
 import lightgraph.DataSet;
 import lightgraph.Graph;
 
@@ -31,6 +33,8 @@ import java.awt.Color;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -521,13 +525,66 @@ public class SegmentationController {
         });
     }
 
+    /**
+     * Starts processing a single frame at a time.
+     *
+     * @param start 0 based time frame. First frame inclusive.
+     * @param finish 0 based time frame. Last frame inclusive.
+     */
+    public void generateTrainingData(int start, int finish){
+        //frames
+        //output folder;
+        ImagePlus original = getMeshImageStack().original;
+        List<Track> tracks = getAllTracks();
+        Path baseFolder = Paths.get(IJ.getDirectory("Select root folder"));
+        Create3DTrainingDataFromMeshes creator = new Create3DTrainingDataFromMeshes(tracks, getMeshImageStack().original);
+
+        File labelFolder = baseFolder.resolve("labels").toFile();
+        File imageFolder = baseFolder.resolve("images").toFile();
+        String name = original.getTitle().replace(".tif", "");
+
+        for(int i = start; i<=finish; i++){
+            String sliceName = String.format("%s-t%04d.tif", name, i);
+            creator.run(i);
+            ImagePlus maskPlus = original.createImagePlus();
+            maskPlus.setStack(creator.getLabeledStack());
+            IJ.save(maskPlus, new File(labelFolder, sliceName).getAbsolutePath());
+            System.out.println("finished working");
+            //maskPlus.show();
+            try {
+                ImagePlus scaled = creator.getOriginalFrame(i);
+                scaled.setLut(LUT.createLutFromColor(Color.WHITE));
+                scaled.setOpenAsHyperStack(true);
+                IJ.save(scaled, new File(imageFolder, sliceName).getAbsolutePath());
+
+            } catch(Exception e){
+                e.printStackTrace();
+            }
+        }
+
+
+
+
+
+
+    }
+
     public void reMeshConnections(double minConnectionLength, double maxConnectionLength){
         int f = model.getCurrentFrame();
         Track track = model.getSelectedTrack();
         reMeshConnections(track, f, minConnectionLength, maxConnectionLength);
     }
 
+    public void plotCellCount(){
+        MeshAnalysis.plotMeshesOverTime(getAllTracks(), getMeshImageStack());
+    }
 
+    public void plotVolumes(){
+        MeshAnalysis.plotVolumesOverTime(getAllTracks(), getMeshImageStack());
+    }
+    public void selectNone(){
+        submit(() ->model.selectMeshTrack(null));
+    }
 
     public ImagePlus guessMeshes(int level) {
 

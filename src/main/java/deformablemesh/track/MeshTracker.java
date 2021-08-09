@@ -204,6 +204,10 @@ public class MeshTracker {
         if(tracks.contains(track)){
             selectedTrack = track;
             track.setSelected(true);
+        } else{
+            selectedTrack = null;
         }
     }
+
+
 }

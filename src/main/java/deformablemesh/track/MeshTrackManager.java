@@ -64,7 +64,7 @@ public class MeshTrackManager {
     MeshSelectionModel selectionModel = new MeshSelectionModel();
     Map<DeformableMesh3D, JLabel> labels = new HashMap<>();
     JLabel nullLabel = getNullLabel();
-
+    long lastUpdated = -1;
     private JLabel getNullLabel() {
         BufferedImage img = new BufferedImage(64, 64, BufferedImage.TYPE_4BYTE_ABGR);
         Graphics2D g2d = (Graphics2D)img.getGraphics();
@@ -527,9 +527,11 @@ public class MeshTrackManager {
      */
     public void manageMeshTrackes(SegmentationController controller, List<Track> tracks){
         List<Track> newTracks = new ArrayList<>();
-        if(!controller.getMeshModified()){
+        if(lastUpdated == controller.getCurrentState()){
             return;
         }
+        lastUpdated = controller.getCurrentState();
+        
         Map<DeformableMesh3D, JLabel> newLabels = new HashMap<>();
         int rows = 0;
         for(Track track: tracks){
@@ -561,7 +563,6 @@ public class MeshTrackManager {
                         Track::getLastFrame)
         );
         model.rows = rows+1;
-
         EventQueue.invokeLater(()->{
             this.tracks.clear();
             this.tracks.addAll(newTracks);

@@ -95,6 +95,14 @@ public class DeformableMeshDataObject implements DataObject {
                 specular,
                 0.1f);
         a.setMaterial(mat);
+
+        float alpha = (1f - rgb[3]);
+        TransparencyAttributes tat = new TransparencyAttributes(
+                TransparencyAttributes.NICEST,
+                alpha);
+        tat.setCapability(TransparencyAttributes.ALLOW_VALUE_WRITE);
+        a.setTransparencyAttributes(tat);
+
         return a;
     }
 

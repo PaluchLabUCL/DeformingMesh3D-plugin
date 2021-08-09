@@ -638,7 +638,8 @@ public class SegmentationModel {
     }
     public void createMosaicImage() {
         ImagePlus plus = DeformableMesh3DTools.createMosaicRepresentation(stack, original_plus, tracker.getAllMeshTracks());
-        plus.setTitle("mosaic: " + original_plus.getShortTitle());
+        plus.setTitle(original_plus.getShortTitle() + "-mosaic.tif");
+        plus.setOpenAsHyperStack(true);
         plus.show();
     }
 

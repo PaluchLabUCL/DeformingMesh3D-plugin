@@ -166,12 +166,14 @@ public class MeshAnalysis {
 
         for(Track t: tracks){
             DataSet d2 = null;
-            for(int i = 0; i<mis.getNFrames(); i++){
+            for(int i = t.getFirstFrame(); i<=t.getLastFrame(); i++){
                 if(t.containsKey(i)){
                     DeformableMesh3D mesh = t.getMesh(i);
                     double volume = mesh.calculateVolume()*Math.pow(mis.SCALE, 3);
                     if(d2 == null){
                         d2 = volumePlot.addData(new double[0], new double[0]);
+                        d2.setLabel(t.getName());
+                        d2.setColor(t.getColor());
                     }
                     d2.addPoint(i, volume);
                 }

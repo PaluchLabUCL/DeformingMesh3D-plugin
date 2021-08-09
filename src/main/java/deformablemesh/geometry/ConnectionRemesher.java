@@ -140,12 +140,11 @@ public class ConnectionRemesher {
 
         }
         ave = ave/original.connections.size();
-        System.out.println("min: " + mn + ", max: " + ml + ", mean: " + ave);
+        if (Double.isNaN(mn) || Double.isNaN(ml) || Double.isInfinite(mn) || Double.isInfinite(ml)){
+            throw new RuntimeException("Invalid mesh result: " + "min: " + mn + ", max: " + ml + ", mean: " + ave);
+        }
+
         longOnes.sort(Comparator.comparingDouble(c -> c.length));
-
-        System.out.println(longOnes.size() + " connections to split");
-        System.out.println("before: " + triangles.size() + " triangles. " + connections.size() + " connections");
-
 
         positions = original.positions;
         while(longOnes.size()>0){
@@ -172,8 +171,6 @@ public class ConnectionRemesher {
 
         }
 
-        System.out.println("after: " + triangles.size() + " triangles. " + connections.size() + " connections");
-
         List<Connection3D> shorties = new ArrayList<>();
 
         for(Connection3D con: connections){
@@ -188,10 +185,6 @@ public class ConnectionRemesher {
 
 
         }
-
-
-
-        System.out.println(longOnes.size() + " too long. " + shorties.size() + " too short");
 
         Connection3D ss = getShortestConnection();
 
@@ -216,7 +209,6 @@ public class ConnectionRemesher {
             positions[3*i+1] = pt[1];
             positions[3*i+2] = pt[2];
             map.put(nodes.get(i).index, i);
-
         }
 
         int[] triangle_indexes = new int[3*triangles.size()];
