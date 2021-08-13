@@ -1407,7 +1407,6 @@ public class DeformableMesh3DTools {
 
     public static void mosaicBinary(MeshImageStack stack, ImageStack out, DeformableMesh3D mesh, int rgb){
         InterceptingMesh3D picker = new InterceptingMesh3D(mesh);
-        picker = new InterceptingMesh3D(RayCastMesh.rayCastMesh(picker, picker.getCenter(), 4));
         double[] xdirection = {1,0,0};
 
         int slices = out.getSize();
@@ -1423,46 +1422,43 @@ public class DeformableMesh3DTools {
                 List<Intersection> sections = picker.getIntersections(stack.getNormalizedCoordinate(center), xdirection);
                 sections.sort((a,b)->Double.compare(a.location[0], b.location[0]));
 
-                boolean inside = false;
+                boolean startInside = false;
                 double count = 0;
                 double[] boundaries = new double[sections.size()+1];
                 int valid = 0;
-                boolean startInside = false;
                 for(int k = 0; k<sections.size(); k++){
 
                     double bound = stack.getImageCoordinates(sections.get(k).location)[0];
                     boolean facingLeft = sections.get(k).surfaceNormal[0]<0;
                     boolean facingRight = !facingLeft;
-                    boolean outside = !inside;
-                    if(bound>0){
-                        //check if it is actually a boundary
-
-                        if(inside&&facingRight){
-                            //going outside
-                            inside = false;
-                            boundaries[valid] = bound;
-                            valid++;
-                        } else if(outside&facingLeft){
-                            //coming back in.
-                            inside = true;
-                            boundaries[valid] = bound;
-                            valid++;
-                        }
-
+                    //going through all interfaces, and either going further in
+                    //or back out.
+                    if(facingLeft){
+                        count++;
                     } else{
-                        //check if entering or exiting.
-                        if(inside && facingRight){
-                            //entering.
-                            inside = false;
-
-                        } else if(outside&&facingLeft){
-                            //exiting
-                            inside = true;
+                        count--;
+                    }
+                    if(bound>0) {
+                        //check if it is actually a boundary
+                        if ( count==1 && facingLeft ) {
+                            //boundary entering region.
+                            if( valid == 0){
+                                startInside = false;
+                            }
+                            boundaries[valid] = bound;
+                            valid++;
+                        } else if (count==0 && facingRight) {
+                            //stepped out.
+                            if( valid == 0){
+                                startInside = true;
+                            }
+                            boundaries[valid] = bound;
+                            valid++;
                         }
-                        startInside = inside;
+
                     }
                 }
-                inside = startInside;
+                boolean inside = startInside;
                 boundaries[valid] = w;
 
                 int current = 0;

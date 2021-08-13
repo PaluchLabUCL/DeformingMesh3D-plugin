@@ -44,6 +44,15 @@ public class RegionGrowing{
         }
     }
 
+    /**
+     * Get the pixels corresponding to slice i.
+     *
+     * @param i slice number from 1 to stack size.
+     * @return
+     */
+    public short[] getLabelPixels(int i){
+        return labelPixels.get(i-1);
+    }
     boolean isFrontier(int label, int[] xyz){
         for(int i = -1; i<=1; i++){
             int z = xyz[2] + i;
@@ -133,6 +142,7 @@ public class RegionGrowing{
                 frontier.add(px);
                 region.add(px);
             }
+
         }
     }
     public void setLabel(int[] xyz, int label){

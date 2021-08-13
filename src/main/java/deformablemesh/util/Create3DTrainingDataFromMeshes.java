@@ -16,6 +16,8 @@ import ij.process.*;
 import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -235,18 +237,10 @@ public class Create3DTrainingDataFromMeshes {
 
     public static void main(String[] args) throws IOException {
         new ImageJ();
-        Create3DTrainingDataFromMeshes creator;
-        File output;
         File base;
-        ImagePlus plus;
-
         base = args.length==2? new File(args[0]) : new File(ij.IJ.getFilePath("select image"));
         String meshFileName = args.length==2? args[1] : ij.IJ.getFilePath("select mesh file for " + base.getName());
 
-        output = base.getParentFile();
-        plus = ij.IJ.openImage(base.getAbsolutePath());
-
-        System.out.println("labelling: " + base + " with meshes: " + meshFileName);
         if(meshFileName==null) return;
 
         File meshFile = new File(meshFileName);
@@ -255,113 +249,39 @@ public class Create3DTrainingDataFromMeshes {
 
 
         //plus = createScaledImagePlus(plus);
-        plus.show();
-        creator = new Create3DTrainingDataFromMeshes(tracks, plus);
+        ImagePlus original = ij.IJ.openImage(base.getAbsolutePath());;
+        original.show();
+        Path baseFolder = Paths.get(IJ.getDirectory("Select root folder"));
+        Create3DTrainingDataFromMeshes creator = new Create3DTrainingDataFromMeshes(tracks, original);
 
-        String name = base.getName().replace(".tif", "");
-
-        File labelFolder = new File(output, name + "-labels");
+        File labelFolder = baseFolder.resolve("labels").toFile();
         if(!labelFolder.exists()){
-            labelFolder.mkdir();
+            labelFolder.mkdirs();
         }
-
-
-
-        File scaledFolder = new File(output, name + "-scaled");
-        if(!scaledFolder.exists()){
-            scaledFolder.mkdir();
+        File imageFolder = baseFolder.resolve("images").toFile();
+        if(!imageFolder.exists()){
+            imageFolder.mkdirs();
         }
+        String name = original.getTitle().replace(".tif", "");
 
-
-
-        int min = Integer.MAX_VALUE;
-        int max = -1;
-        for(Track track: creator.tracks){
-            int f = track.getFirstFrame();
-            int l = track.getLastFrame();
-            if(f<min){
-                min = f;
-            }
-            if(l>max){
-                max = l;
-            }
-        }
-
-        List<List<Integer>> jobs = new ArrayList<>();
-        List<Create3DTrainingDataFromMeshes> creators = new ArrayList<>();
-
-        int threads = 1;
-        for(int i = 0; i<threads; i++){
-            jobs.add(new ArrayList<>());
-            creators.add(new Create3DTrainingDataFromMeshes(creator.tracks, creator.original));
-        }
-        int count = 0;
-        Random ng = new Random();
-        for(int i = min; i<=max; i++){
-            //int v = min + ng.nextInt(max - min);
-            Integer key = i;
-            if(creator.tracks.stream().anyMatch(t->t.containsKey(key))) {
-                jobs.get(count % threads).add(key);
-                count++;
-            }
-
-        }
-
-        ExecutorService service = Executors.newFixedThreadPool(threads);
-
-        for(int worker = 0; worker<threads; worker++){
-            final List<Integer> tasks = jobs.get(worker);
-            final Create3DTrainingDataFromMeshes localCreator = creators.get(worker);
-            service.submit(()->{
-                for(Integer i: tasks) {
-                    System.out.println("tasking" + i);
-                    String sliceName = String.format("%s-t%04d.tif", name, i);
-
-                    localCreator.run(i);
-
-                    ImagePlus maskPlus = creator.original.createImagePlus();
-                    maskPlus.setStack(localCreator.mask);
-                    IJ.save(maskPlus, new File(labelFolder, sliceName).getAbsolutePath());
-                    System.out.println("finished working");
-                    //maskPlus.show();
-                    try {
-                        ImagePlus scaled = creator.getOriginalFrame(i);
-                        scaled.setLut(LUT.createLutFromColor(Color.WHITE));
-                        scaled.setOpenAsHyperStack(true);
-
-                        IJ.save(scaled, new File(scaledFolder, sliceName).getAbsolutePath());
-
-                    } catch(Exception e){
-                        e.printStackTrace();
-                    }
-
-                }
-            });
-
-        }
-        service.shutdown();
-        /*
-
-        for(int i = min; i<=max; i++){
+        for(int i = 0; i < original.getNFrames(); i++){
             String sliceName = String.format("%s-t%04d.tif", name, i);
-            System.out.println("processing: " + i + " saving as: " + sliceName);
+            creator.run(i-1);
+            ImagePlus maskPlus = original.createImagePlus();
+            maskPlus.setStack(creator.getLabeledStack());
+            IJ.save(maskPlus, new File(labelFolder, sliceName).getAbsolutePath());
+            System.out.println("finished working");
+            //maskPlus.show();
+            try {
+                ImagePlus scaled = creator.getOriginalFrame(i);
+                scaled.setLut(LUT.createLutFromColor(Color.WHITE));
+                scaled.setOpenAsHyperStack(true);
+                IJ.save(scaled, new File(imageFolder, sliceName).getAbsolutePath());
 
-            creator.run(i);
-
-            ImagePlus maskPlus = plus.createImagePlus();
-            maskPlus.setStack(creator.mask);
-            IJ.save(maskPlus, new File(maskFolder, sliceName).getAbsolutePath());
-
-            ImagePlus membranePlus = plus.createImagePlus();
-            membranePlus.setStack(creator.membrane);
-            IJ.save(membranePlus, new File(membraneFolder, sliceName).getAbsolutePath());
-
-            ImagePlus distancePlus = plus.createImagePlus();
-            distancePlus.setStack(creator.distance);
-            IJ.save(distancePlus, new File(distanceFolder, sliceName).getAbsolutePath());
-
+            } catch(Exception e){
+                e.printStackTrace();
+            }
         }
-        */
     }
 
     public ImagePlus getOriginalFrame(Integer tp) {

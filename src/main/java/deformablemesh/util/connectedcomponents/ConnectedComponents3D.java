@@ -83,23 +83,32 @@ public class ConnectedComponents3D {
             return "Mapping[" + A + "::" + B +"]";
         }
     }
+
+    /**
+     * Adds a cc2d and uses the backing data for tracking. The maps will be broken after
+     * the values have been included. So the cc2d log data is from original mapping.
+     *
+     * @param cc2d
+     * @param slice
+     */
     private void add(ConnectedComponents2D cc2d, int slice){
         if(pixels.size() > 0){
-
             ConnectedComponents2D previous = pixels.get(pixels.size() - 1);
             Map<Integer, List<int[]>> regions2D = cc2d.getRegions();
-
             Set<Mapping> finishing = new HashSet<>();
             int free = log.lastKey() + 1;
             Set<Mapping> conjoined = new HashSet<>();
+            Set<Integer> keys = regions2D.keySet();
 
-            for(Integer key: regions2D.keySet()){
+            for(Integer key: keys){
+
                 if(key==0){
                     continue;
                 }
                 TreeSet<Integer> linked = new TreeSet<>();
 
                 for(int[] px2d: regions2D.get(key)){
+
                     int l = previous.get(px2d[0],px2d[1]);
                     if(l!=0) {
                         linked.add(l);
@@ -121,8 +130,10 @@ public class ConnectedComponents3D {
                 } else{
                     //grabs and removes the first one.
                     Integer bottom = linked.pollFirst();
-                    finishing.add(new Mapping(key, bottom));
+                    //The lowest value is used for the other keys.
+                    finishing.add( new Mapping(key, bottom) );
                     for(Integer i : linked ){
+                        //these will need to be updated in previous slices. All i's are going to the bottom.
                         conjoined.add( new Mapping(i, bottom));
                     }
                 }
@@ -197,22 +208,25 @@ public class ConnectedComponents3D {
                     dest.add(px);
                     set(px, target);
                 }
+                log.remove(i);
             }
             pixels.add(cc2d);
-            for(Mapping m : finishing){
-                Integer label;
-                if(mapped.containsKey(m.B)){
-                    label = mapped.get(m.B);
-                } else{
-                    label = m.B;
-                }
-                List<int[]> px = regions2D.get(m.A);
-                List<int[]> destination = log.computeIfAbsent(label, ArrayList::new);
-                for(int[] p: px){
-                    destination.add(new int[]{p[0], p[1], slice});
-                    //regions no longer match labels!
-                    cc2d.set(p[0], p[1], label);
-                }
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       for(Mapping m : finishing){
+            Integer label;
+            if(mapped.containsKey(m.B)){
+                label = mapped.get(m.B);
+            } else{
+                label = m.B;
+            }
+
+            List<int[]> px = regions2D.get(m.A);
+            List<int[]> destination = log.computeIfAbsent(label, ArrayList::new);
+
+            for(int[] p: px){
+                destination.add(new int[]{p[0], p[1], slice});
+                //regions no longer match labels!
+                cc2d.set(p[0], p[1], label);
+            }
             }
 
 
@@ -231,7 +245,7 @@ public class ConnectedComponents3D {
 
     /**
      * This breaks the backing cc2d. Regions will no longer map labels.
-     * @param xyz
+     * @param xyz xy and slice value. z goes from 1 to N slices.
      * @param value
      */
     private void set(int[] xyz, int value){

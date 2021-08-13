@@ -47,14 +47,14 @@ public class MeshImageStack {
         data = new double[1][1][1];
         max_dex = new int[3];
     }
-
-    public MeshImageStack(ImagePlus original){
+    public MeshImageStack(ImagePlus original, int frame, int channel){
         this.original=original;
         SLICES = original.getNSlices();
         FRAMES = original.getNFrames();
         CHANNELS = original.getNChannels();
 
-        CURRENT=0;
+        CURRENT=frame;
+        this.channel = channel;
         int py = original.getHeight();
         int px = original.getWidth();
 
@@ -62,21 +62,19 @@ public class MeshImageStack {
 
         max_dex = new int[]{px-1, py-1, SLICES-1};
 
-        copyValues();
-
         FileInfo info = original.getFileInfo();
 
         double[] dim3d = new double[]{
-            info.pixelWidth*px,
-            info.pixelHeight*py,
-            info.pixelDepth*SLICES
+                info.pixelWidth*px,
+                info.pixelHeight*py,
+                info.pixelDepth*SLICES
         };
 
 
         pixel_dimensions = new double[]{
-            info.pixelWidth,
-            info.pixelHeight,
-            info.pixelDepth
+                info.pixelWidth,
+                info.pixelHeight,
+                info.pixelDepth
         };
 
         SCALE = dim3d[0];
@@ -106,6 +104,10 @@ public class MeshImageStack {
                 nPx[1] < nPx[2] ? nPx[1] : nPx[2];
 
         copyValues();
+    }
+
+    public MeshImageStack(ImagePlus original){
+        this(original, 0, 0);
     }
 
     public int getNFrames(){
