@@ -575,6 +575,12 @@ public class SegmentationController {
         reMeshConnections(track, f, minConnectionLength, maxConnectionLength);
     }
 
+    public int getNChannels(){
+        return model.getNChannels();
+    }
+    public int getCurrentChannel(){
+        return getMeshImageStack().channel;
+    }
     public void plotCellCount(){
         MeshAnalysis.plotMeshesOverTime(getAllTracks(), getMeshImageStack());
     }
@@ -1627,6 +1633,11 @@ public class SegmentationController {
         model.stopRunning();
     }
 
+    /**
+     * Sets the current image, and sets it on channel 0. Attempts to stay on the same frame.
+     *
+     * @param plus new backing image.
+     */
     public void setOriginalPlus(ImagePlus plus){
         setOriginalPlus(plus, 0);
     }
@@ -1637,20 +1648,13 @@ public class SegmentationController {
      * @param plus
      */
     public void setOriginalPlus(ImagePlus plus, int channel) {
-
         submit(
-
                 ()->{
-
                     boolean volumeShowing = meshFrame3D!=null && meshFrame3D.volumeShowing();
-
                     if(volumeShowing){
                         meshFrame3D.hideVolume();
                     }
-
-                    model.setOriginalPlus(plus);
-
-                    model.stack.setChannel(channel);
+                    model.setOriginalPlus(plus, channel);
 
                     if(volumeShowing) {
                         showVolume();

@@ -253,13 +253,30 @@ public class SegmentationModel {
         getSelectedMesh(getCurrentFrame()).calculateStress();
     }
 
-
+    /**
+     * Sets the backing image plus, defaulting the channel to 0 and the frame to the current frame.
+     *
+     * @param plus
+     */
     public void setOriginalPlus(final ImagePlus plus){
+        setOriginalPlus(plus, getCurrentFrame(), 0);
+    }
+
+    /**
+     * Sets the current backing image to the provided image at the selected channel and the
+     * current frame.
+     *
+     * @param plus
+     * @param channel
+     */
+    public void setOriginalPlus(ImagePlus plus, int channel){
+        setOriginalPlus(plus, getCurrentFrame(), channel);
+    }
+
+    public void setOriginalPlus(ImagePlus plus, int frame, int channel){
         original_plus = plus;
-        int cf = getCurrentFrame();
-        stack = new MeshImageStack(original_plus);
-        stack.setFrame(cf);
-        if(stack.CURRENT != cf){
+        stack = new MeshImageStack(original_plus, frame, channel);
+        if(stack.CURRENT != getCurrentFrame()){
             setFrame(stack.CURRENT);
         } else {
             notifyFrameListeners();
@@ -958,6 +975,10 @@ public class SegmentationModel {
     public void selectMeshTrack(Track track) {
         tracker.selectMeshTrack(track);
         notifyMeshListeners();
+    }
+
+    public int getNChannels() {
+        return original_plus.getNChannels();
     }
 }
 

@@ -278,7 +278,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         }
         CircularMeshInitializationDialog dialog = new CircularMeshInitializationDialog(segmentationController);
         dialog.start();
-        tabbedPane.add("initializer", dialog.getContent());
+        tabbedPane.add("init: ", dialog.getContent());
         tabbedPane.setSelectedComponent(dialog.getContent());
         dialog.setCloseCallback( () ->{
             tabbedPane.remove(dialog.getContent());
@@ -424,18 +424,21 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         });
     }
 
+    public void imageStatus(){
 
+    }
 
     public void createFrameIndicator(JPanel panel){
         JPanel topBottom = new JPanel(new BorderLayout());
-        JLabel l = new JLabel("frame: ");
-        topBottom.add(l, BorderLayout.CENTER);
+        topBottom.add(frameIndicator.imageName, BorderLayout.CENTER);
+        topBottom.add(frameIndicator.channelLabel, BorderLayout.EAST);
 
         JPanel sub = new JPanel();
         sub.setLayout(new BoxLayout(sub, BoxLayout.LINE_AXIS));
         sub.add(frameIndicator.getTextField());
         sub.add(frameIndicator.getMaxLabel());
         topBottom.add(sub, BorderLayout.SOUTH);
+
         panel.add(topBottom);
     }
 
@@ -574,15 +577,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         JMenuItem original = new JMenuItem("Open Image");
         file.add(original);
         original.addActionListener(evt -> {
-            setReady(false);
-            ImagePlus original1 = IJ.openImage();
-            if(original1 ==null){
-                finished();
-                return;
-            }
-            segmentationController.setOriginalPlus(original1);
-            original1.show();
-            finished();
+            openImage();
         });
 
         JMenuItem selectOpen = new JMenuItem("Select open image");
@@ -1070,6 +1065,36 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         segmentationController.saveMeshes(f);
         finished();
     }
+
+    public void openImage(){
+        setReady(false);
+        ImagePlus plus = IJ.openImage();
+        if(plus == null){
+            finished();
+            return;
+        }
+
+        int channel = 0;
+        if(plus.getNChannels()>1){
+            Object[] values = IntStream.range(1, plus.getNChannels()+1).boxed().toArray();
+            Object channelChoice = JOptionPane.showInputDialog(
+                    frame,
+                    "Select Channel:",
+                    "Choose Channel",
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    values,
+                    values[0]
+            );
+            if(channelChoice == null) return;
+            channel = (Integer)channelChoice - 1;
+        }
+        System.out.println("channel: " + channel);
+        segmentationController.setOriginalPlus(plus, channel);
+        plus.show();
+        finished();
+    }
+
     public void importMeshes(){
         /**
          * "matching" the same frame.
@@ -1237,12 +1262,15 @@ public class ControlFrame implements ReadyObserver, FrameListener {
 
     @Override
     public void frameChanged(int i) {
-        frameIndicator.setFrame(segmentationController.getCurrentFrame(), segmentationController.getNFrames());
+
+        frameIndicator.update();
     }
 
     class FrameIndicator{
         JTextField field = new JTextField("-");
         JLabel max = new JLabel("/-");
+        JLabel imageName = new JLabel("xxx");
+        JLabel channelLabel = new JLabel("-:-");
         FrameIndicator() {
             Dimension size = new Dimension(60, 30);
             field.setMinimumSize(size);
@@ -1267,10 +1295,8 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             } );
 
             field.addFocusListener(new FocusListener() {
-
                 @Override
                 public void focusGained(FocusEvent focusEvent) {
-
                 }
 
                 @Override
@@ -1279,14 +1305,12 @@ public class ControlFrame implements ReadyObserver, FrameListener {
                         return;             //how?
                     }
                     try {
-
                         int frame = Integer.parseInt(field.getText());
                         segmentationController.toFrame(frame-1);
                         field.setEnabled(false);
-
-                        } catch (NumberFormatException exc) {
+                    } catch (NumberFormatException exc) {
                         //oh well
-                        }
+                    }
                 }
             });
         }
@@ -1296,7 +1320,17 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         public JLabel getMaxLabel(){
             return max;
         }
-        public void setFrame(int frame, int total) {
+
+        public void update(){
+            int frame = segmentationController.getCurrentFrame();
+            int total = segmentationController.getNFrames();
+
+            String title = segmentationController.getShortImageName();
+            imageName.setText(title);
+
+            int channel = segmentationController.getCurrentChannel() + 1;
+            int n = segmentationController.getNChannels();
+            channelLabel.setText(channel + ":" + n);
             field.setEnabled(false);
             field.setText(String.format("%d", (frame+1)));
             max.setText("/ " + total);

@@ -27,6 +27,8 @@ import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 
 import javax.swing.*;
+import javax.swing.border.BevelBorder;
+import javax.swing.border.EtchedBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
@@ -84,8 +86,7 @@ public class CircularMeshInitializationDialog implements FrameListener {
         content.setLayout(new BorderLayout());
         host = new JPanel();
 
-        JPanel row = new JPanel();
-        row.setLayout(new BoxLayout(row, BoxLayout.LINE_AXIS));
+
 
         JButton add = new JButton("add mesh");
         add.addActionListener(evt->{
@@ -141,17 +142,32 @@ public class CircularMeshInitializationDialog implements FrameListener {
             createAndShowBinaryImage();
         });
 
+        // contains controls.
+        JPanel row = new JPanel();
+        row.setBorder(BorderFactory.createEtchedBorder(EtchedBorder.RAISED));
+        row.setLayout(new BoxLayout(row, BoxLayout.PAGE_AXIS));
+
+        int c = segmentationController.getCurrentChannel();
+        String fullTitle = segmentationController.getShortImageName();
+        String displayTitle;
+        if(fullTitle.length() > 16){
+            displayTitle = fullTitle.substring(0, 11) + "...:" + c;
+        } else{
+            displayTitle = fullTitle + ":" + c;
+        }
+        JLabel tl = new JLabel(displayTitle);
+        tl.setToolTipText(fullTitle);
+        row.add(tl);
         row.add(showCursor);
         row.add(showMeshes);
         row.add(close);
         row.add(clear);
         row.add(add);
         row.add(binary);
-
-        row.add(Box.createHorizontalGlue());
         row.add(gridView);
         row.add(tabbedView);
-        content.add(row, BorderLayout.SOUTH);
+
+        content.add(row, BorderLayout.EAST);
 
 
 
