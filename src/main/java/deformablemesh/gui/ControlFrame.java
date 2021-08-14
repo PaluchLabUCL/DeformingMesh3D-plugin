@@ -16,6 +16,7 @@ import ij.io.OpenDialog;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.MenuItemUI;
 import javax.swing.plaf.basic.BasicButtonUI;
 import javax.swing.plaf.basic.BasicMenuItemUI;
@@ -278,7 +279,14 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         }
         CircularMeshInitializationDialog dialog = new CircularMeshInitializationDialog(segmentationController);
         dialog.start();
-        tabbedPane.add("init: ", dialog.getContent());
+        tabbedPane.add("Initializer", dialog.getContent());
+        int i = tabbedPane.indexOfComponent(dialog.getContent());
+
+        JPanel closableTab = GuiTools.getClosableTabComponent("initializer", evt->{
+            dialog.afterClosing();
+        });
+        tabbedPane.setTabComponentAt(i, closableTab);
+
         tabbedPane.setSelectedComponent(dialog.getContent());
         dialog.setCloseCallback( () ->{
             tabbedPane.remove(dialog.getContent());
@@ -1131,6 +1139,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         for(int i = 0; i<n; i++){
             String title = tabbedPane.getTitleAt(i);
             if(managerTitle.equals(title)){
+                tabbedPane.setSelectedIndex(i);
                 return;
             }
         }
@@ -1164,10 +1173,14 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         main.add(content, BorderLayout.CENTER);
 
         tabbedPane.add(main, managerTitle);
-        cancel.addActionListener(evt->{
+        int dex = tabbedPane.indexOfComponent(main);
+        ActionListener closeListener = evt->{
             tabbedPane.remove(main);
             segmentationController.removeMeshListener(fl);
-        });
+        };
+        JPanel closableTab = GuiTools.getClosableTabComponent(managerTitle, closeListener);
+        tabbedPane.setTabComponentAt(dex, closableTab);
+        cancel.addActionListener(closeListener);
 
 
     }

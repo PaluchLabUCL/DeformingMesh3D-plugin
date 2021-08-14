@@ -158,12 +158,14 @@ public class CircularMeshInitializationDialog implements FrameListener {
         JLabel tl = new JLabel(displayTitle);
         tl.setToolTipText(fullTitle);
         row.add(tl);
+
+        row.add(add);
+        row.add(clear);
+        row.add(close);
+        row.add(binary);
+        row.add(Box.createHorizontalStrut(tl.getWidth()));
         row.add(showCursor);
         row.add(showMeshes);
-        row.add(close);
-        row.add(clear);
-        row.add(add);
-        row.add(binary);
         row.add(gridView);
         row.add(tabbedView);
 

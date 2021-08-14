@@ -7,6 +7,9 @@ import ij.WindowManager;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;
@@ -211,6 +214,64 @@ public class GuiTools {
 
     public static double parseDouble(String value) throws ParseException{
         return Double.parseDouble(value);
+    }
+
+    static public JPanel getClosableTabComponent(String title, ActionListener closeListener){
+        JPanel closableTab = new JPanel();
+        closableTab.setLayout(new BoxLayout(closableTab, BoxLayout.LINE_AXIS));
+        closableTab.setAlignmentY(JPanel.CENTER_ALIGNMENT);
+        closableTab.setOpaque(false);
+        JLabel label = new JLabel("initializer");
+        label.setOpaque(false);
+        label.setFont(label.getFont().deriveFont(12.f));
+        //label.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
+        JButton button = GuiTools.getXButton();
+        button.addActionListener(closeListener);
+        closableTab.add(label);
+        closableTab.add(button);
+        return closableTab;
+    }
+    public static JButton getXButton(){
+        JButton b = new JButton();
+        b.setBorderPainted(false);
+        b.setContentAreaFilled(false);
+        b.setMargin(new Insets(0,2,0,0));
+        b.setBorder(null);
+        b.setIcon( getXIcon( Color.BLACK ) );
+        b.setRolloverIcon( getXIcon(Color.GREEN.darker()) );
+        b.setPressedIcon( getXIcon(Color.RED));
+        b.setPreferredSize(new Dimension(12, 12));
+        return b;
+    }
+    public static Icon getXIcon(Color c) {
+        int L = 10;
+        BufferedImage img = new BufferedImage(L+2, L+2, BufferedImage.TYPE_4BYTE_ABGR);
+        Graphics2D g2d = img.createGraphics();
+        applyRenderingHints(g2d);
+        g2d.setColor(c);
+
+        g2d.drawOval(1, 1, L, L);
+        int w = (int)(L / Math.sqrt(2));
+        g2d.drawLine(1, 1, L, L);
+        g2d.drawLine(2, L, L, 2);
+        g2d.dispose();
+        return new ImageIcon(img);
+    }
+
+    /**
+     * For making a g2d that draws nicely.
+     * @param g2d
+     */
+    public static void applyRenderingHints(Graphics2D g2d){
+        g2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
+        g2d.setRenderingHint(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_ENABLE);
+        g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+
     }
 
     public static class LocaleNumericTextField{
