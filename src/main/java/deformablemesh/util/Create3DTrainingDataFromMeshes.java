@@ -238,8 +238,8 @@ public class Create3DTrainingDataFromMeshes {
     public static void main(String[] args) throws IOException {
         new ImageJ();
         File base;
-        base = args.length==2? new File(args[0]) : new File(ij.IJ.getFilePath("select image"));
-        String meshFileName = args.length==2? args[1] : ij.IJ.getFilePath("select mesh file for " + base.getName());
+        base = args.length>=2? new File(args[0]) : new File(ij.IJ.getFilePath("select image"));
+        String meshFileName = args.length>=2? args[1] : ij.IJ.getFilePath("select mesh file for " + base.getName());
 
         if(meshFileName==null) return;
 
@@ -249,9 +249,10 @@ public class Create3DTrainingDataFromMeshes {
 
 
         //plus = createScaledImagePlus(plus);
+
         ImagePlus original = ij.IJ.openImage(base.getAbsolutePath());;
         original.show();
-        Path baseFolder = Paths.get(IJ.getDirectory("Select root folder"));
+        Path baseFolder = args.length>2 ? Paths.get(args[2]) : Paths.get(IJ.getDirectory("Select root folder"));
         Create3DTrainingDataFromMeshes creator = new Create3DTrainingDataFromMeshes(tracks, original);
 
         File labelFolder = baseFolder.resolve("labels").toFile();
@@ -266,30 +267,30 @@ public class Create3DTrainingDataFromMeshes {
 
         for(int i = 0; i < original.getNFrames(); i++){
             String sliceName = String.format("%s-t%04d.tif", name, i);
-            creator.run(i-1);
+            System.out.println("running " + sliceName);
+            creator.run(i);
             ImagePlus maskPlus = original.createImagePlus();
             maskPlus.setStack(creator.getLabeledStack());
             IJ.save(maskPlus, new File(labelFolder, sliceName).getAbsolutePath());
-            System.out.println("finished working");
-            //maskPlus.show();
+            System.out.println("saved labels: " + sliceName);
             try {
                 ImagePlus scaled = creator.getOriginalFrame(i);
                 scaled.setLut(LUT.createLutFromColor(Color.WHITE));
                 scaled.setOpenAsHyperStack(true);
                 IJ.save(scaled, new File(imageFolder, sliceName).getAbsolutePath());
-
+                System.out.println("saved copy");
             } catch(Exception e){
                 e.printStackTrace();
             }
         }
+        System.out.println("Finished Everything!");
+        System.exit(0);
     }
 
     public ImagePlus getOriginalFrame(Integer tp) {
-        System.out.println("getting frame: " + tp);
         ImagePlus frame = original.createImagePlus();
         ImageStack stack = new ImageStack(original.getWidth(), original.getHeight());
         int n = original.getNSlices();
-        System.out.println("t " + tp + " n " + n +" of " + original.getStackSize());
         int c = original.getNChannels();
         ImageStack originStack = original.getStack();
         int tpSize = n*c;

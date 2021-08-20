@@ -60,7 +60,12 @@ public class ControlFrame implements ReadyObserver, FrameListener {
     HotKeyDelegate mf3DInterface;
     public ControlFrame( SegmentationController model){
         this.segmentationController = model;
-        terminal = new SwingJSTerm(model);
+        try{
+            terminal = new SwingJSTerm(model);
+        } catch (Exception e){
+            System.out.println("Javascript not configured properly");
+            //can be a couple errors.
+        }
 
     }
     public void showFrame(){

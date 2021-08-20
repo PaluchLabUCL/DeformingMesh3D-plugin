@@ -1,24 +1,32 @@
 package deformablemesh.gui;
 
+import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.geometry.Furrow3D;
+import deformablemesh.geometry.Node3D;
+import deformablemesh.util.Vector3DOps;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.LinearGradientPaint;
 import java.awt.Paint;
 import java.awt.Point;
 import java.awt.RadialGradientPaint;
 import java.awt.RenderingHints;
+import java.awt.Stroke;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Ellipse2D;
+import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -30,60 +38,77 @@ public class FurrowInput extends JPanel {
     double markY;
     Ellipse2D marker;
 
-    final static double border = 5;
-    final static double sphereRadius = 30;
+    final static double border = 15;
+    final static double sphereRadius = 45;
     static Ellipse2D sphere = new Ellipse2D.Double(border, border, 2*sphereRadius, 2*sphereRadius);
 
-    final static double bandWidth = 20;
+    final static double bandWidth = 30;
     final static double bandHeight = 2*sphereRadius;
     static Rectangle2D band = new Rectangle2D.Double(2*border + 2*sphereRadius, border, bandWidth, bandHeight);
     final static Color clearBlack = new Color(0,0,0,0);
     final static Color clearWhite = new Color(255, 255, 255, 0);
     final static Color midBlack = new Color(0,0,0,50);
+    final static Color active = new Color(150, 120, 100);
 
     static BufferedImage background = createBackgroundImage();
-    final static double markerRadius = 5;
+    final static double markerRadius = 10;
     static int grating = 5;
     static int delta = (int)(bandHeight/grating);
     static int gratingThickness = (int)(bandHeight*0.5/delta);
     static int gratingBorder = 2;
     double velocity = 0.0;
-
-
-
     List<PlaneChangeListener> listeners = new ArrayList<>();
-
     int scrollOffset = 0;
-
     double[] normal;
+    final static Color lightBlue = new Color(80, 80, 255);
+    final static Color darkBlue = new Color(0, 0, 200);
+    boolean hovering = false;
+    boolean sphereHovering = false;
+
+    boolean wheelHovering = false;
+
+    MarkerListener markListener;
 
     public FurrowInput(){
 
         marker = new Ellipse2D.Double(markX+sphere.getCenterX() - markerRadius, markY+sphere.getCenterY() - markerRadius, 2*markerRadius, 2*markerRadius);
         fixedSize = new Dimension( background.getWidth(), background.getHeight());
-        MarkerListener m = new MarkerListener();
-        addMouseListener(m);
-        addMouseMotionListener(m);
+        markListener = new MarkerListener();
+        addMouseListener(markListener);
+        addMouseMotionListener(markListener);
 
         BandListener b = new BandListener();
         addMouseListener(b);
         addMouseMotionListener(b);
     }
-    final static Color lightBlue = new Color(80, 80, 255);
-    final static Color darkBlue = new Color(0, 0, 200);
-    @Override
-    protected void paintComponent(Graphics g){
-        Graphics2D g2d = (Graphics2D)g;
-        g2d.drawImage(background, 0, 0, this);
-
-
-        g2d.setPaint(getMarkerPaint());
-
+    public void drawMarker(Graphics2D g2d){
+        Paint markerFill;
+        if(markListener.dragging){
+            markerFill = new Color(200, 200, 200);
+        } else if( markListener.hover){
+            markerFill = new Color(255, 255, 230);
+        } else if( sphereHovering ){
+            markerFill = new Color(200, 200, 200);
+        } else{
+            markerFill = new Color(150, 150, 150);
+        }
+        g2d.setPaint(markerFill);
         g2d.fill(marker);
 
-
-        g2d.setColor(Color.BLACK);
+        double dotWidth = 5;
+        Ellipse2D ell = new Ellipse2D.Double(
+                marker.getX() + dotWidth,
+                marker.getY() + dotWidth,
+                marker.getWidth() - 2*dotWidth,
+                marker.getHeight() - 2*dotWidth
+        );
+        g2d.setPaint(active);
+        g2d.fill(ell);
         g2d.draw(marker);
+
+    }
+
+    void drawZoomWheel(Graphics2D g2d){
         int x = (int)band.getX()+gratingBorder;
         int w = (int)band.getWidth() - 2*gratingBorder;
         int bh = (int)bandHeight;
@@ -107,17 +132,199 @@ public class FurrowInput extends JPanel {
 
         }
 
+    }
+
+    @Override
+    protected void paintComponent(Graphics g){
+        super.paintComponent(g);
+        Graphics2D g2d = (Graphics2D)g;
+        g2d.drawImage(background, 0, 0, this);
+
+        if(hovering){
+            g2d.setColor(new Color(50, 50, 0));
+            g2d.draw(sphere);
+        }
+
+        drawPlane(g2d, marker.getCenterX(), marker.getCenterY());
+        drawCurve(g2d, marker.getCenterX(), marker.getCenterY());
+        drawMarker(g2d);
+
+        drawZoomWheel(g2d);
+
 
 
     }
-    final static float[] fractions = {0.0f, 0.8f, 1.0f};
-    final static Color[] colors = {lightBlue, Color.BLUE, darkBlue};
-    final static float c1X = (int)(3*border)+5;
-    final static float c1Y = (int)(2*border)+5;
-    final static float w2 = (int)(0.5*sphereRadius);
-    final static Paint pd = new RadialGradientPaint(c1X, c1Y, w2, fractions, colors );
-    Paint getMarkerPaint(){
-        return pd;
+
+
+    static Path2D createBottomCurve(double x, double y, double w, double h, double trim){
+        Path2D path = new Path2D.Double();
+        path.moveTo(x-w/2, y);
+        path.curveTo(x - w/2 + trim, y + h/2, x + w/2 - trim, y + h/2 , x + w/2, y);
+        return path;
+    }
+
+    static Path2D createTopCurve(double x, double y, double w, double h, double trim){
+        Path2D path = new Path2D.Double();
+        path.moveTo(x-w/2, y);
+        path.curveTo(x - w/2 + trim, y - h/2, x + w/2 - trim    , y - h/2 , x + w/2, y);
+        return path;
+    }
+
+    static void drawFrontCurves(Graphics2D g2d, double middleX, double middleY, int steps){
+        double dtheta = Math.PI/2/steps;
+        g2d.setColor(Color.LIGHT_GRAY);
+        for(int i = 0; i<steps; i++){
+            double dx = (0.5*sphere.getWidth()*Math.sin((i+1)*dtheta));
+            double dy = (0.5*sphere.getHeight()*Math.cos((i+1)*dtheta));
+            g2d.draw(createBottomCurve(middleX, middleY - dy, 2*dx, 0.3*2*dx, 0.3*2*dx));
+            g2d.draw(createBottomCurve(middleX, middleY + dy, 2*dx, 0.3*2*dx, 0.3*2*dx));
+        }
+    }
+    static double fs = 0.2;
+    static double[] getXYZ(double ix, double iy){
+        double R = sphere.getWidth()/2;
+        double cx = sphere.getCenterX();
+        double cy = sphere.getCenterY();
+
+        double a = (1 + fs*fs);
+        double b = 2*fs*(iy - cy);
+        double c = (ix - cx)*(ix -cx) + (iy - cy)*(iy-cy) - R*R;
+
+        double x = ix - cx;
+        double y = (-b - Math.sqrt(b*b - 4*a*c))/(2*a);
+        double z = -fs*y + (cy - iy);
+        return new double[]{x, y, z};
+    }
+    static public void drawPlane(Graphics2D g2d, double ix, double iy){
+        double cx = sphere.getCenterX();
+        double cy = sphere.getCenterY();
+        double l = sphere.getWidth()/4;
+        double[] points = {
+            -l, 0, -l,
+            -l, 0, +l,
+            +l, 0, +l,
+            +l, 0, -l
+        };
+        double[] startingNormal = {0, -1, 0};
+        //plane pointing in the +x direction.
+        double[] xyz = getXYZ(ix, iy);
+        Vector3DOps.normalize(xyz);
+        double[] axis = Vector3DOps.cross(xyz, startingNormal);
+
+        double sin = Vector3DOps.normalize(axis);
+        double cos = Vector3DOps.dot(xyz, startingNormal);
+
+        double[] rotation_matrix = {
+                cos + axis[0]*axis[0]*(1-cos), axis[0]*axis[1]*(1-cos) - axis[2]*sin, axis[0]*axis[2]*(1-cos) + axis[1]*sin,
+                axis[1]*axis[0]*(1-cos) + axis[2]*sin, cos + axis[1]*axis[1]*(1-cos), axis[1]*axis[2]*(1-cos) - axis[0]*sin,
+                axis[2]*axis[0]*(1-cos) - axis[1]*sin, axis[2]*axis[1]*(1-cos) + axis[0]*sin, cos + axis[2]*axis[2]*(1-cos)
+
+        };
+
+        for(int index = 0; index<points.length/3; index++){
+            double[] original_position = Arrays.copyOfRange(points, index*3, index*3 + 3);
+
+            double[] rotated = new double[]{0,0,0};
+
+            for(int i = 0; i< 3; i++){
+                for(int j = 0; j<3; j++){
+                    rotated[i] += rotation_matrix[3*i + j]*original_position[j];
+                }
+            }
+            for(int i = 0; i<3; i++){
+                points[3*index + i] = rotated[i];
+            }
+        }
+        //First rotate about z-axis, then rotate about x-y projected axis.
+        Path2D path = new Path2D.Double();
+        double x = cx + points[0];
+        double y = cy + fs*points[1] - points[2];
+        path.moveTo(x, y);
+        for(int i = 1; i<=4; i++){
+            x = points[(3*i)%points.length] + cx;
+            y = fs*points[(3*i + 1)%points.length] - points[(3*i + 2)%points.length] + cy;
+            path.lineTo( x, y );
+        }
+        g2d.setColor(new Color(100, 0, 0, 75));
+        g2d.fill(path);
+        g2d.setColor(new Color(100, 0, 0, 75));
+        g2d.draw(path);
+    }
+    /**
+     *
+     * @param g2d
+     * @param ix
+     * @param iy
+     */
+    static void drawCurve( Graphics2D g2d, double ix, double iy){
+        //where on the sphere are we?
+        double fs = 0.2;
+        double R = sphere.getWidth()/2;
+        double cx = sphere.getCenterX();
+        double cy = sphere.getCenterY();
+
+        double a = (1 + fs*fs);
+        double b = 2*fs*(iy - cy);
+        double c = (ix - cx)*(ix -cx) + (iy - cy)*(iy-cy) - R*R;
+
+        double x = ix - cx;
+        double y = (-b - Math.sqrt(b*b - 4*a*c))/(2*a);
+        double z = -fs*y + (cy - iy);
+
+        double r = Math.sqrt(R*R - z*z);
+        double h = fs*r;
+
+        double ex = cx - r;
+        double ey = cy - z - h;
+
+        g2d.setColor(Color.WHITE);
+
+        float[] fractions = {0.0f, 1.0f};
+
+        Color[] colors = { new Color(255, 0, 255, 75), Color.GREEN};
+        if((int)(2*h) > 0){
+            //otherwise the gradient paint throws an error.
+            Paint p = new LinearGradientPaint((int) cx, (int) (ey), (int) cx, (int) (ey + 2 * h), fractions, colors);
+            g2d.setPaint(p);
+
+
+            Ellipse2D latitude = new Ellipse2D.Double(ex, ey, 2 * r, 2 * h);
+            g2d.draw(latitude);
+        }
+
+        //double rootB = (-b - Math.sqrt(b*b - 4*))
+        double width = Math.abs(ix - cx);
+
+        Paint longPaint;
+
+        if(ix - cx == 0){
+            longPaint = colors[colors.length - 1];
+        } else if(ix > cx){
+            longPaint = new LinearGradientPaint(
+                    (int)(cx-width), (int)cy, (int)(cx + width), (int)(cy), fractions, colors
+            );
+        } else{
+            longPaint =  new LinearGradientPaint(
+                    (int)(cx + width), (int)cy, (int)(cx - width), (int)(cy), fractions, colors
+            );
+        }
+
+        g2d.setPaint(longPaint);
+        Ellipse2D longitude = new Ellipse2D.Double(cx - width, cy - R, 2*width, 2*R);
+        g2d.draw(longitude);
+    }
+
+    static void drawBackCurves(Graphics2D g2d, double middleX, double middleY, int steps){
+        double dtheta = Math.PI/2/steps;
+        int l = 3;
+        g2d.setColor(new Color(255,255, 255, 50));
+        for(int i = 0; i<steps; i++){
+            double dx = (0.5*sphere.getWidth()*Math.sin((i+1)*dtheta));
+            double dy = (0.5*sphere.getHeight()*Math.cos((i+1)*dtheta));
+
+            g2d.draw(createTopCurve(middleX, middleY - dy, 2*dx, 0.3*2*dx, 0.3*2*dx));
+            g2d.draw(createTopCurve(middleX, middleY + dy, 2*dx, 0.3*2*dx, 0.3*2*dx));
+        }
     }
 
     static BufferedImage createBackgroundImage(){
@@ -130,39 +337,40 @@ public class FurrowInput extends JPanel {
         //g2d.fillRect(0,0,width, height);
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        g2d.setColor(Color.RED);
-        g2d.fill(sphere);
+        //g2d.setColor(Color.RED);
+        //g2d.fill(sphere);
 
         int c1X = (int)(2*border);
         int c1Y = (int)(2*border);
         int w2 = (int)(2.5*sphereRadius);
         float[] fractions = {0.0f, 1.0f};
-        Color[] colors = {clearBlack, Color.BLACK};
+        Color[] colors = {clearBlack, new Color(0, 0, 0, 150)};
         Paint p = new RadialGradientPaint(c1X, c1Y, w2, fractions, colors );
         g2d.setPaint(p);
         g2d.fill(sphere);
 
-        g2d.setColor(Color.BLACK);
-        g2d.draw(sphere);
+        Ellipse2D ring = new Ellipse2D  .Double(sphere.getX()-3, sphere.getY()-3, sphere.getWidth()+5, sphere.getHeight()+5);
+        g2d.setStroke(new BasicStroke(5f));
+        g2d.setColor(Color.WHITE);
+        g2d.draw(ring);
+        g2d.setStroke(new BasicStroke(1f));
+        g2d.setColor(Color.GRAY);
+        Ellipse2D outter = new Ellipse2D  .Double(sphere.getX()-5, sphere.getY()-5, sphere.getWidth()+10, sphere.getHeight()+10);
+        g2d.draw(outter);
+        //g2d.draw(sphere);
         int middleY = (int)sphere.getCenterY();
         int middleX = (int)sphere.getCenterX();
         int leftX = (int)sphere.getX();
         int topY = (int)sphere.getY();
-        g2d.drawLine(middleX, topY, middleX, topY+(int)sphere.getHeight());
-        g2d.drawLine(leftX, middleY, leftX + (int)sphere.getWidth(), middleY);
-        int steps = 6;
+        //g2d.drawLine(middleX, topY, middleX, topY+(int)sphere.getHeight());
+        //g2d.drawLine(leftX, middleY, leftX + (int)sphere.getWidth(), middleY);
+        int steps = 3;
         double dtheta = Math.PI/2/steps;
-        int l = 3;
-        for(int i = 0; i<steps; i++){
-            int dx = (int)(0.5*sphere.getWidth()*Math.sin((i+1)*dtheta));
-            g2d.setColor(midBlack);
-            g2d.drawOval(middleX-dx, middleY-dx, 2*dx, 2*dx );
-            g2d.setColor(Color.BLACK);
-            g2d.drawLine(middleX+dx, middleY-l, middleX+dx, middleY+l );
-            g2d.drawLine(middleX-dx, middleY-l, middleX-dx, middleY+l );
-            g2d.drawLine(middleX-l, middleY+dx, middleX+l, middleY+dx);
-            g2d.drawLine(middleX-l, middleY-dx, middleX+l, middleY-dx);
-        }
+
+
+        drawBackCurves(g2d, middleX, middleY, steps);
+        drawAxis(g2d, middleX, middleY);
+        drawFrontCurves(g2d, middleX, middleY, steps);
 
         c1X = (int)(3*border);
         c1Y = (int)(2*border);
@@ -174,23 +382,47 @@ public class FurrowInput extends JPanel {
         g2d.fill(sphere);
 
         //draw band.
-        g2d.setColor(Color.RED);
+        g2d.setColor(active);
         g2d.fill(band);
         g2d.setColor(Color.black);
         g2d.draw(band);
 
         float y1 = (float)(band.getY());
-        float y2 = (float)(band.getY() + band.getHeight()*0.5);
-        p = new GradientPaint(0f, y1, Color.BLACK, 0f, y2, clearBlack, true);
-        g2d.setPaint(p);
+        float y2 = (float)(band.getY() + band.getHeight()*0.25);
+        Paint sphbg = new GradientPaint(0f, y1, Color.BLACK, 0f, y2, clearBlack, false);
+        g2d.setPaint(sphbg);
         g2d.fill(band);
 
+        y1 = (float)(band.getY() + band.getHeight());
+        y2 = (float)(band.getY() + band.getHeight()*0.75);
+        sphbg = new GradientPaint(0f, y1, Color.BLACK, 0f, y2, clearBlack, false);
+        g2d.setPaint(sphbg);
+        g2d.fill(band);
         //g2d.fill(band);
 
 
         g2d.dispose();
 
         return bg;
+    }
+
+    private static void drawAxis(Graphics2D g2d, int middleX, int middleY) {
+        int l = 3;
+
+        Path2D axis = new Path2D.Double();
+        axis.moveTo(middleX, middleY);
+        axis.lineTo(middleX, middleY - 0.5*sphere.getHeight() - l);
+        axis.moveTo(middleX, middleY);
+        axis.lineTo(middleX + 0.5*sphere.getWidth(), middleY + 0.1*sphere.getHeight());
+        axis.moveTo(middleX, middleY);
+        axis.lineTo(middleX - 0.5*sphere.getWidth(), middleY + 0.2*sphere.getHeight());
+
+        //Stroke s = g2d.getStroke();
+        //g2d.setStroke(new BasicStroke(2f));
+        //g2d.setColor(new Color(100, 100, 255));
+        //g2d.draw(axis);
+        //g2d.setStroke(s);
+
     }
 
     @Override
@@ -209,6 +441,47 @@ public class FurrowInput extends JPanel {
     class MarkerListener extends MouseAdapter {
         boolean dragging;
         Point last;
+        boolean hover = false;
+        @Override
+        public void mouseMoved(MouseEvent e){
+            if(sphere.contains(e.getPoint())){
+                if(!sphereHovering) {
+                    sphereHovering = true;
+                    repaint();
+                }
+            } else{
+                if(sphereHovering){
+                    sphereHovering = false;
+                    repaint();
+                }
+            }
+
+            if(marker.contains(e.getPoint())){
+                if(!hover){
+                    hover = true;
+                    repaint();
+                }
+            } else{
+                if(hover){
+                    hover = false;
+                    repaint();
+                }
+            }
+
+        }
+        @Override
+        public void mouseEntered(MouseEvent e) {
+            hovering = true;
+            repaint();
+        }
+
+        @Override
+        public void mouseExited(MouseEvent evt){
+            hovering = false;
+            sphereHovering = false;
+            repaint();
+        }
+
         @Override
         public void mousePressed(MouseEvent e) {
             if(marker.contains(e.getPoint())){

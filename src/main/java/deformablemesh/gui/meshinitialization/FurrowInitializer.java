@@ -2,7 +2,9 @@ package deformablemesh.gui.meshinitialization;
 
 import deformablemesh.SegmentationController;
 import deformablemesh.SegmentationModel;
+import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Projectable;
+import deformablemesh.geometry.ProjectableMesh;
 import deformablemesh.gui.RingController;
 import deformablemesh.ringdetection.FurrowTransformer;
 import deformablemesh.util.Vector3DOps;
@@ -10,6 +12,7 @@ import ij.ImagePlus;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -26,7 +29,9 @@ import java.awt.event.WindowListener;
 import java.awt.geom.Ellipse2D;
 import java.io.File;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Created by msmith on 3/31/16.
@@ -34,15 +39,15 @@ import java.util.Map;
 public class FurrowInitializer extends JDialog {
 
 
-    SegmentationController model;
+    SegmentationController segmentationController;
     RingController rings;
 
     Initializer initializer;
     Runnable callback;
-
+    JCheckBox showMeshes;
     public FurrowInitializer(JFrame owner, SegmentationController model, Runnable callback){
         super(owner, false);
-        this.model = model;
+        this.segmentationController = model;
         this.callback = callback;
         initializer = new Initializer();
     }
@@ -64,6 +69,12 @@ public class FurrowInitializer extends JDialog {
         });
         row.add(previous);
         row.add(next);
+        showMeshes = new JCheckBox("show meshes");
+        showMeshes.setSelected(true);
+        showMeshes.addActionListener(evt->{
+            showMeshes();
+        });
+        row.add(showMeshes);
         content.add(row, BorderLayout.SOUTH);
 
 
@@ -95,7 +106,7 @@ public class FurrowInitializer extends JDialog {
         });
 
         setVisible(true);
-
+        showMeshes();
     }
 
     public void finish(){
@@ -103,7 +114,7 @@ public class FurrowInitializer extends JDialog {
         setVisible(false);
         double[] c = initializer.getCenter();
         double[] n = initializer.getNormal();
-        model.setFurrowForCurrentFrame(c , n);
+        segmentationController.setFurrowForCurrentFrame(c , n);
 
         afterClosing();
     }
@@ -111,7 +122,7 @@ public class FurrowInitializer extends JDialog {
     private JPanel createHorizontalMidPlaneSelectionPanel(){
         double[] hPos = {0,0,0};
         double[] zDir = {0,0,1};
-        SlicePicker xyPicker  = new SlicePicker(model.getMeshImageStack(), zDir, hPos );
+        SlicePicker xyPicker  = new SlicePicker(segmentationController.getMeshImageStack(), zDir, hPos );
         JPanel horizontal = xyPicker.buildView();
         xyPicker.setLabel("pick x-y points. Slider adjusts z.");
         initializer.addPicker(xyPicker);
@@ -123,7 +134,7 @@ public class FurrowInitializer extends JDialog {
 
         double[] hPos = {0,0,0};
         double[] yDir = {0,-1,0};
-        SlicePicker xzPicker  = new SlicePicker(model.getMeshImageStack(), yDir, hPos );
+        SlicePicker xzPicker  = new SlicePicker(segmentationController.getMeshImageStack(), yDir, hPos );
         JPanel horizontal = xzPicker.buildView();
         xzPicker.setLabel("pick x-z points. Slider adjusts y.");
         initializer.addPicker(xzPicker);
@@ -131,11 +142,36 @@ public class FurrowInitializer extends JDialog {
         return horizontal;
     }
 
+    void showMeshes(){
+
+        if(showMeshes.isSelected()) {
+            segmentationController.submit(()->{
+                final List<DeformableMesh3D> meshes = segmentationController.getAllTracks().stream(
+
+                ).filter(
+                        t -> t.containsKey(segmentationController.getCurrentFrame())
+                ).map(
+                        t -> t.getMesh(segmentationController.getCurrentFrame())
+                ).collect(Collectors.toList());
+
+                for (final DeformableMesh3D mesh : meshes) {
+                    EventQueue.invokeLater(()->{
+                        initializer.addProjectableMesh(mesh);
+                    });
+                }
+
+            });
+
+        } else{
+            initializer.clearProjectableMeshes();
+        }
+    }
+
     private JPanel createVerticalFacingSelectionPanel(){
 
         double[] hPos = {0,0,0};
         double[] xDir = {1,0,0};
-        SlicePicker yzPicker  = new SlicePicker(model.getMeshImageStack(), xDir, hPos );
+        SlicePicker yzPicker  = new SlicePicker(segmentationController.getMeshImageStack(), xDir, hPos );
         yzPicker.rotateView();
         JPanel horizontal = yzPicker.buildView();
         yzPicker.setLabel("pick z-y points. Slider adjusts x position");
@@ -181,6 +217,8 @@ public class FurrowInitializer extends JDialog {
         CircleModifier A;
         CircleModifier B;
         CircleModifier dragging;
+        Map<DeformableMesh3D, ProjectableMesh> meshMap = new HashMap<>();
+
 
         public Initializer(){
         }
@@ -278,6 +316,25 @@ public class FurrowInitializer extends JDialog {
         @Override
         public void mouseMoved(MouseEvent e) {
 
+        }
+
+        public void addProjectableMesh(DeformableMesh3D mesh) {
+            ProjectableMesh pm = new ProjectableMesh(mesh);
+
+            for(SlicePicker pick: pickers.values()){
+                pick.addProjectableMesh(pm, mesh);
+            }
+
+            meshMap.put(mesh, pm);
+        }
+
+        public void clearProjectableMeshes() {
+            for(DeformableMesh3D mesh: meshMap.keySet()){
+                for(SlicePicker pick: pickers.values()){
+                    pick.removeProjectable(meshMap.get(mesh));
+                }
+            }
+            meshMap.clear();
         }
 
         void addProjectable(Projectable project, Color c){

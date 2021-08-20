@@ -139,7 +139,6 @@ public class MeshTrackManager {
 
     public MeshTrackManager(){
         model = new MeshListModel();
-
     }
 
     public void setSegmentationController( SegmentationController controller){

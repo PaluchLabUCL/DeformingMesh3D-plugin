@@ -388,6 +388,32 @@ public class SegmentationController {
         });
     }
 
+    public void maskToDistanceTransform(){
+        MeshImageStack stack = getMeshImageStack();
+        ImageStack result = new ImageStack(stack.getWidthPx(), stack.getHeightPx() );
+
+        for(int i = 0; i<getNFrames(); i++) {
+            getMeshImageStack().setFrame(i);
+            ImagePlus frame = getMeshImageStack().getCurrentFrame();
+            DistanceTransformMosaicImage dtmi = new DistanceTransformMosaicImage(frame);
+            System.out.println("starting");
+            dtmi.findBlobs();
+            System.out.println("blobbed");
+            dtmi.createCascades();
+            System.out.println("cascading");
+            //dtmi.createScaledCascades(2); //TODO make this non-fixed.
+            System.out.println("Creating image!");
+            ImageStack frames = dtmi.createLabeledImage().getStack();
+            for(int j = 1; j<=frames.getSize(); j++){
+                result.addSlice(frames.getSliceLabel(j), frames.getProcessor(j));
+            }
+        }
+        ImagePlus transformed = stack.original.createImagePlus();
+        transformed.setTitle(stack.original.getShortTitle() +  "-transformed.tif");
+        transformed.setStack(result, 1, stack.getNSlices(), stack.getNFrames());
+        transformed.setOpenAsHyperStack(true);
+        transformed.show();
+    }
     public MeshImageStack getMeshImageStack(){
         return model.stack;
     }
@@ -572,6 +598,11 @@ public class SegmentationController {
     public void reMeshConnections(double minConnectionLength, double maxConnectionLength){
         int f = model.getCurrentFrame();
         Track track = model.getSelectedTrack();
+        if(track == null){
+            //nothing to do no track selected.
+            return;
+        }
+
         reMeshConnections(track, f, minConnectionLength, maxConnectionLength);
     }
 
@@ -695,6 +726,11 @@ public class SegmentationController {
         return new ImagePlus("threshold", threshed);
     }
 
+    /**
+     * Remeshes all meshes in the current frame.
+     * @param minConnectionLength
+     * @param maxConnectionLength
+     */
     public void reMeshConnectionsAllMeshes(double minConnectionLength, double maxConnectionLength){
         int f = model.getCurrentFrame();
         List<Track> tracks = model.getAllTracks().stream().filter(t -> t.containsKey(f)).collect(Collectors.toList());
@@ -703,8 +739,14 @@ public class SegmentationController {
                 DeformableMesh3D mesh = t.getMesh(f);
                 ConnectionRemesher remesher =  new ConnectionRemesher();
                 remesher.setMinAndMaxLengths(minConnectionLength, maxConnectionLength);
-
-                return remesher.remesh(mesh);
+                DeformableMesh3D rep;
+                try{
+                    rep = remesher.remesh(mesh);
+                } catch(Exception e){
+                    System.err.println(e.getMessage());
+                    rep = mesh;
+                }
+                return rep;
 
             }).collect(Collectors.toList());
             setMeshes(tracks, f,  remeshed);

@@ -139,7 +139,16 @@ public class ConnectionRemesher {
             ave += l;
 
         }
+        double totalLength = ave;
+
         ave = ave/original.connections.size();
+
+        int originalSize = original.connections.size();
+        double minResult = Math.pow(2, ave/maxLength)*original.connections.size();
+        System.out.println( "before: " + ave + "// " + mn + "//" + ml + " ... " + originalSize);
+        if(minResult > originalSize && minResult > 20000){
+            throw new RuntimeException("Too many edges are predicted to be created: " + minResult);
+        }
         if (Double.isNaN(mn) || Double.isNaN(ml) || Double.isInfinite(mn) || Double.isInfinite(ml)){
             throw new RuntimeException("Invalid mesh result: " + "min: " + mn + ", max: " + ml + ", mean: " + ave);
         }
@@ -225,6 +234,9 @@ public class ConnectionRemesher {
             connection_indexes[dex++] = map.get(c.A.index);
             connection_indexes[dex++] = map.get(c.B.index);
         }
+
+
+        System.out.println( "after: " + connections.size());
 
         return new DeformableMesh3D(positions, connection_indexes, triangle_indexes);
 
@@ -459,7 +471,6 @@ public class ConnectionRemesher {
                 //this fault is also a triangle that is split in three.
                 //the middle node, and three triangles can be removed and
                 // replaced by a single triangle.
-                System.out.println("Cannot remove edge.");
                 return false;
             }
         }
@@ -490,7 +501,6 @@ public class ConnectionRemesher {
             //This is a necking type fault. Where the connection nodes
             // share another node.
             //This could be a location to split the mesh.
-            System.out.println("non-removable edge: " + shared);
             return false;
         }
         List<Triangle3D> mappingTriangles = new ArrayList<>(nodeToTriangle.get(con.B));
@@ -584,8 +594,7 @@ public class ConnectionRemesher {
 
     public void addConnection(Connection3D c){
         if(connections.contains(c)){
-            System.out.println("existing!");
-            //throw new RuntimeException("adding existing connection");
+            throw new RuntimeException("adding existing connection");
         }
         connections.add(c);
 

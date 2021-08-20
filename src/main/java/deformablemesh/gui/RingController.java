@@ -1,11 +1,13 @@
 package deformablemesh.gui;
 
+import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
 import deformablemesh.SegmentationController;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Furrow3D;
 import deformablemesh.geometry.Projectable;
 import deformablemesh.geometry.ProjectableMesh;
+import deformablemesh.geometry.modifier.MeshModifier;
 import deformablemesh.gui.meshinitialization.FurrowInitializer;
 import deformablemesh.io.FurrowWriter;
 import deformablemesh.ringdetection.ContractileRingDetector;
@@ -15,6 +17,7 @@ import ij.process.ImageProcessor;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -29,6 +32,8 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Graphics2D;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Shape;
 import java.awt.event.KeyEvent;
@@ -62,24 +67,33 @@ public class RingController implements FrameListener, ListDataListener {
     List<FrameListener> listeners = new ArrayList<>();
     List<ProjectableMesh> selectableMeshes = new ArrayList<>();
     boolean furrowShowing;
+    private boolean showTexture;
 
+    MeshModifier modifier;
+    
     public RingController(SegmentationController model){
         this.model = model;
         detector = new ContractileRingDetector();
     }
 
-    public void showFurrow(){
+    public void showFurrow(boolean textured){
         furrowShowing = true;
+        showTexture = textured;
         setFurrowValues();
     }
 
     public void hideFurrow(){
         furrowShowing = false;
-        getFurrow().removeDataObject();
+        Furrow3D furrow = getFurrow();
+        if(furrow != null){
+            furrow.removeDataObject();
+            frameChanged(model.getCurrentFrame());
+        }
 
-        frameChanged(model.getCurrentFrame());
     }
-
+    public boolean isTextureShowing(){
+        return showTexture;
+    }
     public GuiTools.LocaleNumericTextField createNumericInputField(double initial){
         JTextField ret = new JTextField();
         Dimension d = new Dimension(30, 20);
@@ -108,47 +122,86 @@ public class RingController implements FrameListener, ListDataListener {
         content.setLayout(new BorderLayout());
 
         JPanel buttons = new JPanel();
-        buttons.setLayout( new BoxLayout(buttons, BoxLayout.PAGE_AXIS));
+        buttons.setLayout( new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
         JButton showFurrowButton = new JButton("show");
+        buttons.add(showFurrowButton, gbc);
+        gbc.gridx++;
+        gbc.gridwidth = 2;
+
+        JCheckBox box = new JCheckBox("textured");
+        box.addActionListener(evt ->{
+            if(furrowShowing){
+                showFurrow(box.isSelected());
+            }
+        });
+
+        buttons.add(box, gbc);
+
         showFurrowButton.addActionListener(evt->{
             if(showFurrowButton.getText().equals("show")){
                 showFurrowButton.setText("hide");
-                showFurrow();
+                showFurrow(box.isSelected());
             } else{
                 showFurrowButton.setText("show");
                 hideFurrow();
             }
         });
-        buttons.add(showFurrowButton);
-        JButton initialize = new JButton("init furrow");
-        initialize.addActionListener((event)->new FurrowInitializer(parent, model, ()->{}).start());
-        buttons.add(initialize);
+
+        gbc.gridx = 0;
+        gbc.gridwidth = 1;
+        gbc.gridy++;
 
         frame = new JLabel("1");
-        buttons.add(frame);
+        buttons.add(frame, gbc);
+        gbc.gridx++;
 
         JButton prev = new JButton("prev");
         prev.setMnemonic(KeyEvent.VK_COMMA);
         prev.addActionListener(evt->model.previousFrame());
-        buttons.add(prev);
+        buttons.add(prev, gbc);
+        gbc.gridx++;
 
         JButton next = new JButton("next");
         next.setMnemonic(KeyEvent.VK_PERIOD);
         next.addActionListener(evt->model.nextFrame());
-        buttons.add(next);
+        buttons.add(next, gbc);
+        gbc.gridy++;
+        gbc.gridx = 0;
 
+        gbc.gridwidth = 1;
+        JButton initialize = new JButton("init furrow");
+        initialize.addActionListener((event)->new FurrowInitializer(parent, model, ()->{}).start());
+        buttons.add(initialize, gbc);
+        gbc.gridx++;
+        JButton center = new JButton("center");
+        center.addActionListener(evt->{
+            DeformableMesh3D mesh = model.getSelectedMesh();
+            if(mesh == null){
+                setFurrow(getInputNormal(), new double[]{0, 0, 0});
+            } else{
+                double[] loc = DeformableMesh3DTools.centerAndRadius(mesh.nodes);
+                setFurrow(getInputNormal(), loc);
+            }
+        });
+        buttons.add(center, gbc);
+        gbc.gridx++;
+        JButton split = new JButton("split");
+        split.addActionListener(evt->model.splitMesh());
+        buttons.add(split, gbc);
+
+        gbc.gridwidth=3;
+        gbc.gridx = 0;
+        gbc.gridy++;
+        buttons.add(createFurrowInput(), gbc);
+        gbc.gridy++;
+        buttons.add(histControls.panel, gbc);
         content.add(buttons, BorderLayout.EAST);
 
         sliceView = new Slice3DView();
         content.add(new JScrollPane(sliceView.panel), BorderLayout.CENTER);
-
-        JPanel bottom = new JPanel();
-        bottom.setLayout(new FlowLayout());
-        bottom.add(histControls.panel);
-        bottom.add(createFurrowInput());
-        content.add(bottom, BorderLayout.SOUTH);
-
-
 
         contentPane = content;
         activateSliceViewMouseListener();
@@ -392,14 +445,14 @@ public class RingController implements FrameListener, ListDataListener {
     public void setFurrow(double[] dir, double[] pos){
         Furrow3D furrow = detector.getFurrow();
         if(furrow!=null) {
-            furrow.moveTo(pos);
-            furrow.setDirection(dir);
+            furrow.showTexture(showTexture);
+            furrow.setGeometry( pos, dir);
         } else{
             furrow = new Furrow3D(pos, dir);
+            furrow.showTexture(showTexture);
             detector.putFurrow(model.getCurrentFrame(), furrow);
         }
         frameChanged(model.getCurrentFrame());
-
     }
 
     @Override

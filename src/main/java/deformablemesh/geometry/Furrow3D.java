@@ -6,10 +6,8 @@ import deformablemesh.meshview.FurrowPlaneDataObject;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.meshview.SphereDataObject;
 import deformablemesh.meshview.TexturedPlaneDataObject;
-import deformablemesh.meshview.VectorField;
 import deformablemesh.ringdetection.FurrowTransformer;
 import deformablemesh.util.Vector3DOps;
-import org.scijava.vecmath.Point3d;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,9 +29,9 @@ public class Furrow3D implements Interceptable{
     public double[] up;
 
     //double[] line;
-    TexturedPlaneDataObject slice;
-    FurrowPlaneDataObject object2;
-    boolean showPlane = false;
+    TexturedPlaneDataObject texturedPlaneDataObject;
+    FurrowPlaneDataObject furrowPlaneDataObject;
+    boolean texturedPlane = false;
     /**
      * Creates a 3D furrow based on the center and direction.
      *
@@ -45,31 +43,33 @@ public class Furrow3D implements Interceptable{
         normal = Arrays.copyOf(direction, 3);
     }
 
-    public void create3DObject(){
-        showPlane = true;
-        slice = null;
+    public void showTexture(boolean t){
+        texturedPlane = t;
 
-        object2 = new FurrowPlaneDataObject(cm, normal);
+        if( !t && texturedPlaneDataObject != null ){
+            texturedPlaneDataObject = null;
+        }
+    }
+    public void create3DObject(){
+        furrowPlaneDataObject = new FurrowPlaneDataObject(cm, normal);
 
     }
 
     public void createTexturedPlane3DObject(MeshImageStack mis){
-        showPlane = false;
-        object2 = null;
         DeformableMesh3D texturedPlaneGeometry = BinaryMeshGenerator.getQuad(
                 new double[]{0,0,0},
                 new double[]{1, 0, 0},
                 new double[]{0, 1, 0}
         );
-        slice = new TexturedPlaneDataObject(texturedPlaneGeometry, mis);
-
+        texturedPlaneDataObject = new TexturedPlaneDataObject(texturedPlaneGeometry, mis);
+        updateTexturedSliceGeometry();
     }
 
     public DataObject getDataObject(){
-        if(showPlane){
-            return object2;
+        if(!texturedPlane){
+            return furrowPlaneDataObject;
         } else{
-            return slice;
+            return texturedPlaneDataObject;
         }
     }
 
@@ -344,17 +344,13 @@ public class Furrow3D implements Interceptable{
 
     }
 
-    private void updateSliceGeometry() {
+    private void updateTexturedSliceGeometry() {
 
-        if(showPlane){
+        if(texturedPlaneDataObject == null){
             return;
         }
 
-        if(slice==null){
-            return;
-        }
-
-        MeshImageStack mis = slice.getMeshImageStack();
+        MeshImageStack mis = texturedPlaneDataObject.getMeshImageStack();
 
         int w = mis.getWidthPx();
         int h = mis.getHeightPx();
@@ -369,29 +365,22 @@ public class Furrow3D implements Interceptable{
                 p2[0], p2[1], p2[2],
                 p3[0], p3[1], p3[2]
         };
-        slice.updateGeometry(res);
+        texturedPlaneDataObject.updateGeometry(res);
     }
 
 
-    public void rotateNormalZ(double theta){
-        double c = Math.cos(theta);
-        double s = Math.sin(theta);
-        normal[0] = c*normal[0] - s*normal[1];
-        normal[1] = s*normal[0] + c*normal[1];
+    public void setGeometry( double[] pos, double[] dir){
+        cm[0] = pos[0];
+        cm[1] = pos[1];
+        cm[2] = pos[2];
+
+        normal[0]=dir[0];
+        normal[1]=dir[1];
+        normal[2]=dir[2];
 
         updateGeometry();
+
     }
-
-    public void rotateNormalY(double theta){
-        double c = Math.cos(theta);
-        double s = Math.sin(theta);
-        normal[0] = c*normal[0] + s*normal[2];
-        normal[2] = -s*normal[0] + c*normal[2];
-
-        updateGeometry();
-    }
-
-
     public void moveTo(double[] original) {
 
         cm[0] = original[0];
@@ -402,12 +391,14 @@ public class Furrow3D implements Interceptable{
 
     }
     public void updateGeometry(){
-        if(showPlane){
-            if(object2!=null){
-                object2.updatePosition(cm,normal);
+        if(!texturedPlane){
+
+            if(furrowPlaneDataObject!=null){
+                furrowPlaneDataObject.updatePosition(cm,normal);
             }
+
         } else{
-            updateSliceGeometry();
+            updateTexturedSliceGeometry();
         }
     }
     public void setDirection(double[] dir) {
@@ -477,6 +468,8 @@ public class Furrow3D implements Interceptable{
     }
 
     public void removeDataObject() {
-        slice = null;
+
+        texturedPlaneDataObject = null;
+        furrowPlaneDataObject = null;
     }
 }

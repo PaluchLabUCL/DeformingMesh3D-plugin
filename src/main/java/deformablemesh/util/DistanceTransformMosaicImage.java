@@ -109,8 +109,10 @@ public class DistanceTransformMosaicImage {
         }
 
 
-
-        return new ImagePlus("watershed-distance", stack);
+        ImagePlus plus = mosaic.createImagePlus();
+        plus.setStack(stack, 1, mosaic.getNSlices(), mosaic.getNFrames());
+        plus.setOpenAsHyperStack(true);
+        return plus;
 
 
     }

@@ -610,7 +610,7 @@ public class    MeshFrame3D {
 
 
     public void updateRingController(){
-
+        System.out.println("updating: " + ringController);
         RingController rc = segmentationController.getRingController();
         if(rc!=ringController){
             ringController=rc;
@@ -619,12 +619,16 @@ public class    MeshFrame3D {
             });
         }
 
-        if(ringController.getFurrow()!=null && ringController.isFurrowShowing()) {
+        if(ringController.getFurrow() != null && ringController.isFurrowShowing() ) {
             Furrow3D furrow = ringController.getFurrow();
-            if(furrow.getDataObject()==null){
-                furrow.createTexturedPlane3DObject(segmentationController.getMeshImageStack());
+            if(furrow.getDataObject() == null ){
+                if(ringController.isTextureShowing()){
+                    furrow.createTexturedPlane3DObject(segmentationController.getMeshImageStack());
+                } else{
+                    furrow.create3DObject();
+                }
             }
-            observeObject(ringController, ringController.getFurrow().getDataObject());
+            observeObject(ringController, furrow.getDataObject());
 
         } else{
             observeObject(ringController, null);

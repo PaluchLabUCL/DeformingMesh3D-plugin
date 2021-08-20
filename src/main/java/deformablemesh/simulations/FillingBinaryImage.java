@@ -83,7 +83,6 @@ public class FillingBinaryImage {
     }
 
     public static DeformableMesh3D fillBinaryWithMesh(ImagePlus plus, List<int[]> points){
-        System.out.println("filling binary blob");
 
         MeshImageStack stack = new MeshImageStack(plus);
         double[] xyz = new double[3];
@@ -108,28 +107,6 @@ public class FillingBinaryImage {
         mesh.ALPHA = 1.0;
         mesh.BETA = 0.0;
 
-        //ConnectionRemesher remesher =  new ConnectionRemesher();
-        //remesher.setMinAndMaxLengths(0.01, 0.025);
-        //mesh = remesher.remesh(mesh);
-
-        //mesh.reshape();
-
-        //double pressure = 1;
-
-        //mesh.addExternalEnergy(new FillingForce(mesh, pressure, stack));
-
-        int count = 0;
-
-        //while(count<400){
-        //    mesh.update();
-            /*if(count==300){
-                mesh.clearEnergies();
-                RayCastMesh.subDivideMesh(mesh);
-                mesh.reshape();
-                mesh.addExternalEnergy(new FillingForce(mesh, pressure, stack));
-            }*/
-        //    count++;
-        //}
         return mesh;
 
 
