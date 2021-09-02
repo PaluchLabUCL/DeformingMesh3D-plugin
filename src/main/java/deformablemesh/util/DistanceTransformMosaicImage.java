@@ -333,6 +333,12 @@ public class DistanceTransformMosaicImage {
                         next.add(pt);
                     }
                 }
+
+                if(region.size() == 0){
+                    //no edge points
+                    region.addAll(full);
+                }
+
                 for(int[] pt: region){
                     set(pt, (byte)0);
                 }

@@ -280,8 +280,14 @@ public class Slice3DView {
         }
     }
 
-    public void addMouseListener(MouseListener mouseListener) {
-        panel.addMouseListener(mouseListener);
+    public void addMouseAdapter(MouseAdapter adapter){
+        panel.addMouseListener(adapter);
+        panel.addMouseMotionListener(adapter);
+    }
+
+    public void removeMouseAdapter(MouseAdapter adapter){
+        panel.removeMouseListener(adapter);
+        panel.removeMouseMotionListener(adapter);
     }
 
     public void repaint() {

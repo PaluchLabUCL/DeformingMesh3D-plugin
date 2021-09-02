@@ -2,11 +2,16 @@ package deformablemesh.util;
 
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
+import deformablemesh.geometry.BinaryMomentsOfInertia;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Furrow3D;
 import deformablemesh.geometry.Triangle3D;
 import deformablemesh.gui.GuiTools;
 import deformablemesh.track.Track;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.process.ByteProcessor;
+import ij.process.ColorProcessor;
 import lightgraph.DataSet;
 import lightgraph.Graph;
 
@@ -28,6 +33,52 @@ public class MeshAnalysis {
         this.meshes = meshes;
         this.furrows = furrows;
         this.stack = stack;
+    }
+
+    /**
+     *
+     * @param tracks
+     * @param meshImageStack
+     */
+    public static void plotElongationsVsTime(List<Track> tracks) {
+        Graph elongationPlot = new Graph();
+        int w = 64;
+        int h = 64;
+        int d = 64;
+        ImagePlus plus = new ImagePlus();
+        ImageStack stack = new ImageStack(w, h);
+        for(int i = 0; i<d; i++){
+            stack.addSlice(new ByteProcessor(w, h));
+        }
+        plus.setStack(stack);
+        MeshImageStack mis = new MeshImageStack(plus);
+
+        for(Track t: tracks){
+
+            DataSet d2 = null;
+            for(int i = t.getFirstFrame(); i<=t.getLastFrame(); i++){
+                if(t.containsKey(i)){
+                    DeformableMesh3D start = t.getMesh(i);
+                    BinaryMomentsOfInertia bmi = new BinaryMomentsOfInertia(start, mis);
+
+                    List<double[]> vectors = bmi.getEigenVectors();
+                    double[] ln = vectors.get(3);
+
+                    if(d2 == null){
+                        d2 = elongationPlot.addData(new double[0], new double[0]);
+                        d2.setLabel(t.getName());
+                        d2.setColor(t.getColor());
+                    }
+                    double lmin = ln[0] < ln[1] ?
+                            ln[0] < ln[2] ? ln[0] : ln[2] :
+                            ln[1] < ln[2] ? ln[1] : ln[2];
+
+                    double e = (ln[0] + ln[1] + ln[2])/lmin;
+                    d2.addPoint(i, e);
+                }
+            }
+        }
+        elongationPlot.show(false, "Elongation per Frame");
     }
 
 
@@ -181,6 +232,37 @@ public class MeshAnalysis {
         }
         volumePlot.show(false, "Volumes per Frame");
     }
+
+    public static void plotDisplacementsVsTime(List<Track> tracks, MeshImageStack meshImageStack) {
+        Graph displacementPlot = new Graph();
+
+        for(Track t: tracks){
+            if(t.size()<2){
+                continue;
+            }
+            DataSet d2 = null;
+            for(int i = t.getFirstFrame(); i<=t.getLastFrame(); i++){
+                if(t.containsKey(i) && t.containsKey(i+1)){
+                    DeformableMesh3D start = t.getMesh(i);
+                    DeformableMesh3D fin = t.getMesh(i+1);
+                    double[] cs = DeformableMesh3DTools.centerAndRadius(start.nodes);
+                    double[] cf = DeformableMesh3DTools.centerAndRadius(fin.nodes);
+                    if(d2 == null){
+                        d2 = displacementPlot.addData(new double[0], new double[0]);
+                        d2.setLabel(t.getName());
+                        d2.setColor(t.getColor());
+                    }
+                    double d =
+                            Vector3DOps.normalize(
+                                Vector3DOps.difference(cs, cf)
+                            );
+                    d2.addPoint(i + 0.5, d);
+                }
+            }
+        }
+        displacementPlot.show(false, "Displacement per Frame");
+    }
+
 
     /**
      * Generates a text window with the time series for all of the tracks provided.

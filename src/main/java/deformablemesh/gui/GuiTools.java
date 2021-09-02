@@ -221,7 +221,7 @@ public class GuiTools {
         closableTab.setLayout(new BoxLayout(closableTab, BoxLayout.LINE_AXIS));
         closableTab.setAlignmentY(JPanel.CENTER_ALIGNMENT);
         closableTab.setOpaque(false);
-        JLabel label = new JLabel("initializer");
+        JLabel label = new JLabel(title);
         label.setOpaque(false);
         label.setFont(label.getFont().deriveFont(12.f));
         //label.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
@@ -250,9 +250,9 @@ public class GuiTools {
         applyRenderingHints(g2d);
         g2d.setColor(c);
 
-        g2d.drawOval(1, 1, L, L);
+        //g2d.drawOval(1, 1, L, L);
         int w = (int)(L / Math.sqrt(2));
-        g2d.drawLine(1, 1, L, L);
+        g2d.drawLine(2, 2, L, L);
         g2d.drawLine(2, L, L, 2);
         g2d.dispose();
         return new ImageIcon(img);

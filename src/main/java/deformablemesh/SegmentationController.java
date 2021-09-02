@@ -392,21 +392,21 @@ public class SegmentationController {
         MeshImageStack stack = getMeshImageStack();
         ImageStack result = new ImageStack(stack.getWidthPx(), stack.getHeightPx() );
 
+
         for(int i = 0; i<getNFrames(); i++) {
+            long start = System.currentTimeMillis();
+            System.out.println("starting frame: " + i);
             getMeshImageStack().setFrame(i);
             ImagePlus frame = getMeshImageStack().getCurrentFrame();
             DistanceTransformMosaicImage dtmi = new DistanceTransformMosaicImage(frame);
-            System.out.println("starting");
             dtmi.findBlobs();
-            System.out.println("blobbed");
             dtmi.createCascades();
-            System.out.println("cascading");
-            //dtmi.createScaledCascades(2); //TODO make this non-fixed.
-            System.out.println("Creating image!");
             ImageStack frames = dtmi.createLabeledImage().getStack();
             for(int j = 1; j<=frames.getSize(); j++){
                 result.addSlice(frames.getSliceLabel(j), frames.getProcessor(j));
             }
+            long finished = System.currentTimeMillis() - start;
+            System.out.println("finished in " + (finished/1000.0) + " seconds");
         }
         ImagePlus transformed = stack.original.createImagePlus();
         transformed.setTitle(stack.original.getShortTitle() +  "-transformed.tif");
@@ -616,9 +616,21 @@ public class SegmentationController {
         MeshAnalysis.plotMeshesOverTime(getAllTracks(), getMeshImageStack());
     }
 
+    public void plotTrackingStatistics(){
+        TrackAnalysis.plotNextFrameTrackingResults(getAllTracks(), getCurrentFrame());
+    }
     public void plotVolumes(){
         MeshAnalysis.plotVolumesOverTime(getAllTracks(), getMeshImageStack());
     }
+
+    public void plotDisplacements(){
+        MeshAnalysis.plotDisplacementsVsTime(getAllTracks(), getMeshImageStack());
+    }
+
+    public void plotElongationsVsTime(){
+        MeshAnalysis.plotElongationsVsTime(getAllTracks());
+    }
+
     public void selectNone(){
         submit(() ->model.selectMeshTrack(null));
     }

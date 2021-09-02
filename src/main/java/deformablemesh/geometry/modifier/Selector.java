@@ -46,7 +46,6 @@ public class Selector implements ModificationState{
                 Point3d origin = new Point3d();
                 ray.getDirection(dir);
                 ray.getOrigin(origin);
-                System.out.println("found? " + result);
                 return;
             }
 

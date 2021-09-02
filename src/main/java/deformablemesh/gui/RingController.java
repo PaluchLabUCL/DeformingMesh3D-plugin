@@ -70,7 +70,7 @@ public class RingController implements FrameListener, ListDataListener {
     private boolean showTexture;
 
     MeshModifier modifier;
-    
+
     public RingController(SegmentationController model){
         this.model = model;
         detector = new ContractileRingDetector();
@@ -192,6 +192,11 @@ public class RingController implements FrameListener, ListDataListener {
         split.addActionListener(evt->model.splitMesh());
         buttons.add(split, gbc);
 
+        //Mesh modification code.
+        JButton nodeSelect = new JButton("select nodes");
+        JButton sculpt = new JButton("sculpt");
+        JButton displace = new JButton("move");
+
         gbc.gridwidth=3;
         gbc.gridx = 0;
         gbc.gridy++;
@@ -204,7 +209,7 @@ public class RingController implements FrameListener, ListDataListener {
         content.add(new JScrollPane(sliceView.panel), BorderLayout.CENTER);
 
         contentPane = content;
-        activateSliceViewMouseListener();
+        activateSelectMeshMode();
     }
 
     public JPanel getContentPane(JFrame parent){
@@ -237,8 +242,20 @@ public class RingController implements FrameListener, ListDataListener {
         return furrowInput;
     }
 
-    public void activateSliceViewMouseListener(){
-        sliceView.addMouseListener( new MouseAdapter(){
+    MouseAdapter currentControls;
+
+    public void setSliceListener( MouseAdapter adapter){
+
+        if(adapter == currentControls){
+            return;
+        }
+
+        sliceView.addMouseAdapter(adapter);
+    }
+
+    public void activateSelectMeshMode(){
+
+        setSliceListener( new MouseAdapter(){
             @Override
             public void mouseClicked(MouseEvent e) {
 

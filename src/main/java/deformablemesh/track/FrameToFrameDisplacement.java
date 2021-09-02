@@ -35,6 +35,13 @@ public class FrameToFrameDisplacement {
     final Integer first, last;
     Map<Integer, Track> lastAdded = new HashMap<>();
     Map<Track, List<Mapping>> results = new HashMap<>();
+    boolean followCenterOfMass = true;
+
+    public FrameToFrameDisplacement(){
+        first = -1;
+        last = -1;
+    }
+
     public FrameToFrameDisplacement(List<Track> tracks){
         this.tracks = tracks;
         int min = Integer.MAX_VALUE;
@@ -53,7 +60,7 @@ public class FrameToFrameDisplacement {
         last = max;
 
     }
-    static double[] centerOfMass(List<DeformableMesh3D> meshes){
+    public static double[] centerOfMass(List<DeformableMesh3D> meshes){
         double[] c = new double[3];
         double m = 0;
         for(DeformableMesh3D mesh: meshes){
@@ -108,6 +115,56 @@ public class FrameToFrameDisplacement {
         ds.forEach(d -> System.out.printf( "( %d, %3.3f )\t",d.index, d.distance));
         return ds.get(0).index;
     }
+    public List<double[]>  processJaccardIndexMatrix(List<DeformableMesh3D> m1, List<DeformableMesh3D> m2){
+        List<Mapping> mappings = processJaccardIndexMap(m1, m2);
+        Map<Integer, List<Mapping>> grouped = mappings.stream().collect(Collectors.groupingBy(m->m.a));
+        List<double[]> results = new ArrayList<>();
+        System.out.println( grouped.size() + " // " + m1.size());
+        List<Integer> keys = new ArrayList<>(grouped.keySet());
+        for(Integer key: keys){
+            List<Mapping> mapped = grouped.get(key);
+            double[] jis = new double[m2.size()];
+            for(int i = 0; i<mapped.size(); i++){
+                int dex = mapped.get(i).b;
+                jis[dex] = mapped.get(i).ji;
+
+            }
+            results.add(jis);
+        }
+
+        return results;
+    }
+    public List<Mapping> processJaccardIndexMap(List<DeformableMesh3D> m1, List<DeformableMesh3D> m2){
+        System.out.println(m1.size() + " meshes tracking to " + m2.size());
+        List<Mapping> maps;
+        if(followCenterOfMass) {
+            double[] c1 = centerOfMass(m1);
+            double[] c2 = centerOfMass(m2);
+            //displacement from c1 to c2.
+            double[] delta = {c2[0] - c1[0], c2[1] - c1[1], c2[2] - c1[2]};
+            displacements(m1, m2, delta);
+
+
+            delta[0] = -delta[0];
+            delta[1] = -delta[1];
+            delta[2] = -delta[2];
+            List<DeformableMesh3D> dups = m2.stream().map(
+                    m -> new DeformableMesh3D(
+                            Arrays.copyOf(m.positions, m.positions.length),
+                            Arrays.copyOf(m.connection_index, m.connection_index.length),
+                            Arrays.copyOf(m.triangle_index, m.triangle_index.length)
+                    )
+            ).collect(Collectors.toList());
+
+            dups.forEach(m->m.translate(delta));
+            maps = jaccardIndex(m1, dups);
+        } else{
+            maps = jaccardIndex(m1, m2);
+        }
+
+
+        return maps;
+    }
 
     /**
      *
@@ -117,29 +174,8 @@ public class FrameToFrameDisplacement {
         int nextFrame = starting+1;
         List<DeformableMesh3D> m1 = tracks.stream().filter(t -> t.containsKey(starting)).map(t->t.getMesh(starting)).collect(Collectors.toList());
         List<DeformableMesh3D> m2 = tracks.stream().filter(t -> t.containsKey(nextFrame)).map(t->t.getMesh( starting+1 )).collect(Collectors.toList());
-        System.out.println(m1.size() + " meshes tracking to " + m2.size());
+        List<Mapping> maps = processJaccardIndexMap(m1, m2);
 
-        double[] c1 = centerOfMass(m1);
-        double[] c2 = centerOfMass(m2);
-
-        //displacement from c1 to c2.
-        double[] delta = {c2[0] - c1[0], c2[1] - c1[1], c2[2] - c1[2]};
-        displacements(m1, m2, delta);
-
-
-        delta[0] = -delta[0];
-        delta[1] = -delta[1];
-        delta[2] = -delta[2];
-        List<DeformableMesh3D> dups = m2.stream().map(
-                m -> new DeformableMesh3D(
-                        Arrays.copyOf(m.positions, m.positions.length),
-                        Arrays.copyOf(m.connection_index, m.connection_index.length),
-                        Arrays.copyOf(m.triangle_index, m.triangle_index.length)
-                )
-        ).collect(Collectors.toList());
-
-        dups.forEach(m->m.translate(delta));
-        List<Mapping> maps = jaccardIndex(m1, dups);
         Map<Integer, Double> bs = new HashMap<>();
         Map<Integer, Track> currentlyAdding = new HashMap<>();
         for(Mapping m: maps){
@@ -192,6 +228,7 @@ public class FrameToFrameDisplacement {
 
 
     }
+
     public Track createNewTrack(){
         String name = ColorSuggestions.getColorName(ColorSuggestions.getSuggestion());
         return new Track(name);

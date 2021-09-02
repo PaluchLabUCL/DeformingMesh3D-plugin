@@ -65,12 +65,14 @@ public class MeshTrackManager {
     Map<DeformableMesh3D, JLabel> labels = new HashMap<>();
     JLabel nullLabel = getNullLabel();
     long lastUpdated = -1;
+    static final int w = 32;
+    static final int h = 32;
     private JLabel getNullLabel() {
-        BufferedImage img = new BufferedImage(64, 64, BufferedImage.TYPE_4BYTE_ABGR);
+        BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_4BYTE_ABGR);
         Graphics2D g2d = (Graphics2D)img.getGraphics();
         g2d.setColor(Color.BLUE);
         g2d.setColor(new Color(200, 200, 200, 40));
-        g2d.fillRect(0, 0, 64, 64);
+        g2d.fillRect(0, 0, w, h);
         return new JLabel(new ImageIcon(img));
     }
 
@@ -178,7 +180,7 @@ public class MeshTrackManager {
 
         trackTable.setCellSelectionEnabled(true);
         trackTable.setSelectionModel(selectionModel);
-        trackTable.setRowHeight(64);
+        trackTable.setRowHeight(h);
         trackTable.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
 
         DefaultListSelectionModel lsm =
@@ -248,9 +250,9 @@ public class MeshTrackManager {
                     column.setMinWidth(40);
                     column.setMaxWidth(40);
                 } else {
-                    column.setPreferredWidth(64);
-                    column.setMinWidth(64);
-                    column.setMaxWidth(64);
+                    column.setPreferredWidth(w);
+                    column.setMinWidth(w);
+                    column.setMaxWidth(w);
                 }
             }
         }
@@ -527,6 +529,7 @@ public class MeshTrackManager {
     public void manageMeshTrackes(SegmentationController controller, List<Track> tracks){
         List<Track> newTracks = new ArrayList<>();
         if(lastUpdated == controller.getCurrentState()){
+            //prevents erasing pending changes, unless data was changed elsewhere.
             return;
         }
         lastUpdated = controller.getCurrentState();
@@ -587,9 +590,9 @@ public class MeshTrackManager {
                         column.setMinWidth(40);
                         column.setMaxWidth(40);
                     } else {
-                        column.setPreferredWidth(64);
-                        column.setMinWidth(64);
-                        column.setMaxWidth(64);
+                        column.setPreferredWidth(w);
+                        column.setMinWidth(w);
+                        column.setMaxWidth(w);
                     }
                 }
             }
@@ -598,22 +601,22 @@ public class MeshTrackManager {
     }
 
     private JLabel createLabel(DeformableMesh3D mesh) {
-        BufferedImage img = new BufferedImage(64, 64, BufferedImage.TYPE_4BYTE_ABGR);
+        BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_4BYTE_ABGR);
         double[] center = DeformableMesh3DTools.centerAndRadius(mesh.nodes);
         Furrow3D furrow = new Furrow3D(center, new double[]{0, 0, 1});
         FurrowTransformer transformer = new FurrowTransformer(furrow, new MeshImageStack());
         ProjectableMesh pmesh = new ProjectableMesh(mesh);
         Shape path = pmesh.continuousPaths(transformer);
-        AffineTransform transform = AffineTransform.getScaleInstance(64, 64);
+        AffineTransform transform = AffineTransform.getScaleInstance(w, h);
         transform.translate(0.5, 0.5);
         path = transform.createTransformedShape(path);
 
         Graphics2D g2d = (Graphics2D)img.getGraphics();
         g2d.setColor(Color.BLUE);
-        g2d.drawLine(32, 34, 32, 0);
-        g2d.drawLine(30, 32, 64, 32);
+        g2d.drawLine(w/2, h/2, w/2, 0);
+        g2d.drawLine(w/2, h/2, w, h);
         g2d.setColor(new Color(200, 200, 200, 40));
-        g2d.fillRect(0, 0, 64, 64);
+        g2d.fillRect(0, 0, w, h);
         g2d.setColor(Color.BLACK);
         g2d.draw(path);
         g2d.setColor(mesh.getColor());

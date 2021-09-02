@@ -62,7 +62,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         this.segmentationController = model;
         try{
             terminal = new SwingJSTerm(model);
-        } catch (Exception e){
+        } catch (Throwable e){
             System.out.println("Javascript not configured properly");
             //can be a couple errors.
         }
@@ -933,11 +933,13 @@ public class ControlFrame implements ReadyObserver, FrameListener {
 
         JMenuItem scripts = new JMenuItem("javascript console");
         tools.add(scripts);
-        scripts.addActionListener(evt->{
-            terminal.showTerminal();
-        });
-        terminal.addReadyObserver(this);
+        if(terminal != null) {
+            scripts.addActionListener(evt -> {
+                terminal.showTerminal();
+            });
 
+            terminal.addReadyObserver(this);
+        }
         JMenu help = new JMenu("help");
         menu.add(help);
         JMenuItem about = new JMenuItem("about");

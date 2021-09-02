@@ -154,6 +154,37 @@ controls.submit( function(){
 
 ```
 # Changes
+0.5.0
+- moved initializer to a new frame.
+- Created a non-3d mode
+- BUG FIX names can break mesh loading.
+- BUG FIX track manager changes show surface.
+- Split mesh and deform partial available from java script.
+- Some linear plots.
+- Moved manage tracks to a tabbed pane.
+- Improved non-3d version to run program for running over x11 forwarded.
+- steric mesh uses shorted distance along normal.
+- improved redo/undo
+- "SegmentationController.selectTrack" was broken.
+- Bug fix: BinaryInterceptible was off by 1 for z axis.
+- Furrow3D shows the texture.
+- Furrow input panel is changing design.
+- Histogram input is smaller and adjustabble.
+- show/hide furrow.
+- Meshes are now selectable from the furrow screen.
+- Worked on the import meshes. Created 4 types of import. Checked each on. do and undo seemed to work.
+- Removed a bug where removing a track would empty all of it's meshes, breaking undo.
+- Added labels to the histogram control.
+- Implemented the curvature smoothing algorithm. Not sure if it does anything.
+- Channels now sync to the frame when they're added.
+- BinaryInterceptible considers edge of image points as edges.
+- Added limited transparency control
+- Added mesh projections to the Furrow tab.
+- Restructuring the furrow tab layout.
+- Remove the field 'original_stack'
+- Adding a non-energy option.
+- Added channel select when selecting an open image plus.
+
 0.3.9
 - Added connection remesher to control panel.
 - Multi channel support 

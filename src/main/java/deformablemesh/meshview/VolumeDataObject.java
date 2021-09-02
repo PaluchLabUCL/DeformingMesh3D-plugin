@@ -165,6 +165,7 @@ public class VolumeDataObject implements DataObject {
         for(int[] pt: pts){
             texture_data[pt[0]-lowx][h - pt[1] + lowy - 1][pt[2]-lowz-1] = 255;
         }
+        lengths = stack.scaleToNormalizedLength(new double[]{sizes[0], sizes[1], sizes[2]});
         updateVolume();
     }
 
