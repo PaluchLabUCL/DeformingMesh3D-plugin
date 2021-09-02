@@ -137,20 +137,16 @@ public class FurrowPlaneDataObject implements DataObject {
 
     private Appearance createFront(){
         Appearance a = new Appearance();
-        TransparencyAttributes ta = new TransparencyAttributes(TransparencyAttributes.BLEND_SRC_ALPHA, 0.2f);
         ColoringAttributes c_at = new ColoringAttributes(1f, 0f, 0f, ColoringAttributes.NICEST);
         a.setColoringAttributes(c_at);
-        a.setTransparencyAttributes(ta);
         return a;
 
     }
 
     private Appearance createBack(){
         Appearance a = new Appearance();
-        TransparencyAttributes ta = new TransparencyAttributes(TransparencyAttributes.BLEND_SRC_ALPHA, 0.2f);
         ColoringAttributes c_at = new ColoringAttributes(0f, 0f, 1f, ColoringAttributes.NICEST);
         a.setColoringAttributes(c_at);
-        a.setTransparencyAttributes(ta);
         return a;
 
     }
