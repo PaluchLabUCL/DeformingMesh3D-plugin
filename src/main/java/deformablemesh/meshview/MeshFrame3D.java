@@ -610,7 +610,6 @@ public class    MeshFrame3D {
 
 
     public void updateRingController(){
-        System.out.println("updating: " + ringController);
         RingController rc = segmentationController.getRingController();
         if(rc!=ringController){
             ringController=rc;

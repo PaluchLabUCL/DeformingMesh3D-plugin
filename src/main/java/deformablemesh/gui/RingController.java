@@ -335,7 +335,6 @@ public class RingController implements FrameListener, ListDataListener {
         currentFrame = frame;
         detector.setFrame(frame);
         this.frame.setText("" + (frame+1));
-        refreshFurrow();
         ImageProcessor p = detector.getFurrowSlice();
         if(p!=null){
             sliceView.clear();

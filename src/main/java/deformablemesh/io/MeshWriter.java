@@ -179,6 +179,13 @@ public class MeshWriter {
         saveMeshes(output, tracker);
 
     }
+
+    static public void saveMeshes(File output, List<Track> tracks) throws IOException {
+        MeshTracker tracker = new MeshTracker();
+        tracker.addMeshTracks(tracks);
+        saveMeshes(output, tracker);
+    }
+
     static public void saveMeshes(File output, MeshTracker tracker) throws IOException {
         try(DataOutputStream dos = new DataOutputStream(
                 new BufferedOutputStream(

@@ -23,6 +23,7 @@ import deformablemesh.simulations.FillingBinaryImage;
 import deformablemesh.util.Vector3DOps;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 
@@ -138,9 +139,18 @@ public class CircularMeshInitializationDialog implements FrameListener {
             clearSpheres();
         });
         JButton binary = new JButton("binary image");
+        binary.setToolTipText("Creates a binary image of current spheres.");
+
         binary.addActionListener(evt->{
             createAndShowBinaryImage();
         });
+
+        JButton snapshots = new JButton("snapshots");
+        snapshots.setToolTipText("Takes a snapshot of current three views.");
+        snapshots.addActionListener(evt->{
+            createSnapShots();
+        });
+
 
         // contains controls.
         JPanel row = new JPanel();
@@ -163,6 +173,8 @@ public class CircularMeshInitializationDialog implements FrameListener {
         row.add(clear);
         row.add(close);
         row.add(binary);
+        row.add(snapshots);
+
         row.add(Box.createHorizontalStrut(tl.getWidth()));
         row.add(showCursor);
         row.add(showMeshes);
@@ -187,6 +199,20 @@ public class CircularMeshInitializationDialog implements FrameListener {
 
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         showMeshes();
+    }
+
+    private void createSnapShots() {
+        List<SlicePicker> pickers = initializer.getSlicePickers();
+
+        int count = 0;
+        for(SlicePicker picker: pickers){
+
+            Image img = picker.view.getSnapShot();
+            ImageProcessor proc = new ColorProcessor(img);
+            new ImagePlus("initializer-" + count++, proc).show();
+
+        }
+
     }
 
     private void startMesh(ActionEvent actionEvent) {
@@ -308,7 +334,7 @@ public class CircularMeshInitializationDialog implements FrameListener {
             slice.setPixels(px);
             imgStack.addSlice(slice);
         }
-        plus.setStack(imgStack,1, 1, stack.getNSlices());
+        plus.setStack( imgStack, 1, stack.getNSlices(), 1 );
 
         return plus;
     }
@@ -470,6 +496,9 @@ public class CircularMeshInitializationDialog implements FrameListener {
         public Initializer(){
         }
 
+        public List<SlicePicker> getSlicePickers(){
+            return new ArrayList<>(pickers.values());
+        }
         public void refreshSlices(){
             for(SlicePicker p: pickers.values()){
                 p.refreshSlice();

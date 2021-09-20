@@ -281,6 +281,7 @@ public class SlicePicker{
             } else{
                 g.setColor(mesh.getColor());
             }
+
             g.draw(pm.getProjection(transformer));
         };
         projectDrawingMapper.put(pm, d);

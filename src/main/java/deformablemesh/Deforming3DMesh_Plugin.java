@@ -4,11 +4,14 @@ import deformablemesh.gui.ControlFrame;
 import deformablemesh.gui.PropertySaver;
 import deformablemesh.gui.RingController;
 import deformablemesh.meshview.MeshFrame3D;
+import ij.IJ;
 import ij.ImagePlus;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
 
+import javax.swing.JOptionPane;
 import java.io.IOException;
+import java.util.stream.IntStream;
 
 /**
  * An entry point for starting the application.
@@ -44,7 +47,26 @@ public class Deforming3DMesh_Plugin implements PlugInFilter {
     public int setup(String s, ImagePlus imagePlus) {
         SegmentationModel model = createDeformingMeshApplication();
         if(imagePlus != null) {
-            model.setOriginalPlus(imagePlus);
+
+            int channel = 0;
+            if(imagePlus.getNChannels()>1){
+                Object[] values = IntStream.range(1, imagePlus.getNChannels()+1).boxed().toArray();
+                Object channelChoice = JOptionPane.showInputDialog(
+                        IJ.getInstance(),
+                        "Select Channel:",
+                        "Choose Channel",
+                        JOptionPane.QUESTION_MESSAGE,
+                        null,
+                        values,
+                        values[0]
+                );
+                if(channelChoice == null) channelChoice = 1;
+                channel = (Integer)channelChoice - 1;
+            }
+
+
+
+            model.setOriginalPlus(imagePlus, channel);
         }
 
         return DOES_ALL;

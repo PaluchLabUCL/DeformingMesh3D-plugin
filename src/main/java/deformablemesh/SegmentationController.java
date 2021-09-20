@@ -1076,6 +1076,35 @@ public class SegmentationController {
         });
     }
 
+    public void addTracer(Track t){
+        int s = t.getFirstFrame();
+        int e = t.getLastFrame();
+        int f = getCurrentFrame();
+
+        e = f<e ? f : e;
+
+        List<double[]> points = new ArrayList<>();
+        List<int[]> connections = new ArrayList<>();
+
+
+        for(int i = s; i<=e; i++){
+            if(t.containsKey(i)){
+                DeformableMesh3D m = t.getMesh(i);
+                int last = points.size();
+                points.add(DeformableMesh3DTools.centerAndRadius(m.nodes));
+                if(last > 0){
+                    connections.add(new int[]{last-1, last});
+                }
+            }
+        }
+        if(connections.size() == 0) return;
+
+        DeformableLine3D line = new DeformableLine3D(points, connections);
+        line.createDataObject();
+        float[] comps = t.getColor().getRGBComponents(new float[4]);
+        line.data_object.setColor(comps[0], comps[1], comps[2]);
+        addTransientObject(line.data_object);
+    }
 
     public void startNewMeshTracks(List<DeformableMesh3D> meshes){
 

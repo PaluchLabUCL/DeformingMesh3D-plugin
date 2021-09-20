@@ -2,6 +2,7 @@ package deformablemesh.meshview;
 
 import deformablemesh.SegmentationController;
 import deformablemesh.gui.ControlFrame;
+import deformablemesh.gui.GuiTools;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -275,6 +276,7 @@ public class HotKeyDelegate {
     int width = 420;
     int actionHeight = 20;
     public void draw(Graphics2D graphics){
+        GuiTools.applyRenderingHints(graphics);
         int w = comp.getWidth();
         int h = comp.getHeight();
 

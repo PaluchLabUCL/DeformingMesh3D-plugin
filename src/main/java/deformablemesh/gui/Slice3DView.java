@@ -19,6 +19,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
+import java.awt.image.ImageObserver;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,7 +28,7 @@ import java.util.List;
  *
  * Created by msmith on 10/26/15.
  */
-public class Slice3DView {
+public class Slice3DView{
 
     Image slice;
     Image binary;
@@ -46,9 +47,51 @@ public class Slice3DView {
         setSlice(NO_IMAGE);
         setBinary(NULL_IMAGE);
         dimension = new Dimension(
-                slice.getWidth(null)+binary.getWidth(null),
+                slice.getWidth(null) + binary.getWidth(null),
                 slice.getHeight(null) + binary.getHeight(null)
         );
+    }
+
+    public BufferedImage getSnapShot(){
+        BufferedImage img = new BufferedImage(
+                (int)(zoom*slice.getWidth(null)),
+                (int)(zoom*slice.getHeight(null)),
+                BufferedImage.TYPE_4BYTE_ABGR );
+        Graphics2D g2d = (Graphics2D)img.getGraphics();
+        GuiTools.applyRenderingHints(g2d);
+        applyZoom(g2d);
+        paintBackground(g2d);
+        paintGraphics(g2d);
+        g2d.dispose();
+        return img;
+    }
+    private void paintGraphics(Graphics2D g2d){
+
+        //g2d.setTransform(t);
+        long start = System.currentTimeMillis();
+        synchronized(drawables){
+            int i = 0;
+            for(Drawable drawable: drawables){
+                drawable.draw(g2d);
+            }
+        }
+        long elapsed = System.currentTimeMillis() - start;
+        if(elapsed > 500){
+            System.out.println("projection too slow");
+        }
+    }
+
+    private void paintBackground(Graphics2D g2d){
+        g2d.drawImage(slice, 0, 0, null);
+    }
+
+    private void applyZoom(Graphics2D g2d){
+        if(zoom != 1){
+            AffineTransform t = g2d.getTransform();
+            AffineTransform scale = AffineTransform.getScaleInstance(zoom, zoom);
+            t.concatenate(scale);
+            g2d.setTransform(t);
+        }
     }
 
     JPanel buildComponent(){
@@ -57,23 +100,10 @@ public class Slice3DView {
             public void paintComponent(Graphics g){
                 super.paintComponent(g);
                 Graphics2D g2d = (Graphics2D)g;
-
-                //g2d.setTransform(t);
-                if(zoom != 1){
-                    AffineTransform t = g2d.getTransform();
-                    AffineTransform scale = AffineTransform.getScaleInstance(zoom, zoom);
-                    t.concatenate(scale);
-                    g2d.setTransform(t);
-                }
+                applyZoom(g2d);
                 g2d.drawImage(slice, 0, 0, this);
                 g2d.drawImage(binary, slice.getWidth(this), 0, this);
-                g2d.setColor(Color.RED);
-                synchronized(drawables){
-                    int i = 0;
-                    for(Drawable drawable: drawables){
-                        drawable.draw(g2d);
-                    }
-                }
+                paintGraphics(g2d);
             }
             @Override
             public Dimension getPreferredSize(){
@@ -116,6 +146,10 @@ public class Slice3DView {
     public void setSlice(Image s){
         slice = s;
         resize();
+    }
+
+    public Image getSlice(){
+        return slice;
     }
 
     public Point2D getScaledLocation(Point p){

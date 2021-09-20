@@ -89,6 +89,14 @@ public class SwingJSTerm {
         this.controls = controls;
     }
 
+    public void appendToDisplay(String text){
+        int pos = display.getCaretPosition();
+
+        display.append(text);
+        //System.out.println("old: " + pos + " new: " + display.getCaretPosition());
+        //display.setCaretPosition(display.getDocument().getLength());
+
+    }
 
     public void addClasses() throws ScriptException {
 
@@ -111,13 +119,13 @@ public class SwingJSTerm {
 
         display = new JTextArea("**shift+enter will execute command immediately.**\n");
         display.setEditable(false);
+        display.setCaretPosition(display.getDocument().getLength());
 
         display.setBorder(BorderFactory.createCompoundBorder(
                 display.getBorder(),
                 BorderFactory.createEmptyBorder(15, 15, 15, 15)));
 
         JScrollPane display_pane = new JScrollPane(display);
-        display_pane.setPreferredSize(new Dimension(600, 100));
         root.add(display_pane);
 
 
@@ -228,12 +236,15 @@ public class SwingJSTerm {
             echoed = o.toString() + "\n";
         }
         EventQueue.invokeLater(()->{
-            display.append(echoed);
+            appendToDisplay(echoed);
         });
     }
 
     public void submit(){
         String s = input.getText();
+        if(s.length() == 0){
+            return;
+        }
         input.setText("");
         historyTemp[0] = "";
         commandHistory.add(s);
@@ -264,7 +275,7 @@ public class SwingJSTerm {
 
         EventQueue.invokeLater(()->{
             for(String line: lines){
-                display.append(line + '\n');
+                appendToDisplay(line + '\n');
             }
         });
 
@@ -276,9 +287,9 @@ public class SwingJSTerm {
         } catch (ScriptException e) {
             EventQueue.invokeLater(()->{
                 StackTraceElement[] elements = e.getStackTrace();
-                display.append(e.getMessage() + '\n');
+                appendToDisplay(e.getMessage() + '\n');
                 if(elements.length>0){
-                    display.append(elements[0].toString() + '\n');
+                    appendToDisplay(elements[0].toString() + '\n');
                 }
             });
 

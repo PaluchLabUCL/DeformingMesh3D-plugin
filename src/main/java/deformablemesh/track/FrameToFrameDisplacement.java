@@ -175,62 +175,82 @@ public class FrameToFrameDisplacement {
         List<DeformableMesh3D> m1 = tracks.stream().filter(t -> t.containsKey(starting)).map(t->t.getMesh(starting)).collect(Collectors.toList());
         List<DeformableMesh3D> m2 = tracks.stream().filter(t -> t.containsKey(nextFrame)).map(t->t.getMesh( starting+1 )).collect(Collectors.toList());
         List<Mapping> maps = processJaccardIndexMap(m1, m2);
+        if(m1.size() != maps.size()){
+            throw new RuntimeException("Missing mesh!");
+        }
+
+
+
+        for(Mapping map: maps){
+            if(!lastAdded.containsKey(map.a)){
+                //the mesh in 'a' started on starting frame.
+                Track t = createNewTrack();
+                t.addMesh(starting, m1.get(map.a));
+                results.put(t, new ArrayList<>());
+                lastAdded.put(map.a, t);
+            }
+        }
 
         Map<Integer, Double> bs = new HashMap<>();
         Map<Integer, Track> currentlyAdding = new HashMap<>();
+        //lastAdded has all of the meshes from starting in working tracks.
         for(Mapping m: maps){
             if(m.b == -1){
-                //the mesh in a does not overlap with any mesh in b... at all.
-                if(!lastAdded.containsKey(m.a)){
-                    //the mesh in 'a' started on starting frame.
-                    Track t = createNewTrack();
-                    t.addMesh(starting, m1.get(m.a));
-                    results.put(t, new ArrayList<>());
-                }
+                //this track ends, nobody overlapped it.
                 continue;
             }
+
             if( bs.containsKey(m.b) ){
+                //multiple tracks map to the same m.b.
                 double v = bs.get(m.b);
                 if(v > m.ji){
+                    //old mapping is better.
                     continue;
                 } else{
-                    System.out.println("Really!!!");
-                    //find the old track and remove m.b
+                    //find the old track that contained m.b
                     for(Track t: results.keySet()){
                         if(t.containsMesh(m2.get(m.b))){
+                            //remove the mesh from other track.
                             t.remove(m2.get(m.b));
-                            bs.put(m.b, m.ji);
+                            //remove the mapping from the results.
+                            results.get(t).remove(m);
                         }
                     }
+                    //overwrite old
+                    bs.put(m.b, m.ji);
+                    Track t = lastAdded.get(m.a);
+                    t.addMesh(nextFrame, m2.get(m.b));
+                    //overwrite old.
+                    currentlyAdding.put(m.b, t);
+
+                    results.get(t).add(m);
                 }
             } else{
+                Track t = lastAdded.get(m.a);
+                t.addMesh(nextFrame, m2.get(m.b));
+
+                currentlyAdding.put(m.b, t);
+                results.get(t).add(m);
                 bs.put(m.b, m.ji);
-            }
-            Track t;
-            if(lastAdded.containsKey(m.a)){
-                t = lastAdded.get(m.a);
-            } else{
-                t = createNewTrack();
-                t.addMesh(starting, m1.get(m.a));
-                results.put(t, new ArrayList<>());
+
             }
 
-            t.addMesh(nextFrame, m2.get(m.b));
-            currentlyAdding.put(m.b, t);
-            results.get(t).add(m);
         }
+
+
         lastAdded = currentlyAdding;
         if( bs.size() == maps.size() ){
-            System.out.println("one to one");
+            System.out.println("1:1");
         } else{
-            System.out.println("BORKED");
+            System.out.println("difference b-a = " + (bs.size() - maps.size()));
         }
-
-
     }
-
+    List<Color> global = new ArrayList<>();
     public Track createNewTrack(){
-        String name = ColorSuggestions.getColorName(ColorSuggestions.getSuggestion());
+        Color c = ColorSuggestions.getSuggestion(global);
+        global.add(c);
+
+        String name = ColorSuggestions.getColorName(c);
         return new Track(name);
     }
 
@@ -320,32 +340,25 @@ public class FrameToFrameDisplacement {
             return Double.compare(ji, o.ji);
         }
     }
-    public static void displacements(List<DeformableMesh3D> A, List<DeformableMesh3D> B, double[] aToB){
+    public static double[][] displacements(List<DeformableMesh3D> A, List<DeformableMesh3D> B, double[] aToB){
         double[][] distances = new double[A.size()][B.size()];
+        List<double[]> centers = B.stream().map(
+                InterceptingMesh3D::new
+            ).map(
+                    InterceptingMesh3D::getCenter
+            ).collect(
+                    Collectors.toList()
+            );
+
         for(int i = 0; i<A.size(); i++){
             double[] cm = new InterceptingMesh3D(A.get(i)).getCenter();
             double[] tf = {cm[0] + aToB[0], cm[1] + aToB[1], cm[2] + aToB[2]};
             for(int j = 0; j<B.size(); j++){
-                double[] c2 = new InterceptingMesh3D(B.get(j)).getCenter();
+                double[] c2 = centers.get(j);
                 distances[i][j] = Vector3DOps.distance(tf, c2);
             }
         }
-
-        for(int i = 0; i<distances.length; i++){
-            double[] row = distances[i];
-            double min = 1;
-            int dex = -1;
-            for(int j = 0; j<row.length; j++){
-
-                if(row[j]<min){
-                    min = row[j];
-                    dex = j;
-                }
-
-            }
-            System.out.println(dex + " displacement maps to " + i);
-        }
-        print2DMatrix(distances);
+        return distances;
     }
 
 
@@ -442,6 +455,16 @@ public class FrameToFrameDisplacement {
         }
         return ji;
     }
+
+    /**
+     * Finds the jaccardIndexMatrix between the two lists of meshes. Finds the maximum jaccard index
+     * value for all of the meshes in one, .
+     * for each mesh in list one and maps it to a mesh in .
+     *
+     * @param one List of meshes to be tracked from.
+     * @param two List of meshes to be tracked too.
+     * @return a list of mappings the same length as one
+     */
     public static List<Mapping> jaccardIndex(List<DeformableMesh3D> one, List<DeformableMesh3D> two){
 
         double[][] ji = boundingBoxJaccardIndexMatrix(one, two);
@@ -462,8 +485,6 @@ public class FrameToFrameDisplacement {
             mappings.add(new Mapping(i, dex, max));
         }
 
-
-        print2DMatrix(ji);
         return mappings;
     }
 

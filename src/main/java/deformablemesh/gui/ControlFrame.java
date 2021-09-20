@@ -69,7 +69,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
 
     }
     public void showFrame(){
-        frame = new JFrame("Deformable Mesh Control Panel");
+        frame = new JFrame("DM3D: control panel");
         frame.setIconImage(GuiTools.getIcon());
         JPanel contentPanel = new JPanel();
         contentPanel.setLayout(new BorderLayout());
@@ -174,7 +174,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         inputs.add(GuiTools.createInputField("image weight", createSavingValue(set_image_weight), segmentationController.getImageWeight(), this));
 
         SetValue set_divisions = d -> segmentationController.setDivisions((int)d);
-        inputs.add(GuiTools.createInputField("divisions", createSavingValue(set_divisions), segmentationController.getDivisions(), this));
+        inputs.add(GuiTools.createComboControl("divisions", createSavingValue(set_divisions)));
 
         SetValue setBeta = d -> segmentationController.setBeta(d);
         inputs.add(GuiTools.createInputField("beta", createSavingValue(setBeta), segmentationController.getBeta(), this));
@@ -322,7 +322,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
 
     public void createConnectionRemesh(JPanel buttonPanel){
         JButton action = new JButton("connection remesh");
-
+        buttons.add(action);
 
         minValue.setMinimumSize( minValue.getPreferredSize() );
         minValue.setText("0.01");
@@ -386,7 +386,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
     }
 
     public void createButtonRemesh(JPanel buttonPanel){
-        JButton button = new JButton("remesh");
+        JButton button = new JButton("raycast\nremesh");
         buttons.add(button);
         buttonPanel.add(button);
         button.addActionListener((evt)->{
@@ -1104,7 +1104,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             if(channelChoice == null) return;
             channel = (Integer)channelChoice - 1;
         }
-        System.out.println("channel: " + channel);
         segmentationController.setOriginalPlus(plus, channel);
         plus.show();
         finished();

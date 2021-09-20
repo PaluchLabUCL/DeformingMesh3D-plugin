@@ -10,6 +10,7 @@ import javax.swing.BoxLayout;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;
@@ -96,6 +97,23 @@ public class GuiTools {
         frame.setSize(600,800);
         frame.setVisible(true);
 
+    }
+
+    public static ParameterCombo createComboControl(String name, final SetValue action){
+        JLabel label = new JLabel(name);
+
+
+        final JComboBox<Integer> values = new JComboBox<>(new Integer[]{0, 1, 2, 3, 4, 5});
+        values.setSelectedIndex(3);
+
+        values.addActionListener(evt->{
+            action.setValue(values.getItemAt(values.getSelectedIndex()));
+        });
+
+
+        ParameterCombo control = new ParameterCombo();
+        control.prepareValue(label, values);
+        return control;
     }
     public static ParameterControl createInputField(String name, final SetValue action, double initial, ReadyObserver observer){
 
@@ -243,6 +261,16 @@ public class GuiTools {
         b.setPreferredSize(new Dimension(12, 12));
         return b;
     }
+
+    public static void highQualityRenderingHints(Graphics2D g2d){
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
+        g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+    }
+
     public static Icon getXIcon(Color c) {
         int L = 10;
         BufferedImage img = new BufferedImage(L+2, L+2, BufferedImage.TYPE_4BYTE_ABGR);
@@ -271,7 +299,6 @@ public class GuiTools {
         g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
         g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
         g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
-
     }
 
     public static class LocaleNumericTextField{

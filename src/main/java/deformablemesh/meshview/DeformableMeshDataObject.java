@@ -176,7 +176,7 @@ public class DeformableMeshDataObject implements DataObject {
     }
 
 
-    public void updateGeometry(double[] positions){
+    public void     updateGeometry(double[] positions){
         lines.setCoordinates(0, positions);
         surfaces.setCoordinates(0, positions);
     }
