@@ -58,6 +58,10 @@ public class MultiChannelVolumeTexture extends Texture3D{
         double min;
         double max;
         boolean scaled = true;
+
+        double clear = 0;
+        double opaque = 5;
+
         Color3f color;
 
         /**
@@ -80,6 +84,20 @@ public class MultiChannelVolumeTexture extends Texture3D{
                 clampedMin = rmin;
                 clampedMax = rmax;
             }
+        }
+
+        void setTransparencyRange( double clear, double opaque){
+            this.clear = clear;
+            this.opaque = opaque;
+        }
+
+        public int alphaFromScale( double scale){
+            if(scale < clear){
+                return 0;
+            } if(scale > opaque){
+                return 255;
+            }
+            return (int)(255 * (scale - clear)/(opaque - clear));
         }
     }
 
@@ -194,7 +212,7 @@ public class MultiChannelVolumeTexture extends Texture3D{
                 int index = 0;
                 double[][][] double3d = textures.get(channel);
                 Calibration cal = calibrations.get(channel);
-                final Vector4f color4f = new Vector4f(cal.color.x, cal.color.y, cal.color.z, 0.15f);
+                final Vector4f color4f = new Vector4f(cal.color.x, cal.color.y, cal.color.z, 1.f);
                 int notFirst = channel==0?0:1;
                 for (int y = 0; y < yDim; y++) {
                     for (int x = 0; x < xDim; x++) {
@@ -218,7 +236,8 @@ public class MultiChannelVolumeTexture extends Texture3D{
                         byteData[index] = accumulate(byteData[index]*notFirst, (int)(v.z*255));
                         index++;
                         //transparency
-                        byteData[index] = accumulate(byteData[index]*notFirst, (int)(v.w*255));
+                        int a = cal.alphaFromScale(scale);
+                        byteData[index] = accumulate(byteData[index]*notFirst, a);
                         index++;
                     }
                 }

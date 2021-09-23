@@ -132,6 +132,10 @@ public class MeshImageStack {
         return original.getHeight();
     }
 
+    public String getUnits(){
+        return original.getFileInfo().unit;
+    }
+
     /**
      * given a length in px, px, slices this scales the length to normalized
      * coordinate values.

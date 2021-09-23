@@ -624,7 +624,10 @@ public class SegmentationController {
     }
 
     public void plotDisplacements(){
+
         MeshAnalysis.plotDisplacementsVsTime(getAllTracks(), getMeshImageStack());
+        MeshAnalysis.plotDisplacementHistogram(getAllTracks(), getMeshImageStack());
+
     }
 
     public void plotElongationsVsTime(){

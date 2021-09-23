@@ -14,9 +14,14 @@ import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import lightgraph.DataSet;
 import lightgraph.Graph;
+import lightgraph.GraphPoints;
+import lightgraph.painters.GraphPainter;
 
 import java.awt.EventQueue;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -214,6 +219,17 @@ public class MeshAnalysis {
      */
     public static void plotVolumesOverTime(List<Track> tracks, MeshImageStack mis){
         Graph volumePlot = new Graph();
+        volumePlot.setXRange(0, 135);
+        volumePlot.setXTicCount(6);
+        volumePlot.setYRange(0, 1500);
+        volumePlot.setYTicCount(6);
+        volumePlot.setXLabel("Frame No.");
+        String unit = mis.getUnits();
+        if(unit == null){
+            unit = "au";
+        }
+        volumePlot.setYLabel("Volume ( " + unit + "^3 )");
+        volumePlot.setTitle("Volumes vs Time");
 
         for(Track t: tracks){
             DataSet d2 = null;
@@ -225,6 +241,9 @@ public class MeshAnalysis {
                         d2 = volumePlot.addData(new double[0], new double[0]);
                         d2.setLabel(t.getName());
                         d2.setColor(t.getColor());
+                        if(t.getFirstFrame() == 0 && t.getLastFrame() == mis.getNFrames()-1){
+                            d2.setPoints(GraphPoints.filledTriangles());
+                        }
                     }
                     d2.addPoint(i, volume);
                 }
@@ -233,8 +252,74 @@ public class MeshAnalysis {
         volumePlot.show(false, "Volumes per Frame");
     }
 
+    public static void plotDisplacementHistogram(List<Track> tracks, MeshImageStack meshImageStack){
+        double min = 0;
+        double max = 10.0;
+        int bins = 100;
+
+        double[] x = new double[bins];
+        double delta = (max - min )/bins;
+        for(int i = 0; i<x.length; i++){
+            x[i] = min + (i + 0.5)*delta;
+        }
+
+        Graph displacementPlot = new Graph();
+        double[] count = new double[bins];
+        for(Track t: tracks) {
+            if (t.size() < 2) {
+                continue;
+            }
+            List<double[]> di = new ArrayList<>();
+            for (int i = t.getFirstFrame(); i <= t.getLastFrame(); i++) {
+                if (t.containsKey(i) && t.containsKey(i + 1)) {
+                    DeformableMesh3D start = t.getMesh(i);
+                    DeformableMesh3D fin = t.getMesh(i + 1);
+                    double[] cs = DeformableMesh3DTools.centerAndRadius(start.nodes);
+                    double[] cf = DeformableMesh3DTools.centerAndRadius(fin.nodes);
+                    double d =
+                            Vector3DOps.normalize(
+                                    Vector3DOps.difference(cs, cf)
+                            ) * meshImageStack.SCALE;
+
+                    di.add(new double[]{i + 0.5, d});
+                }
+            }
+            if (di.size() > 0) {
+
+                for (double[] d : di) {
+                    int dex = (int) ((d[1] - min) / delta);
+                    if (dex == bins) {
+                        dex = dex - 1;
+                    }
+                    if (dex < 0 || dex > bins) {
+                        //throw it away.
+                        continue;
+                    }
+                    count[dex] += 1;
+                }
+
+            }
+        }
+        DataSet histo = displacementPlot.addData(x, count);
+        histo.setPoints( GraphPoints.filledSquares());
+        displacementPlot.show(false, "histogram of displacements");
+    }
+
     public static void plotDisplacementsVsTime(List<Track> tracks, MeshImageStack meshImageStack) {
         Graph displacementPlot = new Graph();
+        displacementPlot.setTitle("Displacements over Time");
+
+        displacementPlot.setXRange(0, 135);
+        displacementPlot.setXTicCount(6);
+        displacementPlot.setYRange(0, 10);
+        displacementPlot.setYTicCount(6);
+        displacementPlot.setXLabel("Frame No.");
+        String unit = meshImageStack.getUnits();
+        if(unit == null){
+            unit = "au";
+        }
+        displacementPlot.setYLabel("Displacement ( " + unit + " )");
+        displacementPlot.setTitle("Displacements vs Time");
 
         for(Track t: tracks){
             if(t.size()<2){
@@ -251,11 +336,15 @@ public class MeshAnalysis {
                         d2 = displacementPlot.addData(new double[0], new double[0]);
                         d2.setLabel(t.getName());
                         d2.setColor(t.getColor());
+                        if(t.getFirstFrame() == 0 && t.getLastFrame() == meshImageStack.getNFrames()-1){
+                            d2.setPoints(GraphPoints.filledTriangles());
+                        }
                     }
                     double d =
                             Vector3DOps.normalize(
                                 Vector3DOps.difference(cs, cf)
-                            );
+                            ) * meshImageStack.SCALE;
+
                     d2.addPoint(i + 0.5, d);
                 }
             }
