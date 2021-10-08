@@ -137,7 +137,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         //createButtonShowEnergy(buttonPanel);
         //createButtonShowMeshVolume(buttonPanel);
         createButtonShowForces(buttonPanel);
-        createButtonHideVolume(buttonPanel);
 
         createButtonAdjustVolumeContrast(buttonPanel);
 
@@ -386,7 +385,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
     }
 
     public void createButtonRemesh(JPanel buttonPanel){
-        JButton button = new JButton("raycast\nremesh");
+        JButton button = new JButton("raycast remesh");
         buttons.add(button);
         buttonPanel.add(button);
         button.addActionListener((evt)->{
@@ -408,11 +407,19 @@ public class ControlFrame implements ReadyObserver, FrameListener {
     }
 
     public void createButtonShowVolume(JPanel buttonPanel){
-        JButton show_volume = new JButton("show volume");
+        final String showing = "show volume";
+        final String hide = "hide volume";
+        JButton show_volume = new JButton(showing);
         buttons.add(show_volume);
         buttonPanel.add(show_volume);
         show_volume.addActionListener(e -> {
-            showVolumeAction();
+            if(showing.equals(show_volume.getText())){
+                show_volume.setText(hide);
+                showVolumeAction();
+            } else{
+                show_volume.setText(showing);
+                hideVolumeAction();
+            }
         });
     }
 
@@ -427,6 +434,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         });
     }
     public void createButtonShowMeshVolume(JPanel buttonPanel){
+
         JButton showMeshVolume = new JButton("show mesh volume");
         buttons.add(showMeshVolume);
         buttonPanel.add(showMeshVolume);
@@ -472,12 +480,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         buttons.add(energySelector);
         panel.add(energySelector);
         buttonPanel.add(panel);
-    }
-    public void createButtonHideVolume(JPanel buttonPanel){
-        JButton hide_volume = new JButton("hide volume");
-        buttons.add(hide_volume);
-        buttonPanel.add(hide_volume);
-        hide_volume.addActionListener(actionEvent -> hideVolumeAction());
     }
 
     public void createButtonAdjustMinimum(JPanel buttonPanel){

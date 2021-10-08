@@ -152,8 +152,8 @@ public class Slice3DView{
         return slice;
     }
 
-    public Point2D getScaledLocation(Point p){
-        return new Point2D.Double(p.x/zoom, p.y/zoom);
+    public Point2D getScaledLocation(Point2D p){
+        return new Point2D.Double(p.getX()/zoom, p.getY()/zoom);
     }
 
     public void setBinary(Image b){
@@ -315,6 +315,7 @@ public class Slice3DView{
     }
 
     public void addMouseAdapter(MouseAdapter adapter){
+
         panel.addMouseListener(adapter);
         panel.addMouseMotionListener(adapter);
     }

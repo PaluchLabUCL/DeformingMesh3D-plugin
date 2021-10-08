@@ -5,6 +5,7 @@ import deformablemesh.geometry.Node3D;
 import deformablemesh.geometry.Sphere;
 import deformablemesh.meshview.DataCanvas;
 import deformablemesh.meshview.DataObject;
+import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.ringdetection.FurrowTransformer;
 import deformablemesh.util.Vector3DOps;
 import org.scijava.java3d.utils.picking.PickResult;
@@ -20,12 +21,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-class Sculptor implements ModificationState, MouseWheelListener {
+class Sculptor implements ModificationState {
     double cursorRadius = 0.05;
     Sphere sphere = new Sphere(new double[] { 0.0, 0.0, 0.0}, cursorRadius);
     MeshModifier modifier;
     Set<Node3D> ignoring = new HashSet<>();
     Map<Node3D, Sphere> markers = new HashMap<>();
+    MeshFrame3D meshFrame3D = null;
 
     public Sculptor(MeshModifier modifier){
         this.modifier = modifier;
@@ -38,42 +40,51 @@ class Sculptor implements ModificationState, MouseWheelListener {
         double[] normal  = modifier.furrow.normal;
         return Vector3DOps.add(point, normal, 0.875*sphere.getRadius());
     }
+
     public void cursorMoved(double[] planePosition) {
         if(planePosition != null) {
             sphere.moveTo(planePosition);
         }
     }
 
+    /**
+     * When this sculptor is registered, it attaches to the modifier's meshframe 3D, if one exists.
+     *
+     */
     @Override
     public void register() {
-        modifier.getSliceDataObject().getBranchGroup().setPickable(true);
-        modifier.frame.addDataObject(sphere.createDataObject());
-        modifier.takeControl(this);
-        DataCanvas canvas = modifier.frame.getCanvas();
-        canvas.addMouseWheelListener(this);
+        if(modifier.frame != null){
+            meshFrame3D = modifier.frame;
+            meshFrame3D.addDataObject(getCursor());
+        }
     }
 
     @Override
     public void deregister() {
-        modifier.frame.removeDataObject(sphere.createDataObject());
-        DataCanvas canvas = modifier.frame.getCanvas();
-        canvas.removeMouseWheelListener(this);
-        modifier.releaseControl(this);
+        if(meshFrame3D != null){
+            meshFrame3D.removeDataObject(getCursor());
+            for(Sphere sphere: markers.values()){
+                meshFrame3D.removeDataObject(sphere.createDataObject());
+            }
+            meshFrame3D.setCanvasControllerEnabled(true);
+        }
     }
 
     @Override
-    public void updatePressed(PickResult[] results, MouseEvent evt) {
-        double[] pt = modifier.getPlanePosition(results);
+    public void updatePressed(double[] pt, MouseEvent evt) {
+        //double[] pt = modifier.getPlanePosition(results);
         if(pt==null){
             return;
         }
-        modifier.takeControl(this);
+        if(meshFrame3D != null){
+            meshFrame3D.setCanvasControllerEnabled(false);
+        }
         sphere.moveTo(shifted(pt));
         ignoring.addAll(containedNodes());
     }
 
     @Override
-    public void updateReleased(PickResult[] results, MouseEvent evt) {
+    public void updateReleased(double[] point, MouseEvent evt) {
         ignoring.clear();
 
         if(markers.size() == 0){
@@ -84,7 +95,10 @@ class Sculptor implements ModificationState, MouseWheelListener {
         for(Map.Entry<Node3D, Sphere> marked : markers.entrySet()){
             Sphere s = marked.getValue();
             Node3D n = marked.getKey();
-            modifier.frame.removeDataObject(s.createDataObject());
+            if(meshFrame3D != null){
+                meshFrame3D.removeDataObject(s.createDataObject());
+                meshFrame3D.setCanvasControllerEnabled(true);
+            }
             double[] delta = Vector3DOps.difference(s.getCenter(), n.getCoordinates());
             nodes.add(n);
             deltas.add(delta);
@@ -95,26 +109,23 @@ class Sculptor implements ModificationState, MouseWheelListener {
     }
 
     @Override
-    public void updateClicked(PickResult[] results, MouseEvent evt) {
+    public void updateClicked(double[] point, MouseEvent evt) {
 
     }
 
     @Override
-    public void updateMoved(PickResult[] results, MouseEvent evt) {
+    public void updateMoved(double[] pt, MouseEvent evt) {
         //cursor should follow here.
-        double[] pt = modifier.getPlanePosition(results);
+        //double[] pt = modifier.getPlanePosition(results);
         if(pt==null){
             return;
         }
         sphere.moveTo(shifted(pt));
-
     }
     void moveContained(){
-
         List<Node3D> contained = containedNodes();
-
-        FurrowTransformer ft = modifier.getFurrowTransformer();
-        Furrow3D furrow = ft.getFurrow();
+        //FurrowTransformer ft = modifier.getFurrowTransformer();
+        Furrow3D furrow = modifier.furrow;
         for(int i = 0; i<contained.size(); i++){
             Sphere mark;
             Node3D node = contained.get(i);
@@ -122,7 +133,9 @@ class Sculptor implements ModificationState, MouseWheelListener {
                 mark = markers.get(node);
             } else{
                 mark = new Sphere(node.getCoordinates(), modifier.SELECTED_NODE_RADIUS);
-                modifier.frame.addDataObject(mark.createDataObject());
+                if(meshFrame3D != null){
+                    modifier.frame.addDataObject(mark.createDataObject());
+                }
                 markers.put(node, mark);
             }
             double[] pt = mark.getCenter();
@@ -147,8 +160,8 @@ class Sculptor implements ModificationState, MouseWheelListener {
         }
     }
     @Override
-    public void updateDragged(PickResult[] results, MouseEvent evt) {
-        double[] pt = modifier.getPlanePosition(results);
+    public void updateDragged(double[] pt, MouseEvent evt) {
+        //double[] pt = modifier.getPlanePosition(results);
         if(pt==null){
             return;
         }
@@ -173,18 +186,5 @@ class Sculptor implements ModificationState, MouseWheelListener {
         return modifier.mesh.nodes.stream().filter( this::contained ).collect(Collectors.toList());
     }
 
-    @Override
-    public void mouseWheelMoved(MouseWheelEvent e) {
-        if(!e.isControlDown()){
-            return;
-        }
-        int rotation = e.getWheelRotation();
-        int amount = e.getScrollAmount();
-        int unitsToScroll = e.getUnitsToScroll();
-        if(unitsToScroll != 0){
-            modifier.scrollFurrow( e.getPreciseWheelRotation());
-        }
-        System.out.println(e);
-        e.consume();
-    }
+
 }

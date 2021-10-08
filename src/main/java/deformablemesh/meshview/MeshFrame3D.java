@@ -42,7 +42,6 @@ import java.util.stream.IntStream;
  * User: msmith
  * Date: 7/2/13
  * Time: 8:45 AM
- * To change this template use File | Settings | File Templates.
  */
 public class    MeshFrame3D {
     DataCanvas canvas;
@@ -79,8 +78,8 @@ public class    MeshFrame3D {
     RingController ringController;
 
     DataObject lights;
-    float ambient = 0.75f;
-    float directional = 0.1f;
+    float ambient = 0.6f;
+    float directional = 0.5f;
 
     List<ChannelVolume> channelVolumes = new ArrayList<>();
 
@@ -216,6 +215,7 @@ public class    MeshFrame3D {
      */
     public void rotateView(int dx, int dy){
         canvas.rotateView(dx, dy);
+        syncDirectionalLight();
     }
 
     /**
@@ -224,7 +224,6 @@ public class    MeshFrame3D {
      * @return @see DataCanvas#getViewParameters
      */
     public double[] getViewParameters(){
-        double[] arr = canvas.getViewParameters();
         return canvas.getViewParameters();
     }
     /**
@@ -241,19 +240,10 @@ public class    MeshFrame3D {
         frame.setSize(800, 800);
         if(exit_on_close)
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        GraphicsConfiguration gc = DataCanvas.getBestConfigurationOnSameDevice(frame);
-        Color3f background = new Color3f(1.0f,0.0f,1.0f);
-        canvas = new DataCanvas(gc, background){
-            @Override
-            public void postRender(){
-                J3DGraphics2D g = getGraphics2D();
-                hud.draw(g);
-                g.flush(false);
-            }
-        };
+        Component panel = asJPanel(frame);
         frame.setTitle("DM3D: 3d canvas");
         frame.setIconImage(GuiTools.getIcon());
-        frame.add(canvas);
+        frame.add(panel);
         frame.setVisible(true);
         showAxis();
 
@@ -292,55 +282,74 @@ public class    MeshFrame3D {
             }
 
         };
-
+        canvas.addViewListener(this::syncDirectionalLight);
         return canvas;
     }
     public void removeLights(){
+        directionalLight = null;
         removeDataObject(lights);
     }
-    public void changeAmbientBrightness(float delta){
+    public void setAmbientBrightness(float delta){
 
-        ambient = ambient + delta;
+        ambient = delta;
         if(ambient<0) ambient = 0;
         if(ambient>1) ambient = 1;
         addLights();
     }
-    public void changeDirectionalBrightness(float delta){
+    public void setDirectionalBrightness(float delta){
 
-        directional = directional + delta;
+        directional = delta;
         if(directional<0) directional = 0;
         if(directional>1) directional = 1;
+
         addLights();
     }
 
+    DirectionalLight directionalLight;
+    AmbientLight ambientLight;
+
+    public void syncDirectionalLight(){
+        if(directionalLight!= null) {
+            double[] up = canvas.getUp();
+
+            directionalLight.setDirection(-(float) up[0], -(float) up[1], -(float) up[2]);
+        }
+    }
+
     public void addLights(){
-        AmbientLight amber = new AmbientLight(new Color3f(new float[]{
-                ambient, ambient, ambient
-        }));
 
-        BoundingSphere bounds =	new BoundingSphere (new Point3d(0, 0.0, 0.0), 25.0);
-        amber.setInfluencingBounds(bounds);
-        DirectionalLight light1 = new DirectionalLight(new Color3f(directional, directional, directional), new Vector3f(1f, 0f, 1f));
-        DirectionalLight light2= new DirectionalLight(new Color3f(directional, directional, directional), new Vector3f(-1f, 0f, 1f));
-        DirectionalLight light3= new DirectionalLight(new Color3f(directional, directional, directional), new Vector3f(0f, 1f, 1f));
 
-        light1.setInfluencingBounds(bounds);
-        light2.setInfluencingBounds(bounds);
-        light3.setInfluencingBounds(bounds);
         if(lights!=null){
-            removeLights();
+            ambientLight.setColor(new Color3f(new float[]{
+                    ambient, ambient, ambient
+            }));
+            directionalLight.setColor(new Color3f(directional, directional, directional));
+        } else{
+            BranchGroup bg = new BranchGroup();
+            BoundingSphere bounds =	new BoundingSphere (new Point3d(0, 0.0, 0.0), 25.0);
+            bg.setCapability(BranchGroup.ALLOW_DETACH);
+            ambientLight = new AmbientLight(new Color3f(new float[]{
+                    ambient, ambient, ambient
+            }));
+            ambientLight.setInfluencingBounds(bounds);
+            ambientLight.setCapability(AmbientLight.ALLOW_COLOR_WRITE);
+            bg.addChild(ambientLight);
+
+            double[] up = canvas.getUp();
+            Vector3f dir = new Vector3f(-(float)up[0], -(float)up[1], -(float)up[2]);
+
+            directionalLight = new DirectionalLight(
+                    new Color3f(directional, directional, directional),
+                    dir);
+            directionalLight.setCapability(DirectionalLight.ALLOW_DIRECTION_WRITE);
+            directionalLight.setCapability(DirectionalLight.ALLOW_COLOR_WRITE);
+            directionalLight.setInfluencingBounds(bounds);
+            bg.addChild(directionalLight);
+
+            lights = () -> bg;
+            addDataObject(lights);
         }
 
-        BranchGroup bg = new BranchGroup();
-        bg.setCapability(BranchGroup.ALLOW_DETACH);
-        bg.addChild(amber);
-        bg.addChild(light1);
-        bg.addChild(light2);
-        bg.addChild(light3);
-
-        lights = () -> bg;
-
-        addDataObject(lights);
     }
 
 

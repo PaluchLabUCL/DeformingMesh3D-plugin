@@ -25,17 +25,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Graphics2D;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.GridLayout;
-import java.awt.Shape;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -193,9 +183,71 @@ public class RingController implements FrameListener, ListDataListener {
         buttons.add(split, gbc);
 
         //Mesh modification code.
+
+        gbc.gridwidth=1;
+        gbc.gridx = 0;
+        gbc.gridy++;
+
         JButton nodeSelect = new JButton("select nodes");
+        nodeSelect.addActionListener(evt->{
+            if(modifier == null){
+                modifier = new MeshModifier();
+                modifier.setMeshFrame3D(model.getMeshFrame3D());
+                modifier.setFurrow(getFurrow());
+                setSliceListener(new MouseAdapter(){
+                    @Override
+                    public void mousePressed(MouseEvent evt){
+                        double[] pt = getNormalizedVolumeCoordiante(evt.getPoint());
+                        modifier.updatePressed(pt, evt);
+                    }
+                    @Override
+                    public void mouseReleased(MouseEvent evt){
+                        double[] pt = getNormalizedVolumeCoordiante(evt.getPoint());
+                        modifier.updateReleased(pt, evt);
+                    }
+                    @Override
+                    public void mouseClicked(MouseEvent evt){
+                        double[] pt = getNormalizedVolumeCoordiante(evt.getPoint());
+                        modifier.updateClicked(pt, evt);
+                    }
+                    @Override
+                    public void mouseMoved(MouseEvent evt){
+                        double[] pt = getNormalizedVolumeCoordiante(evt.getPoint());
+                        modifier.updateMoved(pt, evt);
+                    }
+                    @Override
+                    public void mouseDragged(MouseEvent evt){
+                        double[] pt = getNormalizedVolumeCoordiante(evt.getPoint());
+                        modifier.updateDragged(pt, evt);
+                    }
+                });
+            }
+
+            modifier.setMesh( model.getSelectedMesh() );
+            modifier.setSelectNodesMode();
+
+        });
+
+        buttons.add(nodeSelect, gbc);
+        gbc.gridx++;
+
         JButton sculpt = new JButton("sculpt");
-        JButton displace = new JButton("move");
+        sculpt.addActionListener( evt ->{
+                if(modifier==null) return;
+                modifier.setSculptMode();
+            }
+        );
+        buttons.add(sculpt, gbc);
+        gbc.gridx++;
+
+        JButton finish = new JButton("finish");
+        finish.addActionListener(evt->{
+            modifier.deactivate();
+            activateSelectMeshMode();
+        });
+        buttons.add(finish, gbc);
+
+
 
         gbc.gridwidth=3;
         gbc.gridx = 0;
@@ -212,11 +264,25 @@ public class RingController implements FrameListener, ListDataListener {
         activateSelectMeshMode();
     }
 
+    double[] getNormalizedVolumeCoordiante(Point p){
+        FurrowTransformer t = new FurrowTransformer(getFurrow(), model.getMeshImageStack());
+        Point2D furrowPos = sliceView.getScaledLocation(p);
+        double[] pt = t.getVolumeCoordinates(
+                new double[]{furrowPos.getX(), furrowPos.getY()});
+        return pt;
+    }
+
     public JPanel getContentPane(JFrame parent){
         this.parent = parent;
         return contentPane;
     }
 
+    /**
+     * Creates a furrow input that is tied to this ring controller.
+     *
+     *
+     * @return
+     */
     public FurrowInput createFurrowInput(){
         furrowInput = new FurrowInput();
 
@@ -248,9 +314,12 @@ public class RingController implements FrameListener, ListDataListener {
 
         if(adapter == currentControls){
             return;
+        } else if(currentControls != null){
+            sliceView.removeMouseAdapter(currentControls);
         }
 
         sliceView.addMouseAdapter(adapter);
+        currentControls = adapter;
     }
 
     public void activateSelectMeshMode(){
@@ -287,6 +356,7 @@ public class RingController implements FrameListener, ListDataListener {
             }
         });
     }
+
 
 
     void syncSliceViewBoxController(){
@@ -514,4 +584,3 @@ public class RingController implements FrameListener, ListDataListener {
         return furrowShowing;
     }
 }
-

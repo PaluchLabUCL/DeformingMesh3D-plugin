@@ -33,6 +33,11 @@ import java.util.List;
  * Shows the 3d scenes
  */
 public class DataCanvas extends Canvas3D {
+    public static interface ViewListener{
+        public void viewUpdated();
+    }
+    List<ViewListener> viewListeners = new ArrayList<>();
+
     SimpleUniverse universe;
 
     BoundingSphere bounds;
@@ -177,6 +182,15 @@ public class DataCanvas extends Canvas3D {
         obj.getBranchGroup().detach();
     
     }
+
+    public void addViewListener(ViewListener l){
+        viewListeners.add(l);
+    }
+
+    public void removeViewListener(ViewListener l){
+        viewListeners.remove(l);
+    }
+
     private void updateView(){
         TransformGroup ctg = universe.getViewingPlatform().getViewPlatformTransform();
         Vector3d displace = new Vector3d(DX,DY,ZOOM);
@@ -184,9 +198,8 @@ public class DataCanvas extends Canvas3D {
         rot.setRotation(aa);
         rot.transform(displace);
         rot.setTranslation(displace);
-        
-
         ctg.setTransform(rot);
+        viewListeners.forEach(ViewListener::viewUpdated);
     }
 
     public void debugOrientation(){
@@ -447,7 +460,6 @@ public class DataCanvas extends Canvas3D {
 
 
     }
-
     /**
      * Rotates the view such that the new view will be facing towards the normal.
      *
@@ -522,12 +534,16 @@ class OffScreenCanvas3D extends Canvas3D {
     }
 
     BufferedImage doRender(int width, int height) {
+        if(buffer == null) {
+            //This means, the size of the buffer will only be set the first time.
+            //due to a bug.
+            BufferedImage bImage = new BufferedImage(width, height,
+                    BufferedImage.TYPE_INT_ARGB);
+            buffer = new ImageComponent2D(
+                    ImageComponent.FORMAT_RGBA, bImage);
+            setOffScreenBuffer(buffer);
+        }
 
-        BufferedImage bImage = new BufferedImage(width, height,
-                BufferedImage.TYPE_INT_ARGB);
-        buffer = new ImageComponent2D(
-                ImageComponent.FORMAT_RGBA, bImage);
-        setOffScreenBuffer(buffer);
         renderOffScreenBuffer();
         waitForOffScreenRendering();
         BufferedImage r = getOffScreenBuffer().getImage();

@@ -5,7 +5,12 @@ import deformablemesh.geometry.Box3D;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.RayCastMesh;
 import deformablemesh.gui.IntensityRanges;
+import deformablemesh.io.MeshWriter;
+import deformablemesh.track.Track;
 import ij.ImagePlus;
+import org.scijava.java3d.Appearance;
+import org.scijava.java3d.Material;
+import org.scijava.vecmath.Color3f;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,47 +28,48 @@ import java.util.List;
  */
 public class MeshViewer {
     MeshFrame3D meshFrame;
+    int frame = 0;
+    List<Track> tracks = new ArrayList<>();
+    ConfigMesh config;;
+    DeformableMesh3D selectedMesh;
     public MeshViewer(){
 
         MeshFrame3D viewer = new MeshFrame3D();
         viewer.showFrame(true);
         viewer.addLights();
         meshFrame = viewer;
+        config = new ConfigMesh(meshFrame);
+        config.buildGui();
     }
 
-    public void addDeformableMesh(DeformableMesh3D mesh){
-        meshFrame.addDataObject(mesh.data_object);
+
+
+    public void addMeshTrack(Track track){
+        tracks.add(track);
+        if(track.containsKey(frame)){
+            DeformableMesh3D mesh = track.getMesh(frame);
+            mesh.setSelected(false);
+            mesh.setShowSurface(true);
+            mesh.create3DObject();
+            //tracks are not being managed through the segmentation controller.
+            //so the wirecolor needs to be set!?
+            mesh.data_object.setWireColor(track.getColor());
+            meshFrame.addDataObject(mesh.data_object);
+            config.addMesh(mesh);
+        }
+
     }
 
-    public static void main(String[] args){
+    public static void main(String[] args) throws Exception{
         MeshViewer viewer = new MeshViewer();
 
-        DeformableMesh3D mesh = RayCastMesh.sphereRayCastMesh(0);
-        mesh.create3DObject();
 
 
-
-        viewer.addDeformableMesh(mesh);
-        ConfigMesh config = new ConfigMesh(mesh);
-        config.buildGui();
-
-        ImagePlus vol = new ImagePlus(Paths.get(args[0]).toAbsolutePath().toString());
-
-        VolumeDataObject vdo = new VolumeDataObject(Color.GREEN);
-        MeshImageStack stack = new MeshImageStack(vol);
-        vdo.setTextureData(stack);
-        viewer.meshFrame.addDataObject(vdo);
-
+        List<Track> tracks = MeshWriter.loadMeshes(Paths.get(args[0]).toFile());
+        tracks.forEach(viewer::addMeshTrack);
         viewer.meshFrame.addKeyListener(new KeyListener() {
             @Override
             public void keyTyped(KeyEvent e) {
-                if(e.getKeyChar()=='v'){
-
-                    VolumeContrastSetter sets = new VolumeContrastSetter(vdo);
-                    sets.setPreviewBackgroundColor(viewer.meshFrame.getBackgroundColor());
-                    sets.showDialog(viewer.meshFrame.frame);
-
-                }
             }
 
             @Override
@@ -94,26 +100,124 @@ public class MeshViewer {
 
 
 class ConfigMesh{
-    DeformableMesh3D target;
-    public ConfigMesh(DeformableMesh3D target){
-        this.target = target;
+    List<DeformableMesh3D> meshes = new ArrayList<>();
+    JPanel meshlist;
+    MeshFrame3D viewer;
+    public ConfigMesh(MeshFrame3D viewer){
+        this.viewer = viewer;
+    }
+    float clamp(float v){
+        if(v<0) return 0;
+        if(v>1) return 1;
+        return v;
+    }
+    float[] adjust(float[] c, float v){
+        if(v<0) return new float[]{0, 0, 0};
+        if(v<1){
+            return new float[]{c[0]*v, c[1]*v, c[2]*v};
+        }
+        return new float[]{
+                clamp(c[0] + (v-1)),
+                clamp(c[1] + (v-1)),
+                clamp(c[2] + (v-1))
+        };
+    }
+
+    public JPanel buildAppearancePanel(){
+        JSlider diffuse = new JSlider(JSlider.VERTICAL);
+        JSlider emmisive = new JSlider(JSlider.VERTICAL);
+        JSlider ambient = new JSlider(JSlider.VERTICAL);
+        JSlider specular = new JSlider(JSlider.VERTICAL);
+        JButton set = new JButton("apply");
+        JTextField shinyness = new JTextField("1.0");
+        set.addActionListener(evt->{
+            float d = diffuse.getValue()/50.f;
+            float e = emmisive.getValue()/50.f;
+            float a = ambient.getValue()/50.f;
+            float s = specular.getValue()/50.f;
+            float shine = Float.parseFloat(shinyness.getText());
+            System.out.println(d + ", " + e + ", " + a + ", " + s);
+            for(DeformableMesh3D mesh: meshes){
+                Appearance app = new Appearance();
+                float[] rgb = mesh.getColor().getRGBComponents(new float[4]);
+
+                Color3f ambientColor = new Color3f(adjust(rgb, a));
+                Color3f emmisiveColor = new Color3f(adjust(rgb, e));
+                Color3f diffuseColor = new Color3f(adjust(rgb, d));
+
+                Color3f specularColor = new Color3f(adjust(rgb, s));
+                Material mat = new Material(
+                        ambientColor,
+                        emmisiveColor,
+                        diffuseColor,
+                        specularColor,
+                        shine);
+                app.setMaterial(mat);
+                mesh.data_object.setSurfaceAppearance(app);
+            }
+
+
+        });
+
+        GridBagLayout layout = new GridBagLayout();
+        JPanel sliders = new JPanel(layout);
+        GridBagConstraints con = new GridBagConstraints();
+        con.gridx = 0;
+        con.gridy = 0;
+
+        sliders.add(new JLabel("D"), con);
+        con.gridx++;
+        sliders.add(new JLabel("E"), con);
+        con.gridx++;
+        sliders.add(new JLabel("A"), con);
+        con.gridx++;
+        sliders.add(new JLabel("S"), con);
+
+        con.gridy++;
+        con.gridheight = 3;
+        con.gridx = 0;
+        sliders.add(diffuse, con);
+        con.gridx++;
+        sliders.add(emmisive, con);
+        con.gridx++;
+        sliders.add(ambient, con);
+        con.gridx++;
+        sliders.add(specular, con);
+
+        con.gridx = 0;
+        con.gridy += 3;
+        con.gridheight = 1;
+        con.gridwidth = 3;
+
+        sliders.add(shinyness, con);
+        con.gridx+=3;
+        sliders.add(set, con);
+        return sliders;
     }
 
     public void buildGui(){
         JFrame frame = new JFrame();
         JPanel content = buildPanel();
         frame.setContentPane(content);
-        frame.pack();
+        frame.setSize(640, 480);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
     }
-
-    public JPanel buildPanel(){
+    public void addMesh(DeformableMesh3D mesh){
         JPanel controls = new JPanel();
-        controls.setLayout(new GridBagLayout());
+        controls.setLayout(new BoxLayout(controls, BoxLayout.LINE_AXIS));
+
         JCheckBox surface = new JCheckBox("surface");
+        surface.setSelected(mesh.isShowSurface());
         controls.add(surface);
 
+        controls.add(buildColorButton(mesh));
+        meshlist.add(controls);
+        meshlist.invalidate();
+        meshes.add(mesh);
+    }
+
+    JButton buildColorButton(DeformableMesh3D target){
         JButton button = new JButton(getColorBox(target.getColor()));
         button.addActionListener(evt->{
 
@@ -145,14 +249,29 @@ class ConfigMesh{
 
         });
 
-        controls.add(button);
+        return button;
+    }
+    public JPanel buildPanel(){
+        JPanel main = new JPanel(new BorderLayout());
+        meshlist = new JPanel();
+        meshlist.setLayout(new BoxLayout(meshlist, BoxLayout.PAGE_AXIS));
+        main.add(new JScrollPane(meshlist), BorderLayout.EAST);
+        main.add(buildAppearancePanel(), BorderLayout.WEST);
+        JSlider directional = new JSlider();
+        main.add(directional, BorderLayout.NORTH);
 
-        surface.addActionListener(evt->{
-            boolean checked = surface.isSelected();
-            target.setShowSurface(checked);
+        directional.addChangeListener(evt->{
+
+            float f = directional.getValue()/100.f;
+            viewer.setDirectionalBrightness(f);
         });
-        return controls;
-
+        JSlider ambient = new JSlider();
+        main.add(ambient, BorderLayout.SOUTH);
+        ambient.addChangeListener(evt->{
+            float f = ambient.getValue()/100.f;
+            viewer.setAmbientBrightness(f);
+        });
+        return main;
     }
 
     Icon getColorBox(Color c){

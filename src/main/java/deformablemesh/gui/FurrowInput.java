@@ -30,6 +30,8 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
+ * An input for scrolling and directing a plane in 3D.
+ *
  * Created by msmith on 2/12/16.
  */
 public class FurrowInput extends JPanel {

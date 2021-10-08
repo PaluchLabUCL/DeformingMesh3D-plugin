@@ -2,11 +2,15 @@ package deformablemesh.simulations;
 
 import deformablemesh.externalenergies.ExternalEnergy;
 import deformablemesh.geometry.DeformableMesh3D;
+import deformablemesh.geometry.Node3D;
+import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.meshview.TexturedPlaneDataObject;
 import deformablemesh.util.Vector3DOps;
 import ij.process.ImageProcessor;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class HeightMapSurface implements ExternalEnergy {
     double[][] heightMap;
@@ -172,14 +176,16 @@ public class HeightMapSurface implements ExternalEnergy {
     public void createHeighMapDataObject() {
         int nPoints = 50;
 
-        double dx = width/nPoints;
-        double dy = height/nPoints;
+        double dx = width*1.0/(nPoints - 1);
+        double dy = height*1.0/(nPoints - 1);
 
-        int xsteps = (int) (width / dx);
-        int ysteps = (int) (height / dy);
+        int xsteps = nPoints;
+        int ysteps = nPoints;
 
-        dx = width * 1.0 / (xsteps);
-        dy = height * 1.0 / (ysteps);
+        dx = width * 1.0 / (xsteps - 1);
+        dy = height * 1.0 / (ysteps - 1);
+
+        System.out.println(width + ": " + xsteps + ", " + height + ": "  + ysteps);
 
         double[] points = new double[3 * xsteps * ysteps];
 
@@ -199,7 +205,7 @@ public class HeightMapSurface implements ExternalEnergy {
 
         int boxes = (xsteps - 1) * (ysteps - 1);
         int triangles = 2 * boxes * 3;
-        int connections = 3 * boxes * 2;
+        int connections = ( 3 * boxes  + (xsteps - 1) + (ysteps - 1) )*2;
         int[] triangle_indexes = new int[triangles];
         int[] connection_indexes = new int[connections];
 
@@ -229,14 +235,66 @@ public class HeightMapSurface implements ExternalEnergy {
                 connection_indexes[c++] = down;
 
             }
+            //at the end of the column connect down to dialgonal
+            connection_indexes[c++] = j + (ysteps - 1)*xsteps;
+            connection_indexes[c++] = j + 1 + (ysteps-1)*xsteps;
+
         }
+        //right to diagonal for last column
+        for (int k = 0; k < ysteps - 1; k++) {
+            connection_indexes[c++] = (xsteps-1) + k*xsteps;
+            connection_indexes[c++] = (xsteps - 1) + (k+1)*xsteps;
+        }
+
 
         surfaceGeometry = new DeformableMesh3D(points, connection_indexes, triangle_indexes);
         surfaceGeometry.create3DObject();
-
+        surfaceGeometry.ALPHA = 1;
+        surfaceGeometry.BETA = 0.1;
+        surfaceGeometry.GAMMA = 1;
+        surfaceGeometry.reshape();
     }
 
+    static class FixedPosition{
+        int i;
+        double x, y, z;
+        public FixedPosition(int index, double x, double y, double z){
+            this.i = index;
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
+    }
+    ExternalEnergy getEdgeForce(DeformableMesh3D mesh){
+        List<FixedPosition> locations = new ArrayList<>();
+        for(int i = 0; i<mesh.nodes.size(); i++){
+            double[] pt = mesh.nodes.get(i).getCoordinates();
+            if(pt[0] == minx || pt[0] == maxx || pt[1] == miny || pt[1] == maxy){
+                locations.add(new FixedPosition(i, pt[0], pt[1], 0  ));
+            }
+        }
 
+        return new ExternalEnergy() {
+            @Override
+            public void updateForces(double[] positions, double[] fx, double[] fy, double[] fz) {
+                for(FixedPosition fp: locations){
+                    double x = positions[fp.i*3];
+                    double y = positions[fp.i*3 + 1];
+                    double z = positions[fp.i*3 + 2];
+
+                    fx[fp.i] += fp.x - x;
+                    fy[fp.i] = fp.y - y;
+                    fz[fp.i] = fp.z - z;
+
+                }
+            }
+
+            @Override
+            public double getEnergy(double[] pos) {
+                return 0;
+            }
+        };
+    }
 
     public static void main(String[] args){
         double[][] points = {
@@ -245,9 +303,17 @@ public class HeightMapSurface implements ExternalEnergy {
                                 { 1, 1.5, 2 }
                             };
         HeightMapSurface hms = new HeightMapSurface(points, 1);
+        hms.createHeighMapDataObject();
         double[] f = hms.getForce(0, 0, 0, new double[3]);
         System.out.println(Arrays.toString(f));
-
+        hms.surfaceGeometry.addExternalEnergy(hms.getEdgeForce(hms.surfaceGeometry));
+        MeshFrame3D frame = new MeshFrame3D();
+        frame.showFrame(true);
+        frame.addLights();
+        frame.addDataObject(hms.surfaceGeometry.data_object);
+        while(true){
+            hms.surfaceGeometry.update();
+        }
     }
 
 }

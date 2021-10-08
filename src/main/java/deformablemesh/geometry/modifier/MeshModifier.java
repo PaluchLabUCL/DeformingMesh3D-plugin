@@ -1,12 +1,15 @@
 package deformablemesh.geometry.modifier;
 
 import deformablemesh.MeshImageStack;
+import deformablemesh.SegmentationController;
+import deformablemesh.SegmentationModel;
 import deformablemesh.geometry.BinaryMeshGenerator;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Furrow3D;
 import deformablemesh.geometry.Node3D;
 import deformablemesh.geometry.Sphere;
 import deformablemesh.gui.FurrowInput;
+import deformablemesh.gui.RingController;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.meshview.CanvasView;
 import deformablemesh.meshview.DataObject;
@@ -45,6 +48,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.stream.Collectors;
 
 /**
+ * This needs to be separated into a Controller/Model.
+ *
  * Created by msmith on 21.09.17.
  */
 public class MeshModifier {
@@ -56,7 +61,6 @@ public class MeshModifier {
     List<Node3D> selected = new ArrayList<>();
     LineDataObject obj;
     Furrow3D furrow;
-    FurrowInput fi;
     StateManager manager;
     ActionStack stack = new ActionStack();
     double SELECTED_NODE_RADIUS = 0.005;
@@ -66,6 +70,9 @@ public class MeshModifier {
     TexturedPlaneDataObject slice;
     List<Sphere> markers = new ArrayList<>();
 
+    public MeshModifier(){
+        manager = new StateManager();
+    }
     public List<Sphere> getMarkers() {
         return markers;
     }
@@ -76,6 +83,14 @@ public class MeshModifier {
 
     }
 
+    public void deactivate(){
+        this.state.deregister();
+        selectNone();
+    }
+    public void setFurrow(Furrow3D furrow){
+        this.furrow = furrow;
+    }
+
     public FurrowTransformer getFurrowTransformer() {
         return new FurrowTransformer(furrow, mis);
     }
@@ -84,11 +99,34 @@ public class MeshModifier {
         stack.postAction(displaceNodesAction);
     }
 
-    public void scrollFurrow(double preciseWheelRotation) {
+    public void selectNodes(List<Node3D> selected){
+        selected.forEach(this::selectNode);
+    }
 
-        fi.scrollYUnits(preciseWheelRotation);
+    public void deselectNodes( List<Node3D> deselected){
+        for(Node3D node: deselected){
+            int i = selected.indexOf(node);
+            deselectNode(i);
+        }
+    }
+
+    public void displaceNodes(){
+        manager.setSelectMode();
 
     }
+
+    public void setSelectNodesMode() {
+
+        manager.setSelectMode();
+
+    }
+
+    public void setSculptMode(){
+
+        manager.setSculptMode();
+
+    }
+
 
     private class StateManager implements MeshFrame3D.HudDisplay{
 
@@ -116,6 +154,10 @@ public class MeshModifier {
             registerState(sculptor);
         }
 
+        public void setSelectMode(){
+            registerState(selector);
+        }
+
         Color background = new Color(100, 100, 100, 100);
         Color foreground = Color.BLACK;
 
@@ -130,18 +172,6 @@ public class MeshModifier {
             g.drawString(state.getName(), 20, 60);
 
         }
-
-
-
-
-    }
-
-    public void takeControl(ModificationState recipient ){
-        frame.setCanvasControllerEnabled(false);
-    }
-
-    public void releaseControl(ModificationState owner){
-        frame.setCanvasControllerEnabled(true);
     }
 
     DataObject getSliceDataObject(){
@@ -164,7 +194,6 @@ public class MeshModifier {
 
     public void start(){
         frame = new MeshFrame3D();
-
 
         JMenuBar bar = new JMenuBar();
         JMenu menu = new JMenu("file");
@@ -224,9 +253,20 @@ public class MeshModifier {
         }
     }
 
+    public void selectNode(Node3D node){
+        if(!selected.contains(node)){
+            selected.add(node);
+            double[] pt = node.getCoordinates();
+            Sphere s = new Sphere(pt, SELECTED_NODE_RADIUS);
+
+            markers.add(s);
+            frame.addDataObject(s.createDataObject());
+        }
+    }
+
     public void additionalControls(){
 
-        fi = new FurrowInput();
+        FurrowInput fi = new FurrowInput();
         fi.addPlaneChangeListener(new FurrowInput.PlaneChangeListener() {
             @Override
             public void setNormal(double[] n) {
@@ -356,15 +396,12 @@ public class MeshModifier {
             frame.addDataObject(slice);
         }
     }
+    public void setMeshFrame3D(MeshFrame3D mf3d){
+        frame = mf3d;
+        frame.setHud(manager);
+    }
 
     public void setMesh(DeformableMesh3D mesh){
-        if(this.mesh!=null){
-            frame.removeDataObject(this.mesh.data_object);
-        }
-        if(mesh.data_object==null){
-            mesh.create3DObject();
-        }
-        frame.addDataObject(mesh.data_object);
         this.mesh = mesh;
     }
 
@@ -386,32 +423,54 @@ public class MeshModifier {
 
         System.exit(0);
     }
+
+    public void updatePressed(double[] pt, MouseEvent evt){
+        state.updatePressed(pt, evt);
+    }
+
+    public void updateReleased(double[] pt, MouseEvent evt){
+        state.updateReleased(pt, evt);
+    }
+
+    public void updateClicked(double[] pt, MouseEvent evt){
+        state.updateClicked(pt, evt);
+    }
+    public void updateMoved(double[] pt, MouseEvent evt){
+        state.updateMoved(pt, evt);
+    }
+
+    public void updateDragged(double[] pt, MouseEvent evt){
+        state.updateDragged(pt, evt);
+    }
+
     class PointPicking implements CanvasView {
         @Override
         public void updatePressed(PickResult[] results, MouseEvent evt) {
-            state.updatePressed(results, evt);
+            double[] pt = getPlanePosition(results);
+            MeshModifier.this.updatePressed(pt, evt);
         }
 
         @Override
         public void updateReleased(PickResult[] results, MouseEvent evt) {
-            state.updateReleased(results, evt);
+            double[] pt = getPlanePosition(results);
+            MeshModifier.this.updateReleased(pt, evt);
         }
 
         @Override
         public void updateClicked(PickResult[] results, MouseEvent evt) {
-            state.updateClicked(results, evt);
+            double[] pt = getPlanePosition(results);
+            MeshModifier.this.updateClicked(pt, evt);
         }
 
         @Override
         public void updateMoved(PickResult[] results, MouseEvent evt) {
-            state.updateMoved(results, evt);
+            double[] pt = getPlanePosition(results);
+            MeshModifier.this.updateMoved(pt, evt);
         }
-
-
-
         @Override
         public void updateDragged(PickResult[] results, MouseEvent evt) {
-            state.updateDragged(results, evt);
+            double[] pt =getPlanePosition(results);
+            MeshModifier.this.updateDragged(pt, evt);
         }
     }
 

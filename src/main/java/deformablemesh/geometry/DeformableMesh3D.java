@@ -951,7 +951,7 @@ public class DeformableMesh3D{
                 }
             }
 
-            if(tCons.size()!=3) throw new RuntimeException("BROKEN ADJACENCY MAP");
+            if(tCons.size()!=3) throw new RuntimeException("BROKEN ADJACENCY MAP: " + tCons.size());
 
 
         }
