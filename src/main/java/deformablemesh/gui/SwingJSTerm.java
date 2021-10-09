@@ -279,29 +279,23 @@ public class SwingJSTerm {
             }
         });
 
-        try{
             controls.submit(()->{
                 observers.forEach(o->o.setReady(false));
-            });
-            engine.eval(s);
-        } catch (ScriptException e) {
-            EventQueue.invokeLater(()->{
-                StackTraceElement[] elements = e.getStackTrace();
-                appendToDisplay(e.getMessage() + '\n');
-                if(elements.length>0){
-                    appendToDisplay(elements[0].toString() + '\n');
-                }
-            });
-
-        } finally{
-            if(controls!=null){
-                controls.submit(()->{
+                try{
+                    engine.eval(s);
+                } catch (ScriptException e) {
+                    EventQueue.invokeLater(()->{
+                        StackTraceElement[] elements = e.getStackTrace();
+                        appendToDisplay(e.getMessage() + '\n');
+                        if(elements.length>0){
+                            appendToDisplay(elements[0].toString() + '\n');
+                        }
+                    });
+                } finally{
                     observers.forEach(o->o.setReady(true));
-                });
-            }
-        }
-        StringBuilder build = new StringBuilder();
+                }
 
+            });
 
     }
 
