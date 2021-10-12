@@ -239,8 +239,5 @@ public class DeformableMeshDataObject implements DataObject {
         if(showSurface){
             surface_object.setAppearance(createSurfaceAppearance());
         }
-        //copySolidColor();
-        //updateColors(colors);
-
     }
 }

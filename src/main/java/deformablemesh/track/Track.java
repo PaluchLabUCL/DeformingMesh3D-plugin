@@ -139,6 +139,11 @@ public class Track {
         return color;
     }
     public void setColor(Color c){
+        if (!color.equals(c)) {
+            for(DeformableMesh3D mesh: track.values()){
+                mesh.setColor(c);
+            }
+        }
         color = c;
     }
 

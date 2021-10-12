@@ -187,8 +187,8 @@ public class DeformableMesh3D{
     }
     public void create3DObject(){
         data_object = new DeformableMeshDataObject(nodes, connections, triangles, positions, connection_index, triangle_index);
-//        data_object.setWireColor(color);
         data_object.setColor(color);
+
         data_object.setShowSurface(showSurface);
     }
 

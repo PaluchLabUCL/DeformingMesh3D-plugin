@@ -4,6 +4,7 @@ import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Node3D;
 import deformablemesh.geometry.Sphere;
 import deformablemesh.meshview.DataCanvas;
+import deformablemesh.meshview.DataObject;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.util.Vector3DOps;
 import org.scijava.java3d.BranchGroup;
@@ -24,20 +25,28 @@ public class Selector implements ModificationState{
     MeshModifier modifier;
     double radius = 0.1;
     MeshFrame3D meshFrame3D;
+    Sphere sphere = new Sphere(new double[] { 0.0, 0.0, 0.0}, radius);
+
     public Selector(MeshModifier modifier){
         this.modifier = modifier;
+    }
+    public DataObject getCursor(){
+        return sphere.createDataObject();
     }
 
     @Override
     public void register() {
         if(modifier.frame != null){
             meshFrame3D = modifier.frame;
+            meshFrame3D.addDataObject(getCursor());
         }
     }
 
     @Override
     public void deregister() {
-
+        if(meshFrame3D != null){
+            meshFrame3D.removeDataObject(getCursor());
+        }
     }
 
     @Override
@@ -64,6 +73,7 @@ public class Selector implements ModificationState{
 
     @Override
     public void updateClicked(double[] point, MouseEvent evt) {
+        sphere.moveTo(point);
         DeformableMesh3D mesh = modifier.mesh;
         List<Node3D> selectable = new ArrayList<>();
         for(Node3D node: mesh.nodes){
@@ -76,8 +86,8 @@ public class Selector implements ModificationState{
     }
 
     @Override
-    public void updateMoved(double[] results, MouseEvent evt) {
-
+    public void updateMoved(double[] point, MouseEvent evt) {
+        sphere.moveTo(point);
     }
 
     double[] getPickLocation(List<PickResult> results){
@@ -91,6 +101,7 @@ public class Selector implements ModificationState{
 
     @Override
     public void updateDragged(double[] point, MouseEvent evt) {
+        sphere.moveTo(point);
         //BranchGroup bg = modifier.getSliceDataObject().getBranchGroup();
         DeformableMesh3D mesh = modifier.mesh;
         List<Node3D> selectable = new ArrayList<>();

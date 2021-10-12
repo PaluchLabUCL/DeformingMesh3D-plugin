@@ -127,14 +127,16 @@ public class Slice3DView{
             if(evt.isConsumed()){
                 return;
             }
-            if(evt.getWheelRotation()>0){
+
+            if(evt.getWheelRotation()<0){
                 zoom = zoom - 0.125;
                 if(zoom==0) zoom = 0.125;
                 resize();
-            } else{
+            } else if(evt.getWheelRotation()>0){
                 zoom = zoom + 0.125;
                 resize();
             }
+
         });
 
 

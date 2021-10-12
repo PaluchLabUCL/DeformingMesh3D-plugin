@@ -36,6 +36,10 @@ class Sculptor implements ModificationState {
         return sphere.createDataObject();
     }
 
+    public void setRadius(double r){
+
+    }
+
     double[] shifted(double[] point){
         double[] normal  = modifier.furrow.normal;
         return Vector3DOps.add(point, normal, 0.875*sphere.getRadius());

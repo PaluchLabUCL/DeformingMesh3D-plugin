@@ -16,18 +16,23 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 public class RaycastRender implements Runnable {
-    int width = 512;
-    int height = 512;
+    int width = 1024;
+    int height = 1024;
     BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
     double CUTOFF = 1e-8;
     JPanel panel;
-    InterceptingMesh3D im;
+    List<InterceptingMesh3D> meshes = new ArrayList<>();
+    List<Color> colors = new ArrayList<>();
     Box3D bottom;
     Box3D chip;
     public RaycastRender(){
-        chip = new Box3D(new double[]{0, -1 - 0.25, 0}, 2, 0.5, 2);
+        chip = new Box3D(new double[]{0, -1 - 0.25, 0}, 0.25, 0.5, 0.25);
         Graphics g = img.createGraphics();
         g.setColor(Color.BLACK);
         g.fillRect(0, 0, width, height);
@@ -45,18 +50,23 @@ public class RaycastRender implements Runnable {
 
     }
 
-    public void setMesh(DeformableMesh3D mesh){
-        im = new InterceptingMesh3D(mesh);
-
+    public void setMeshes(List<DeformableMesh3D> meshes){
         double lowest = 1;
-        for(Node3D node: mesh.nodes){
-            double[] c = node.getCoordinates();
-            ping(c);
+        for( DeformableMesh3D mesh: meshes){
+            InterceptingMesh3D im = new InterceptingMesh3D(mesh);
 
-            double z  = c[2];
-            if(z < lowest){
-                lowest = z;
+            for(Node3D node: mesh.nodes){
+                double[] c = node.getCoordinates();
+                //ping(c);
+
+                double z  = c[2];
+                if(z < lowest){
+                    lowest = z;
+                }
             }
+            this.meshes.add(im);
+            colors.add(mesh.getColor());
+            System.out.println(mesh.getColor());
         }
         System.out.println("lowest: " + lowest);
         bottom = new Box3D( new double[]{0., 0., lowest-CUTOFF/2}, 2, 2, CUTOFF);
@@ -75,9 +85,9 @@ public class RaycastRender implements Runnable {
         public Ray(double[] pt, double[] dir, Ray r){
             this.pt = pt;
             this.dir = dir;
-            this.r = r.r/2;
-            this.g = r.g/2;
-            this.b = r.b/2;
+            this.r = r.r*0.75;
+            this.g = r.g*0.75;
+            this.b = r.b*0.75;
         }
 
     }
@@ -113,17 +123,11 @@ public class RaycastRender implements Runnable {
     }
 
     double[] scatter(double[] dir, double[] surfaceNormal){
-        double[] c = Vector3DOps.cross(dir, surfaceNormal);
 
-        double theta = Vector3DOps.normalize(c);
-        if(theta == 0){
-            //parallel.
-        }
-        double dot = -Vector3DOps.dot(dir, surfaceNormal);
+        double dot = Vector3DOps.dot(dir, surfaceNormal);
         double[] pc = { surfaceNormal[0]*dot, surfaceNormal[1]*dot, surfaceNormal[2]*dot };
         double[] per = Vector3DOps.difference(dir, pc);
         double[] res = Vector3DOps.add(per, pc, -1);
-
 
 
 
@@ -135,8 +139,8 @@ public class RaycastRender implements Runnable {
 
     class PointLight{
         final double[] dir, src, px, py;
-        double intensity = 4;
-        double cone = Math.PI;
+        double intensity = 64;
+        double cone = Math.PI*0.15;
 
         PointLight(double[] src, double[] target){
 
@@ -187,14 +191,18 @@ public class RaycastRender implements Runnable {
 
 
     public void run(){
+        ExecutorService service = Executors.newFixedThreadPool(20);
+        double hits = 0;
         while(true){
             List<PointLight> lights = new ArrayList<>();
-            lights.add(new PointLight(new double[]{1, -1, 1}, new double[]{-1, 1, -1}));
-            lights.add(new PointLight(new double[]{-1, -1, 1}, new double[]{1, 1, -1}));
-            lights.add( new PointLight(new double[]{0, 0, 1}, new double[]{0, 0, -1}) );
+            lights.add(new PointLight(new double[]{2, -1, 3}, new double[]{0, 0, -0.37}));
+            lights.add(new PointLight(new double[]{-2, -1, 3}, new double[]{0, 0, -0.37}));
+            lights.add( new PointLight(new double[]{0, -3, 3}, new double[]{0, 0, -0.37}) );
 
-            double hits = 0;
-            int rays = 100;
+
+            int rays = 1000;
+            long start = System.currentTimeMillis();
+            long emitted = 0;
             for(int i = 0; i<rays; i++){
 
                 Deque<Ray> castRays = new ArrayDeque<>();
@@ -203,21 +211,36 @@ public class RaycastRender implements Runnable {
                 }
                 while(castRays.size() > 0) {
                     Ray r = castRays.pop();
-                    List<Intersection> intersections = im.getIntersections(r.pt, r.dir);
-
+                    emitted++;
 
                     Intersection closest = null;
                     double min = Double.MAX_VALUE;
 
-                    for (Intersection intersection : intersections) {
-                        if (Vector3DOps.dot(intersection.surfaceNormal, r.dir) >= 0) {
-                            continue;
+
+                    List<Future<List<Intersection>>> futures = meshes.stream().map(
+                            m -> service.submit(
+                                    () ->m.getIntersections(r.pt, r.dir)
+                            )).collect(Collectors.toList());
+                    int dex = 0;
+                    int scatteringDex = -1;
+                    for(Future<List<Intersection>> future: futures){
+                        try {
+                            List<Intersection> intersections = future.get();
+                            for (Intersection intersection : intersections) {
+                                if (Vector3DOps.dot(intersection.surfaceNormal, r.dir) >= 0) {
+                                    continue;
+                                }
+                                double d = Vector3DOps.dot(r.dir, Vector3DOps.difference(intersection.location, r.pt));
+                                if (d < min && d>CUTOFF) {
+                                    closest = intersection;
+                                    min = d;
+                                    scatteringDex = dex;
+                                }
+                            }
+                        } catch(Exception e){
+                            throw new RuntimeException(e);
                         }
-                        double d = Vector3DOps.dot(r.dir, Vector3DOps.difference(intersection.location, r.pt));
-                        if (d < min && d>CUTOFF) {
-                            closest = intersection;
-                            min = d;
-                        }
+                        dex++;
                     }
 
                     if (closest == null) {
@@ -237,6 +260,7 @@ public class RaycastRender implements Runnable {
                     }
 
                     if (closest == null) {
+
                         //camera
                         for (Intersection is : chip.getIntersections(r.pt, r.dir)) {
                             if (Vector3DOps.dot(is.surfaceNormal, r.dir) >= 0) {
@@ -256,33 +280,51 @@ public class RaycastRender implements Runnable {
                             }
                         }
                     } else{
+                        Color sc;
+                        if(scatteringDex < 0){
+                            sc = Color.WHITE;
+                        } else{
+                            sc = colors.get(scatteringDex);
+                        }
+                        float[] comps = sc.getRGBComponents(new float[4]);
+
                         double[] scattered = scatter(r.dir, closest.surfaceNormal);
                         double[] delta = Vector3DOps.difference(new double[]{0, -1, 0}, closest.location);
                         double n = Vector3DOps.normalize(delta);
+                        Ray next = new Ray(closest.location, scattered, r);
+                        next.r = next.r*(0.5*comps[0] + 0.5);
+                        next.g = next.g*(0.5*comps[1] + 0.5);
+                        next.b = next.b*(0.5*comps[2] + 0.5);
 
-                        r = new Ray(closest.location, scattered, r);
+                        double dot = Vector3DOps.dot(closest.surfaceNormal, delta);
+                        if( dot > 0.0) {
 
-                        if(r.r + r.b + r.g < 1){
-                            r = null;
+                            Ray diffuse = new Ray(closest.location, delta, r);
+                            diffuse.r = r.r*comps[0]*dot;
+                            diffuse.g = r.g*comps[1]*dot;
+                            diffuse.b = r.b*comps[2]*dot;
+
+                            if (diffuse.r + diffuse.g + diffuse.b >= 1) {
+                                castRays.add(diffuse);
+                            }
                         }
-
-                    }
-
-                    if( closest == null){
-                        r = null;
+                        if(next.r + next.b + next.g >= 1){
+                            castRays.add(next);
+                        }
                     }
                 }
-
             }
-            //System.out.println("paint: " + (hits/rays));
+            System.out.println("hits: " + hits + "rays cast: " + emitted + " in: " + ( (System.currentTimeMillis() - start)/1000.0 ) + " seconds");
             panel.repaint();
-
+            if(hits > 1_000_000_000){
+                return;
+            }
         }
     }
     public static void main(String[] args) throws IOException {
         new ImageJ();
         List<Track> tracks = MeshWriter.loadMeshes(new File(IJ.getFilePath("select mesh file")));
-        DeformableMesh3D mesh = tracks.stream().map(t-> t.getMesh(t.getFirstFrame())).findFirst().orElseThrow(IOException::new);
+        List<DeformableMesh3D> mesh = tracks.stream().filter(t->t.containsKey(0)).map(t-> t.getMesh(0)).collect(Collectors.toList());
         RaycastRender rr = new RaycastRender();
         JPanel panel = new JPanel(){
             @Override
@@ -296,7 +338,7 @@ public class RaycastRender implements Runnable {
             }
         };
         rr.setPanel(panel);
-        rr.setMesh(mesh);
+        rr.setMeshes(mesh);
         JFrame frame = new JFrame();
         frame.setContentPane(panel);
 
