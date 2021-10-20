@@ -26,10 +26,9 @@ public class DeformingMesh3DApp{
     public static SegmentationController createDeformingMeshApplication(){
         JAWTUtil.getJAWT(true);
         MeshFrame3D mf3d = new MeshFrame3D();
-        mf3d.showFrame(false);
-        mf3d.addLights();
         SegmentationModel model = new SegmentationModel();
         SegmentationController control = new SegmentationController(model);
+
         try{
             PropertySaver.loadProperties(control);
         } catch(Exception e){
@@ -37,12 +36,10 @@ public class DeformingMesh3DApp{
         }
         ControlFrame controller = new ControlFrame(control);
         controller.showFrame();
-        RingController ring_control = new RingController(control);
-        ring_control.startUI();
-        controller.addTabbedPanel(ring_control.getContentPane(controller.getFrame()), "furrow");
-        control.setMeshFrame3D(mf3d);
+        mf3d.showFrame(false);
+        mf3d.addLights();
         controller.addMeshFrame3D(mf3d);
-        model.setRingController(ring_control);
+        control.setMeshFrame3D(mf3d);
         PropertySaver.positionFrames(controller, mf3d);
         return control;
     }

@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 
 /**
  * For keeping track of mesh linking. A mesh only exists in one frame, but it can be linked to meshes in other frames.
- * A track would be a mesh that persists in multiple frames.
+ * A track is a mesh that persists in multiple frames.
  *
  * Created by msmith on 3/22/16.
  */

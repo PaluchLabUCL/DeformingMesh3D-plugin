@@ -135,4 +135,9 @@ public class Selector implements ModificationState{
         }
     }
 
+    public void setRadius(double f){
+        radius = f;
+        sphere.setRadius(f);
+    }
+
 }

@@ -6,12 +6,13 @@ import deformablemesh.gui.RingController;
 import deformablemesh.meshview.MeshFrame3D;
 import ij.ImageJ;
 import ij.ImagePlus;
+import ij.plugin.PlugIn;
 import jogamp.nativewindow.jawt.JAWTUtil;
 
 import java.awt.EventQueue;
 import java.io.File;
 
-public class DeformingMeshSans3D {
+public class DeformingMeshSans3D implements PlugIn {
 
     public static SegmentationController createDeformingMeshApplication(){
         SegmentationModel model = new SegmentationModel();
@@ -25,10 +26,7 @@ public class DeformingMeshSans3D {
 
         ControlFrame controller = new ControlFrame(control);
         controller.showFrame();
-        RingController ring_control = new RingController(control);
-        ring_control.startUI();
-        controller.addTabbedPanel(ring_control.getContentPane(controller.getFrame()), "furrow");
-        model.setRingController(ring_control);
+
         return control;
     }
 
@@ -55,4 +53,8 @@ public class DeformingMeshSans3D {
         EventQueue.invokeLater(()->startApplication( input ));
     }
 
+    @Override
+    public void run(String s) {
+        startApplication(null);
+    }
 }

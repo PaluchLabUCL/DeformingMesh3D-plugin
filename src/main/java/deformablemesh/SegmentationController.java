@@ -7,6 +7,7 @@ import deformablemesh.gui.FrameListener;
 import deformablemesh.gui.GuiTools;
 import deformablemesh.gui.PropertySaver;
 import deformablemesh.gui.RingController;
+import deformablemesh.gui.render2d.RenderFrame2D;
 import deformablemesh.io.ImportType;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.meshview.*;
@@ -59,6 +60,8 @@ public class SegmentationController {
 
     AtomicLong lastSaved = new AtomicLong(-1);
     ExceptionThrowingService main = new ExceptionThrowingService();
+    private double minConnectionLength = 0.005;
+    private double maxConnectionLength = 0.02;
 
     /**
      * Creates a controller for the supplied model.
@@ -67,6 +70,7 @@ public class SegmentationController {
      */
     public SegmentationController(SegmentationModel model){
         this.model = model;
+        model.setRingController(new RingController(this));
     }
 
     /**
@@ -146,8 +150,22 @@ public class SegmentationController {
     }
 
     public double getPressure() {
-
         return model.getPressure();
+    }
+
+    public double getMinConnectionLength(){
+        return minConnectionLength;
+    }
+    public void setMinConnectionLength(double mcl){
+        minConnectionLength = mcl;
+    }
+
+    public double getMaxConnectionLength(){
+        return maxConnectionLength;
+    }
+
+    public void setMaxConnectionLength(double mcl){
+        maxConnectionLength = mcl;
     }
 
     /**
@@ -1967,7 +1985,13 @@ public class SegmentationController {
         }
         imports.removeAll(toRemove);
     }
+    public void renderMeshesIn2D(){
+        RenderFrame2D renderer =  RenderFrame2D.createRenderingMeshFrame();
 
+        renderer.setTracks(getAllTracks());
+        renderer.setFrame(getCurrentFrame());
+
+    }
     /**
      * Replaces the current tracks with the provided. Used for the mesh track manager.
      *
@@ -2411,6 +2435,7 @@ public class SegmentationController {
      */
     public void showForces() {
         DeformableMesh3D mesh = getSelectedMesh();
+        if(mesh==null) return;
         mesh.clearEnergies();
         showForces(mesh);
     }

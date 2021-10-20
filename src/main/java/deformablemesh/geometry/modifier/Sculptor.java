@@ -37,12 +37,14 @@ class Sculptor implements ModificationState {
     }
 
     public void setRadius(double r){
-
+        cursorRadius = r;
+        sphere.setRadius(r);
     }
 
     double[] shifted(double[] point){
-        double[] normal  = modifier.furrow.normal;
-        return Vector3DOps.add(point, normal, 0.875*sphere.getRadius());
+        //  double[] normal  = modifier.furrow.normal;
+        //return Vector3DOps.add(point, normal, 0.0*sphere.getRadius());
+        return point;
     }
 
     public void cursorMoved(double[] planePosition) {
@@ -66,9 +68,10 @@ class Sculptor implements ModificationState {
     @Override
     public void deregister() {
         if(meshFrame3D != null){
+
             meshFrame3D.removeDataObject(getCursor());
             for(Sphere sphere: markers.values()){
-                meshFrame3D.removeDataObject(sphere.createDataObject());
+                meshFrame3D.removeDataObject(getCursor());
             }
             meshFrame3D.setCanvasControllerEnabled(true);
         }

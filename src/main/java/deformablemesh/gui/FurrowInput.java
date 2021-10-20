@@ -301,13 +301,14 @@ public class FurrowInput extends JPanel {
 
         if(ix - cx == 0){
             longPaint = colors[colors.length - 1];
-        } else if(ix > cx){
+        } else if(ix > cx && (int)width != 0){
             longPaint = new LinearGradientPaint(
                     (int)(cx-width), (int)cy, (int)(cx + width), (int)(cy), fractions, colors
             );
         } else{
+            int d = (int)width == 0 ? 1: (int)width;
             longPaint =  new LinearGradientPaint(
-                    (int)(cx + width), (int)cy, (int)(cx - width), (int)(cy), fractions, colors
+                    (int)(cx + d), (int)cy, (int)(cx - d), (int)(cy), fractions, colors
             );
         }
 

@@ -12,6 +12,7 @@ import deformablemesh.gui.meshinitialization.FurrowInitializer;
 import deformablemesh.io.FurrowWriter;
 import deformablemesh.ringdetection.ContractileRingDetector;
 import deformablemesh.ringdetection.FurrowTransformer;
+import deformablemesh.track.Track;
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
 
@@ -26,6 +27,7 @@ import javax.swing.JTextField;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -46,10 +48,30 @@ import java.util.stream.Collectors;
 public class RingController implements FrameListener, ListDataListener {
     final ContractileRingDetector detector;
     public SegmentationController model;
-    GuiTools.LocaleNumericTextField px, py, pz, dx, dy, dz, thresh;
+
+    public void setCursorRadius(double r) {
+        if(modifier == null) return;
+        modifier.setCursorRadius(r);
+    }
+
+    static class DoubleValue{
+        double value;
+        public DoubleValue(double v){ this.value = v;}
+        public void setValue(double v){ value = v;}
+        public double getValue(){ return value; };
+    }
+    DoubleValue px = new DoubleValue(0);
+    DoubleValue py = new DoubleValue(0);
+    DoubleValue pz = new DoubleValue(0);
+    DoubleValue dx = new DoubleValue(0);
+    DoubleValue dy = new DoubleValue(0);
+    DoubleValue dz = new DoubleValue(1);
+
+    double thresh = 128;
     JLabel frame;
     int currentFrame;
-    Slice3DView sliceView;
+    final Slice3DView sliceView = new Slice3DView();
+
     HistogramInput histControls = new HistogramInput(this);
     JPanel contentPane;
     FurrowInput furrowInput;
@@ -81,6 +103,88 @@ public class RingController implements FrameListener, ListDataListener {
         }
 
     }
+
+    public boolean modifyingMesh(){
+        return modifier != null;
+    }
+    /**
+     * Startes the select nodes activity.
+     *
+     * @param evt
+     */
+    public void selectNodes(ActionEvent evt){
+
+        if(modifier == null){
+            if(model.getSelectedMesh() == null){
+                return;
+            }
+            modifier = new MeshModifier();
+            modifier.setMeshFrame3D(model.getMeshFrame3D());
+            modifier.setFurrow(getFurrow());
+            setSliceListener(new MouseAdapter(){
+                @Override
+                public void mousePressed(MouseEvent evt){
+                    double[] pt = getNormalizedVolumeCoordiante(evt.getPoint());
+                    modifier.updatePressed(pt, evt);
+                }
+                @Override
+                public void mouseReleased(MouseEvent evt){
+                    double[] pt = getNormalizedVolumeCoordiante(evt.getPoint());
+                    modifier.updateReleased(pt, evt);
+                }
+                @Override
+                public void mouseClicked(MouseEvent evt){
+                    double[] pt = getNormalizedVolumeCoordiante(evt.getPoint());
+                    modifier.updateClicked(pt, evt);
+                }
+                @Override
+                public void mouseMoved(MouseEvent evt){
+                    double[] pt = getNormalizedVolumeCoordiante(evt.getPoint());
+                    modifier.updateMoved(pt, evt);
+                }
+                @Override
+                public void mouseDragged(MouseEvent evt){
+                    double[] pt = getNormalizedVolumeCoordiante(evt.getPoint());
+                    modifier.updateDragged(pt, evt);
+                }
+            });
+            modifier.setMesh( model.getSelectedMesh() );
+        }
+        modifier.setSelectNodesMode();
+    }
+
+    public void sculptClicked(ActionEvent evt){
+        if(modifier==null ) return;
+        System.out.println("setting sculpt");
+        modifier.setSculptMode();
+    }
+
+    public JPanel getHistControlsPanel(){
+        return histControls.panel;
+    }
+
+    public void finishedClicked(ActionEvent evt){
+        if(modifier==null) return;
+
+        modifier.deactivate();
+        DeformableMesh3D original = modifier.getOriginalMesh();
+        Track host = model.getAllTracks().stream().filter(t->t.containsMesh(original)).findFirst().orElse(null);
+        if(host != null){
+            System.out.println("found mesh updating track!");
+            int frame = host.getFrame(original);
+            model.setMesh(host, frame, modifier.getMesh());
+        }
+        modifier = null;
+        activateSelectMeshMode();
+    }
+    public void cancel(){
+        if(modifier==null) return;
+
+        modifier.deactivate();
+        modifier = null;
+        activateSelectMeshMode();
+    }
+
     public boolean isTextureShowing(){
         return showTexture;
     }
@@ -93,21 +197,11 @@ public class RingController implements FrameListener, ListDataListener {
         return new GuiTools.LocaleNumericTextField(ret, initial);
     }
 
-    /**
-     * All of the data is tied to the display elements! This needs to be refactored out.
-     *
-     */
-    public void deprecatedInitialization(){
-        px = createNumericInputField(0.0);
-        py = createNumericInputField(0.0);
-        pz = createNumericInputField(0.0);
-        dx = createNumericInputField(0);
-        dy = createNumericInputField(1.);
-        dz = createNumericInputField(0);
-        thresh = createNumericInputField(100);
+    public Slice3DView getSliceView(){
+
+        return sliceView;
     }
     public void startUI(){
-        deprecatedInitialization();
         JPanel content = new JPanel();
         content.setLayout(new BorderLayout());
 
@@ -257,7 +351,6 @@ public class RingController implements FrameListener, ListDataListener {
         buttons.add(histControls.panel, gbc);
         content.add(buttons, BorderLayout.EAST);
 
-        sliceView = new Slice3DView();
         content.add(new JScrollPane(sliceView.panel), BorderLayout.CENTER);
 
         contentPane = content;
@@ -404,7 +497,6 @@ public class RingController implements FrameListener, ListDataListener {
     public void setFrame(int frame){
         currentFrame = frame;
         detector.setFrame(frame);
-        this.frame.setText("" + (frame+1));
         ImageProcessor p = detector.getFurrowSlice();
         if(p!=null){
             sliceView.clear();
@@ -444,14 +536,14 @@ public class RingController implements FrameListener, ListDataListener {
 
             histControls.refresh(p);
             sliceView.setSlice(p.getBufferedImage());
-            detector.setThresh(thresh.getValue());
+            detector.setThresh(thresh);
             ImageProcessor b = detector.createBinarySlice();
             sliceView.setBinary(b.getBufferedImage());
             refreshFurrow();
         }
     }
     public void setThreshold(double v){
-        thresh.setValue(v);
+        thresh = v;
         detector.setThresh(v);
         ImageProcessor b = detector.createBinarySlice();
         sliceView.setBinary(b.getBufferedImage());
@@ -470,7 +562,7 @@ public class RingController implements FrameListener, ListDataListener {
                 pz.getValue()
         };
 
-        final double threshold = thresh.getValue();
+        final double threshold = thresh;
         submit(() ->  detector.setThresh(threshold));
     }
 
@@ -577,7 +669,8 @@ public class RingController implements FrameListener, ListDataListener {
     }
 
     public double getThresh() {
-        return thresh.getValue();
+
+        return thresh;
     }
 
     public boolean isFurrowShowing() {

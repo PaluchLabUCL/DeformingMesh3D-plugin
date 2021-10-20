@@ -44,12 +44,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -112,10 +107,14 @@ public class MeshTrackManager {
                 return Integer.toString(rowIndex + 1);
             }
         }
+
     }
 
     class MeshSelectionModel extends DefaultListSelectionModel {
-
+        @Override
+        public void setSelectionInterval(int index0, int index1) {
+            super.setSelectionInterval(index0, index1);
+        }
     }
 
     class MeshCellRenderer implements TableCellRenderer{
@@ -142,24 +141,52 @@ public class MeshTrackManager {
     public MeshTrackManager(){
         model = new MeshListModel();
     }
-
-    public void setSegmentationController( SegmentationController controller){
-        trackTable.addMouseListener(new MouseAdapter() {
+    public MouseAdapter createMouseAdapter(SegmentationController controller){
+        return new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
+                Point click = e.getPoint();
+                int rowAt = trackTable.rowAtPoint(click);
+                int columnAt = trackTable.columnAtPoint(click);
+
                 if(e.getClickCount() == 2){
-                    Point click = e.getPoint();
-                    int rowAt = trackTable.rowAtPoint(click);
-                    int columnAt = trackTable.columnAtPoint(click);
+
                     controller.toFrame(rowAt);
 
                     DeformableMesh3D mesh = (DeformableMesh3D)trackTable.getModel().getValueAt(rowAt, columnAt);
-                    System.out.println(mesh);
                     controller.selectMesh(mesh);
 
+                } else if(e.isControlDown() ){
+                    //select whole column
+                    Track t = getTrackAtColumn(columnAt);
+                    if(t == null) return;
+
+                    int low = t.getFirstFrame();
+                    int high = t.getLastFrame();
+                    selectionModel.setSelectionInterval(low, high);
+                    e.consume();
+                } else if(e.isAltDown()){
+                    //select all before
+                    Track t = getTrackAtColumn(columnAt);
+                    if(t == null) return;
+                    int low = t.getFirstFrame();
+                    int high = selectionModel.getMaxSelectionIndex();
+                    selectionModel.setSelectionInterval(low, high);
+                    e.consume();
+                }else if(e.isShiftDown()){
+                    //select all after
+                    Track t = getTrackAtColumn(columnAt);
+                    if(t == null) return;
+                    int low = selectionModel.getMinSelectionIndex();
+                    int high = t.getLastFrame();
+                    selectionModel.setSelectionInterval(low, high);
+                    e.consume();
                 }
             }
-        });
+        };
+    }
+    public void setSegmentationController( SegmentationController controller){
+        trackTable.addMouseListener( createMouseAdapter( controller ) );
     }
     public void buildJFrameGui(){
         JFrame frame;
@@ -387,6 +414,18 @@ public class MeshTrackManager {
             shapeTable();
         }
     }
+    public Track getSelectedTrack(){
+        int c = trackTable.getSelectedColumn();
+        return getTrackAtColumn(c-1);
+    }
+
+    public Track getTrackAtColumn(int column){
+        if(column > 0){
+            return tracks.get( column - 1);
+        }
+
+        return null;
+    }
 
     /**
      * Unique names are required for the mesh track manager, maybe test when started.
@@ -405,6 +444,7 @@ public class MeshTrackManager {
         if(destination==null){
             throw new RuntimeException("Destination not found!");
         }
+        //column zero is the index.
         int c = trackTable.getSelectedColumn();
 
         if(c>0) {
@@ -532,12 +572,23 @@ public class MeshTrackManager {
             //prevents erasing pending changes, unless data was changed elsewhere.
             return;
         }
+
         lastUpdated = controller.getCurrentState();
         
         Map<DeformableMesh3D, JLabel> newLabels = new HashMap<>();
         int rows = 0;
+        Set<String> names = new HashSet<>();
         for(Track track: tracks){
-            Track replacement = new Track(track.name, track.color);
+            String mocName = track.getName();
+            int dups = 1;
+            while(names.contains(mocName)){
+                mocName = track.name + "-" + dups++;
+            }
+            if(dups > 1){
+                System.out.println("multiple tracks with same name: " + track.name + " x" + dups);
+            }
+            names.add(mocName);
+            Track replacement = new Track(mocName, track.color);
             replacement.setShowSurface(track.getShowSurface());
             if(track.isSelected()){
                 replacement.setSelected(true);

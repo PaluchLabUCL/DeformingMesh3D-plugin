@@ -1,5 +1,6 @@
 package deformablemesh.geometry.modifier;
 
+import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
 import deformablemesh.SegmentationController;
 import deformablemesh.SegmentationModel;
@@ -54,7 +55,7 @@ import java.util.stream.Collectors;
  */
 public class MeshModifier {
     BlockingQueue<Runnable> tasks = new ArrayBlockingQueue<>(50);
-    DeformableMesh3D mesh;
+    DeformableMesh3D mesh, original;
     MeshFrame3D frame;
     MeshImageStack mis;
     private boolean running = true;
@@ -77,6 +78,12 @@ public class MeshModifier {
         return markers;
     }
 
+    public void setCursorRadius(double f){
+        sculptor.setRadius(f);
+        selector.setRadius(f);
+
+    }
+
     public List<Node3D> getSelected() {
 
         return selected;
@@ -85,6 +92,13 @@ public class MeshModifier {
 
     public void deactivate(){
         this.state.deregister();
+        if(frame != null){
+            frame.removeDataObject(mesh.data_object);
+            if(original.data_object != null){
+                frame.addDataObject(original.data_object);
+            }
+            frame.setNoHud();
+        }
         selectNone();
     }
     public void setFurrow(Furrow3D furrow){
@@ -110,10 +124,6 @@ public class MeshModifier {
         }
     }
 
-    public void displaceNodes(){
-        manager.setSelectMode();
-
-    }
 
     public void setSelectNodesMode() {
 
@@ -122,9 +132,15 @@ public class MeshModifier {
     }
 
     public void setSculptMode(){
-
         manager.setSculptMode();
+    }
 
+    public DeformableMesh3D getOriginalMesh() {
+        return original;
+    }
+
+    public DeformableMesh3D getMesh(){
+        return mesh;
     }
 
 
@@ -402,7 +418,28 @@ public class MeshModifier {
     }
 
     public void setMesh(DeformableMesh3D mesh){
-        this.mesh = mesh;
+
+        if(frame != null){
+            //remove working mesh data object and add original mesh.
+            if(this.mesh != null && this.mesh.data_object != null){
+                frame.removeDataObject(this.mesh.data_object);
+            }
+            if(this.original != null && this.original.data_object != null){
+                frame.addDataObject(this.original.data_object);
+            }
+        }
+
+        this.original = mesh;
+        this.mesh = DeformableMesh3DTools.copyOf(mesh);
+        if(frame != null){
+            this.mesh.setColor(original.getColor());
+            this.mesh.setShowSurface(original.isShowSurface());
+            this.mesh.create3DObject();
+            frame.addDataObject(this.mesh.data_object);
+            if(original.data_object != null){
+                frame.removeDataObject(original.data_object);
+            }
+        }
     }
 
     public void post(Runnable r){

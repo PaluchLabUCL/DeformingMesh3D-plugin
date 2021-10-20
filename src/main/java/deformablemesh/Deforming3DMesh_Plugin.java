@@ -21,24 +21,24 @@ import java.util.stream.IntStream;
 public class Deforming3DMesh_Plugin implements PlugInFilter {
     public static final String version = "0.6.0";
     public static SegmentationModel createDeformingMeshApplication(){
+
         MeshFrame3D mf3d = new MeshFrame3D();
-        mf3d.showFrame(false);
-        mf3d.addLights();
         SegmentationModel model = new SegmentationModel();
-        SegmentationController controls = new SegmentationController(model);
+        SegmentationController control = new SegmentationController(model);
+
         try {
-            PropertySaver.loadProperties(controls);
+            PropertySaver.loadProperties(control);
         } catch (IOException e) {
             System.err.println("cannot load properties: " + e.getMessage());
         }
-        ControlFrame controller = new ControlFrame(controls);
+        ControlFrame controller = new ControlFrame(control);
         controller.showFrame();
-        RingController ring_control = new RingController(controls);
-        ring_control.startUI();
-        controller.addTabbedPanel(ring_control.getContentPane(controller.getFrame()), "furrow");
-        controls.setMeshFrame3D(mf3d);
+        mf3d.showFrame(false);
+        mf3d.addLights();
+
         controller.addMeshFrame3D(mf3d);
-        model.setRingController(ring_control);
+        control.setMeshFrame3D(mf3d);
+
         PropertySaver.positionFrames(controller, mf3d);
         return model;
     }

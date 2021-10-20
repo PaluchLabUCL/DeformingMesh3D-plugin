@@ -1,8 +1,12 @@
 package deformablemesh.gui;
 
+import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.SegmentationController;
 import deformablemesh.externalenergies.ImageEnergyType;
+import deformablemesh.geometry.DeformableMesh3D;
+import deformablemesh.geometry.modifier.MeshModifier;
 import deformablemesh.gui.meshinitialization.CircularMeshInitializationDialog;
+import deformablemesh.gui.meshinitialization.FurrowInitializer;
 import deformablemesh.io.ImportType;
 import deformablemesh.meshview.HotKeyDelegate;
 import deformablemesh.meshview.MeshFrame3D;
@@ -50,14 +54,17 @@ public class ControlFrame implements ReadyObserver, FrameListener {
     FrameIndicator frameIndicator = new FrameIndicator();
     private JFrame frame;
     JTabbedPane tabbedPane;
-
+    JPanel mainContent;
     JMenuItem undo, redo;
     public static Component instance;
+    Component mainDisplay;
 
     SwingJSTerm terminal;
     Dimension pm = new Dimension(29, 29);
     JLabel message = new JLabel("");
     HotKeyDelegate mf3DInterface;
+    RingController ringController;
+
     public ControlFrame( SegmentationController model){
         this.segmentationController = model;
         try{
@@ -67,15 +74,19 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             //can be a couple errors.
         }
 
+        ringController = model.getRingController();
+
     }
     public void showFrame(){
         frame = new JFrame("DM3D: control panel");
         frame.setIconImage(GuiTools.getIcon());
+
         JPanel contentPanel = new JPanel();
         contentPanel.setLayout(new BorderLayout());
         tabbedPane = new JTabbedPane(JTabbedPane.TOP, JTabbedPane.WRAP_TAB_LAYOUT);
 
-        addTabbedPanel(createContentPane(), "main");
+        mainContent = createContentPane();
+        addTabbedPanel(mainContent, "main");
 
         contentPanel.add(tabbedPane, BorderLayout.CENTER);
         contentPanel.add(createStatusPanel(), BorderLayout.SOUTH);
@@ -84,7 +95,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         frame.setJMenuBar(createMenu(frame));
 
 
-        frame.setSize(600, 500);
+        frame.pack();
         frame.setVisible(true);
         instance=frame;
         segmentationController.addFrameListener(this);
@@ -110,44 +121,283 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         });
         return status;
     }
-    private JPanel createContentPane(){
-        JPanel content = new JPanel();
+
+    /**
+     *    | indicator | |deform| |clear|
+     *    |           | |init|   |raycast|
+     *
+     *
+     *
+     * @return
+     */
+    private JPanel createButtonPanel(){
+
+        JPanel imageControls = buildImageStatus();
+        JPanel meshControls = buildMeshControls();
+        JPanel volumeDisplay = buildVolumeControls();
+        JPanel energyDisplay = buildDeformControls();
+        JPanel furrowDisplay = buildFurrowControls();
 
         JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new GridLayout(4,4));
-        GridBagConstraints constraints = new GridBagConstraints();
-        BoxLayout layout = new BoxLayout(content, BoxLayout.PAGE_AXIS);
-        content.setLayout(layout);
+        buttonPanel.setLayout(new GridBagLayout());
+        GridBagConstraints bcon = new GridBagConstraints();
 
-        content.add(buttonPanel);
-        createButtonDeform(buttonPanel);
-        createButtonClearMesh(buttonPanel);
-        createButtonInitializeMesh2(buttonPanel);
-        createButtonRemesh(buttonPanel);
+        buttonPanel.add(meshControls, bcon);
 
-        createFrameIndicator(buttonPanel);
-        createButtonPrevious(buttonPanel);
-        createButtonNext(buttonPanel);
-        createRigidBoundaryCheckbox(buttonPanel);
-        //buttonPanel.add(Box.createGlue());
+        bcon.gridy = 1;
+        buttonPanel.add(energyDisplay, bcon);
+        bcon.gridy = 2;
+        buttonPanel.add(imageControls, bcon);
+        bcon.gridy = 3;
+        buttonPanel.add(volumeDisplay, bcon);
+        buttonPanel.setBorder(BorderFactory.createLineBorder(Color.BLUE));
+        bcon.gridy = 4;
+        bcon.gridwidth = 1;
+        buttonPanel.add(furrowDisplay, bcon);
+        return buttonPanel;
+    }
 
-        createButtonShowVolume(buttonPanel);
-        createEnergySelector(buttonPanel);
+    private JPanel buildImageStatus(){
+        JPanel topBottom = new JPanel(new GridBagLayout());
+        GridBagConstraints bcon = new GridBagConstraints();
+        bcon.gridwidth = 2;
+        topBottom.add(frameIndicator.imageName, bcon);
+        bcon.gridx = 2;
+        bcon.gridwidth = 1;
+        topBottom.add(frameIndicator.channelLabel, bcon);
 
-        //createButtonShowEnergy(buttonPanel);
-        //createButtonShowMeshVolume(buttonPanel);
-        createButtonShowForces(buttonPanel);
+        bcon.gridx = 0;
+        bcon.gridy = 1;
 
-        createButtonAdjustVolumeContrast(buttonPanel);
+        topBottom.add(frameIndicator.getTextField(), bcon);
+        bcon.gridx = 1;
+        topBottom.add(frameIndicator.getMaxLabel(), bcon);
+        bcon.gridy = 2;
+        bcon.gridx = 0;
+        topBottom.add( createButtonPrevious(), bcon);
+        bcon.gridx = 1;
+        topBottom.add( createButtonNext(), bcon);
+        topBottom.setBorder(BorderFactory.createLineBorder(Color.GREEN));
 
-        createButtonAdjustMinimum(buttonPanel);
-        createButtonAdjustMaximum(buttonPanel);
+        return topBottom;
+    }
 
-        //createButtonMeasureVolume(buttonPanel);
-        createConnectionRemesh(buttonPanel);
+    private JPanel buildMeshControls(){
+        JPanel buttonPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints bcon = new GridBagConstraints();
+        buttonPanel.add(createButtonDeform(), bcon );
+        bcon.gridx = 1;
+        buttonPanel.add( createButtonInitializeMesh2(), bcon );
+
+        bcon.gridwidth = 2;
+        bcon.gridy = 1;
+        bcon.gridx = 0;
+
+        buttonPanel.add( createConnectionRemesh(), bcon);
+        bcon.gridy = 2;
+        bcon.gridx = 0;
+        bcon.gridwidth = 1;
+        buttonPanel.add( createButtonRemesh(), bcon );
+        bcon.gridx = 1;
+        buttonPanel.add( createButtonClearMesh(), bcon );
+
+        buttonPanel.setBorder(BorderFactory.createLineBorder(Color.GREEN));
+
+        return buttonPanel;
+    }
+
+    private JPanel buildVolumeControls(){
+        JPanel buttonPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints bcon = new GridBagConstraints();
+
+        buttonPanel.add( createButtonShowVolume(), bcon);
+        bcon.gridx = 1;
+        buttonPanel.add( createButtonAdjustVolumeContrast(), bcon);
+        bcon.gridy = 1;
+        bcon.gridx = 0;
+        buttonPanel.add( createButtonAdjustMinimum(), bcon);
+        bcon.gridx = 1;
+        buttonPanel.add( createButtonAdjustMaximum(), bcon);
+        buttonPanel.setBorder(BorderFactory.createLineBorder(Color.GREEN));
+        return buttonPanel;
+    }
+    private JPanel buildRadiusValueSelector(){
+        double max = 0.2;
+        double min = 0.001;
+        JSlider slides = new JSlider(JSlider.VERTICAL, 0, 100, 10);
+        //slides.setMaximumSize(new Dimension(20, 200));
+        //slides.setMinimumSize(new Dimension(20, 200));
+        JTextField maxField = new JTextField(4);
+        maxField.setHorizontalAlignment(JTextField.RIGHT);
+
+        maxField.setText("" + max);
+
+        JTextField minField = new JTextField(4);
+        minField.setHorizontalAlignment(JTextField.RIGHT);
+
+        minField.setText("" + min);
+        slides.addChangeListener(evt ->{
+            double mx = Double.parseDouble(maxField.getText());
+            double mn = Double.parseDouble(minField.getText());
+
+            double r = (mx - mn)*slides.getValue()/100 + mn;
+
+            ringController.setCursorRadius( r );
+        });
+        JPanel panel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        panel.add(maxField, gbc);
+        gbc.gridy = 1;
+        panel.add(slides, gbc);
+        gbc.gridy = 2;
+        panel.add(minField, gbc);
+        return panel;
+    }
+    private JPanel buildFurrowControls(){
+        JPanel components = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        JButton showFurrowButton = new JButton("show");
+        buttons.add(showFurrowButton);
+
+        JCheckBox box = new JCheckBox("textured");
+
+
+        box.addActionListener(evt ->{
+            if(ringController.furrowShowing){
+                ringController.showFurrow(box.isSelected());
+            }
+        });
+
+        showFurrowButton.addActionListener(evt->{
+            if(showFurrowButton.getText().equals("show")){
+                showFurrowButton.setText("hide");
+                ringController.showFurrow(box.isSelected());
+            } else{
+                showFurrowButton.setText("show");
+                ringController.hideFurrow();
+            }
+        });
+        JButton initialize = new JButton("init");
+        initialize.setToolTipText("initlialize furrow location");
+        buttons.add(initialize);
+        initialize.addActionListener(
+                (event)->new FurrowInitializer(frame, segmentationController, ()->{}).start()
+        );
+        JButton center = new JButton("center");
+        center.setToolTipText("move plane to center of image or selected mesh");
+        buttons.add(center);
+        center.addActionListener(evt->{
+            DeformableMesh3D mesh = segmentationController.getSelectedMesh();
+            if(mesh == null){
+                ringController.setFurrow(ringController.getInputNormal(), new double[]{0, 0, 0});
+            } else{
+                double[] loc = DeformableMesh3DTools.centerAndRadius(mesh.nodes);
+                ringController.setFurrow(ringController.getInputNormal(), loc);
+            }
+        });
+
+        JButton split = new JButton("split mesh");
+        split.addActionListener(evt->segmentationController.splitMesh());
+        buttons.add(split);
+        JButton nodeSelect = new JButton("select");
+        nodeSelect.setToolTipText("select nodes for manual editing");
+        buttons.add(nodeSelect);
+
+        JButton finish = new JButton("finish");
+        JButton cancel = new JButton("cancel");
+        JButton sculpt = new JButton("sculpt");
+        nodeSelect.addActionListener(evt->{
+            ringController.selectNodes(evt);
+            if(ringController.modifyingMesh()){
+                buttons.forEach(b->b.setEnabled(false));
+                sculpt.setEnabled(true);
+                finish.setEnabled(true);
+                cancel.setEnabled(true);
+            }
+
+        });
+        buttons.add(sculpt);
+        buttons.add(cancel);
+        buttons.add(finish);
+        sculpt.addActionListener( evt -> {
+            if(ringController.modifyingMesh()) {
+                ringController.sculptClicked(evt);
+                nodeSelect.setEnabled(true);
+                sculpt.setEnabled(false);
+            }
+        });
+        finish.addActionListener(evt->{
+            ringController.finishedClicked(evt);
+            finished();
+        });
+
+        cancel.addActionListener(evt->{
+            ringController.cancel();
+            finished();
+        });
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        JPanel showSplit = new JPanel(new GridLayout(1, 2));
+        showSplit.add(showFurrowButton);
+        showSplit.add(split);
+        components.add(showSplit);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.gridwidth =1;
+        components.add(box, gbc);
+        gbc.gridy = 0;
+        gbc.gridx = 1;
+        gbc.gridheight = 2;
+        gbc.gridwidth = 2;
+        components.add( ringController.getHistControlsPanel() , gbc);
+
+        gbc.gridy = 2;
+        gbc.gridwidth = 1;
+        gbc.gridx = 0;
+        gbc.gridheight = 3;
+        components.add( ringController.createFurrowInput(), gbc);
+
+
+
+        JPanel keys = new JPanel(new GridLayout(3, 2));
+        keys.add(center);
+        keys.add(initialize);
+        keys.add(nodeSelect);
+        keys.add(sculpt);
+        keys.add(cancel);
+        keys.add(finish);
+        gbc.gridx = 1;
+        gbc.gridwidth = 2;
+        components.add(keys, gbc);
+        gbc.gridy = 0;
+        gbc.gridx = 3;
+        gbc.gridheight = 5;
+        gbc.gridwidth = 1;
+        //components.add( buildRadiusValueSelector(), gbc);
+        components.setBorder(BorderFactory.createLineBorder(Color.GREEN));
+        return components;
+    }
+
+    private JPanel buildDeformControls(){
+        JPanel buttonPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints bcon = new GridBagConstraints();
+        bcon.gridwidth = 3;
+        buttonPanel.add( createEnergySelector(), bcon);
+        bcon.gridy = 1;
+        bcon.gridwidth = 2;
+        buttonPanel.add( createRigidBoundaryCheckbox(), bcon );
+        bcon.gridx = 2;
+        bcon.gridwidth = 1;
+        buttonPanel.add( createButtonShowForces(), bcon);
+        bcon.gridx = 0;
+        buttonPanel.setBorder(BorderFactory.createLineBorder(Color.GREEN));
+        return buttonPanel;
+    }
+
+    private JPanel buildParameterPane(){
         JPanel inputs = new JPanel();
-        inputs.setLayout(new GridLayout(4,2,0,0));
-        content.add(inputs);
+        inputs.setLayout(new GridLayout(8,1,0,0));
         SetValue set_gamma = d -> segmentationController.setGamma(d);
         inputs.add(GuiTools.createInputField("gamma", createSavingValue(set_gamma), segmentationController.getGamma(), this));
 
@@ -157,16 +407,14 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         SetValue set_pressure = d -> segmentationController.setPressure(d);
         inputs.add(GuiTools.createInputField("pressure", createSavingValue(set_pressure), segmentationController.getPressure(), this));
 
-        //SetValue normalizer = d -> segmentationController.setNormalizerWeight(d);
-        //inputs.add(GuiTools.createInputField("normalize", createSavingValue(normalizer), segmentationController.getNormalizeWeight(), this));
         SetValue stericNeighbors = d -> segmentationController.setStericNeighborWeight(d);
         inputs.add(
-            GuiTools.createInputField(
-                "steric neighbors",
-                createSavingValue(stericNeighbors) ,
-                segmentationController.getStericNeighborWeight(),
-                this
-            )
+                GuiTools.createInputField(
+                        "steric neighbors",
+                        createSavingValue(stericNeighbors) ,
+                        segmentationController.getStericNeighborWeight(),
+                        this
+                )
         );
 
         SetValue set_image_weight = d -> segmentationController.setWeight(d);
@@ -184,28 +432,47 @@ public class ControlFrame implements ReadyObserver, FrameListener {
                 parameterControls.put(pc.name, pc);
             }
         }
+        return inputs;
+    }
+    private JPanel createContentPane(){
+        JPanel content = new JPanel();
+        content.setLayout(new BorderLayout());
+        JPanel rightSide = new JPanel();
 
+
+        BoxLayout layout = new BoxLayout(rightSide, BoxLayout.PAGE_AXIS);
+        rightSide.setLayout(layout);
+
+        rightSide.add(createButtonPanel());
+
+        JPanel parameterPane = buildParameterPane();
+        rightSide.add(parameterPane);
+
+
+
+        content.add(rightSide, BorderLayout.EAST);
+        mainDisplay = new JScrollPane(ringController.getSliceView().panel);
+        content.add( mainDisplay, BorderLayout.CENTER);
         return content;
     }
 
-    private void createButtonAdjustVolumeContrast(JPanel buttonPanel) {
+    private JButton createButtonAdjustVolumeContrast() {
 
-        JButton vc = new JButton("v contrast:");
+        JButton vc = new JButton("vol-contrast");
         vc.addActionListener(evt->{
             segmentationController.showVolumeClippingDialog();
         });
-        buttonPanel.add(vc);
         buttons.add(vc);
+        return vc;
     }
 
-    private void createRigidBoundaryCheckbox(JPanel buttonPanel) {
+    private JCheckBox createRigidBoundaryCheckbox() {
         JCheckBox check = new JCheckBox("rigid boundaries");
         check.addActionListener(evt->{
             segmentationController.setRigidBoundaries(check.isSelected());
         });
-        buttonPanel.add(check);
         buttons.add(check);
-
+        return check;
     }
 
     public void updateDisplayedParameters(){
@@ -242,21 +509,20 @@ public class ControlFrame implements ReadyObserver, FrameListener {
 
     }
 
-    public void createButtonClearMesh(JPanel buttonPanel){
+    public JButton createButtonClearMesh(){
         final JButton clear_mesh = new JButton("clear mesh");
         buttons.add(clear_mesh);
-        buttonPanel.add(clear_mesh);
         clear_mesh.addActionListener(actionEvent -> {
             setReady(false);
             segmentationController.clearSelectedMesh();
             finished();
         });
+        return clear_mesh;
     }
 
-    public void createButtonPrevious(JPanel buttonPanel){
+    public JButton createButtonPrevious(){
         JButton previous = new JButton("previous");
         buttons.add(previous);
-        buttonPanel.add(previous);
         previous.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
                 setReady(false);
@@ -264,18 +530,16 @@ public class ControlFrame implements ReadyObserver, FrameListener {
                 finished();
             }
         });
-
+        return previous;
     }
 
-    public void createButtonNext(JPanel buttonPanel){
+    public JButton createButtonNext(){
         JButton next = new JButton("next");
         buttons.add(next);
-        buttonPanel.add(next);
         next.addActionListener(evt -> {
             nextFrameAction();
         });
-
-
+        return next;
     }
     public void initializeMeshAction(){
         if(!segmentationController.hasOriginalPlus()){
@@ -296,13 +560,14 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             tabbedPane.remove(dialog.getContent());
         });
     }
-    public void createButtonInitializeMesh2(JPanel panel){
+    public JButton createButtonInitializeMesh2(){
         final JButton prompt_mesh = new JButton("initialize mesh...");
         buttons.add(prompt_mesh);
-        panel.add(prompt_mesh);
+
         prompt_mesh.addActionListener((evt)->{
             initializeMeshAction();
         });
+        return prompt_mesh;
     }
 
     public void createButtonSnapshot(JPanel buttonPanel){
@@ -316,66 +581,59 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         });
     }
 
-    JTextField minValue = new JTextField(3);
-    JTextField maxValue = new JTextField(3);
-
-    public void createConnectionRemesh(JPanel buttonPanel){
+    public JPanel createConnectionRemesh(){
         JButton action = new JButton("connection remesh");
         buttons.add(action);
+        JPanel minValue = GuiTools.createInputField(
+                "min length",
+                segmentationController::setMinConnectionLength,
+                segmentationController.getMinConnectionLength(),
+                this
+        );
 
-        minValue.setMinimumSize( minValue.getPreferredSize() );
-        minValue.setText("0.01");
-        minValue.setHorizontalAlignment(JTextField.RIGHT);
-
-
-        maxValue.setMinimumSize( maxValue.getPreferredSize() );
-        maxValue.setText("0.025");
-        maxValue.setHorizontalAlignment(JTextField.RIGHT);
-        JLabel min = new JLabel("min");
-        JLabel max = new JLabel("max");
+        JPanel maxValue = GuiTools.createInputField(
+                "max length",
+                segmentationController::setMaxConnectionLength,
+                segmentationController.getMaxConnectionLength(),
+                this
+        );
         JPanel p = new JPanel();
         p.setLayout(new GridBagLayout());
         GridBagConstraints con = new GridBagConstraints();
-        con.gridx = 1;
-        con.gridy = 1;
-        con.gridwidth = 4;
-        p.add(action, con);
-        con.ipadx = 0;
-        con.insets = new Insets(0, 0, 0, 0);
-        con.gridy += 1;
-        con.gridwidth = 1;
-        con.weightx = 1;
-        p.add(min, con);
-        con.gridx++;
-        con.weightx = 0;
-        p.add(minValue, con);
-        con.gridx++;
-        con.weightx = 1;
-        p.add(max, con);
+        p.add(Box.createHorizontalGlue(), con);
 
-        con.gridx++;
-        con.weightx = 0;
+        con.gridx = 1;
+        con.gridy = 0;
+        con.gridwidth = 1;
+        p.add(action, con);
+
+
+        con.gridy = 1;
+        con.gridx = 0;
+        con.gridwidth = 2;
+        p.add(minValue, con);
+
+        con.gridy = 2;
         p.add(maxValue, con);
 
-        buttonPanel.add(p);
 
         action.addActionListener(evt->{
             boolean reMeshAll = ( evt.getModifiers() & ActionEvent.CTRL_MASK ) > 0;
             connectionRemesh(reMeshAll);
         });
+        return p;
 
     }
 
     public void connectionRemesh(boolean reMeshAll){
-        double mn = Double.parseDouble(minValue.getText());
-        double mx = Double.parseDouble(maxValue.getText());
+        double mn = segmentationController.getMinConnectionLength();
+        double mx = segmentationController.getMaxConnectionLength();
         if(mn > mx ){
             throw new RuntimeException("minimum should be less than max");
         }else if( mx <= 0 ){
             throw new RuntimeException("maximum cannot be less than or equal to zero");
         }
         setReady(false);
-
         if(reMeshAll){
             segmentationController.reMeshConnectionsAllMeshes(mn, mx);
         }else{
@@ -384,34 +642,33 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         finished();
     }
 
-    public void createButtonRemesh(JPanel buttonPanel){
+    public JButton createButtonRemesh(){
         JButton button = new JButton("raycast remesh");
         buttons.add(button);
-        buttonPanel.add(button);
         button.addActionListener((evt)->{
             setReady(false);
             segmentationController.reMesh();
             finished();
         });
+        return button;
     }
 
-    public void createButtonClearTransients(JPanel buttonPanel){
+    public JButton createButtonClearTransients(){
         JButton clearTransients = new JButton("clear transient objects");
         buttons.add(clearTransients);
-        buttonPanel.add(clearTransients);
         clearTransients.addActionListener((evt)->{
             setReady(false);
             segmentationController.clearTransientObjects();;
             finished();
         });
+        return clearTransients;
     }
 
-    public void createButtonShowVolume(JPanel buttonPanel){
+    public JButton createButtonShowVolume(){
         final String showing = "show volume";
         final String hide = "hide volume";
         JButton show_volume = new JButton(showing);
         buttons.add(show_volume);
-        buttonPanel.add(show_volume);
         show_volume.addActionListener(e -> {
             if(showing.equals(show_volume.getText())){
                 show_volume.setText(hide);
@@ -421,17 +678,18 @@ public class ControlFrame implements ReadyObserver, FrameListener {
                 hideVolumeAction();
             }
         });
+        return show_volume;
     }
 
-    public void createButtonShowForces(JPanel buttonPanel){
+    public JButton createButtonShowForces(){
         JButton showForces = new JButton("show forces");
         buttons.add(showForces);
-        buttonPanel.add(showForces);
         showForces.addActionListener(e->{
             setReady(false);
             segmentationController.showForces();
             finished();
         });
+        return showForces;
     }
     public void createButtonShowMeshVolume(JPanel buttonPanel){
 
@@ -449,21 +707,8 @@ public class ControlFrame implements ReadyObserver, FrameListener {
 
     }
 
-    public void createFrameIndicator(JPanel panel){
-        JPanel topBottom = new JPanel(new BorderLayout());
-        topBottom.add(frameIndicator.imageName, BorderLayout.CENTER);
-        topBottom.add(frameIndicator.channelLabel, BorderLayout.EAST);
 
-        JPanel sub = new JPanel();
-        sub.setLayout(new BoxLayout(sub, BoxLayout.LINE_AXIS));
-        sub.add(frameIndicator.getTextField());
-        sub.add(frameIndicator.getMaxLabel());
-        topBottom.add(sub, BorderLayout.SOUTH);
-
-        panel.add(topBottom);
-    }
-
-    public void createEnergySelector(JPanel buttonPanel){
+    public JPanel createEnergySelector(){
 
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
@@ -479,10 +724,10 @@ public class ControlFrame implements ReadyObserver, FrameListener {
 
         buttons.add(energySelector);
         panel.add(energySelector);
-        buttonPanel.add(panel);
+        return panel;
     }
 
-    public void createButtonAdjustMinimum(JPanel buttonPanel){
+    public JPanel createButtonAdjustMinimum(){
         Insets margin = new Insets(5, 0, 5, 0);
         JLabel m = new JLabel("min.");
 
@@ -514,10 +759,10 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         sub.add(decrease_min);
         sub.add(increase_min);
         sub.add(Box.createHorizontalStrut(5));
-        buttonPanel.add(sub);
+        return sub;
     }
 
-    public void createButtonAdjustMaximum(JPanel buttonPanel){
+    public JPanel createButtonAdjustMaximum(){
         JLabel m = new JLabel("max.");
         Insets margin = new Insets(5, 0, 5, 0);
         JButton decrease_max = new JButton("-");
@@ -548,7 +793,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         sub.add(decrease_max);
         sub.add(increase_max);
         sub.add(Box.createHorizontalStrut(5));
-        buttonPanel.add(sub);
+        return sub;
     }
 
     public void deformAction(boolean deformAll){
@@ -572,16 +817,13 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         }
     }
 
-    public void createButtonDeform(JPanel buttonPanel){
+    public JButton createButtonDeform(){
         deformButton = new JButton("deform");
-
         buttons.add(deformButton);
-        buttonPanel.add(deformButton);
-
         deformButton.addActionListener(actionEvent -> {
             deformAction( (actionEvent.getModifiers() & ActionEvent.CTRL_MASK) > 0);
         });
-
+        return deformButton;
     }
     JMenuBar createMenu(final JFrame frame){
         JMenuBar menu = new JMenuBar();
@@ -1173,6 +1415,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             //TODO remove this, but the action needs to be done at the end of each track change.
             List<Track> tracks = manager.getTracks();
             segmentationController.setMeshTracks(tracks);
+            finished();
         });
 
         final FrameListener fl = i -> manager.manageMeshTrackes(segmentationController, segmentationController.getAllTracks());
@@ -1275,7 +1518,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         });
     }
 
-    public void addTabbedPanel(JPanel panel, String label){
+    public void addTabbedPanel(Component panel, String label){
         tabbedPane.add(panel, label);
         tabbedPane.invalidate();
         frame.validate();

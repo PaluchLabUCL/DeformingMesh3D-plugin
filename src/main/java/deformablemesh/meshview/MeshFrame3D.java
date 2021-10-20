@@ -238,8 +238,9 @@ public class    MeshFrame3D {
     public void showFrame(boolean exit_on_close){
         frame = new JFrame();
         frame.setSize(800, 800);
-        if(exit_on_close)
+        if(exit_on_close) {
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        }
         Component panel = asJPanel(frame);
         frame.setTitle("DM3D: 3d canvas");
         frame.setIconImage(GuiTools.getIcon());
@@ -264,25 +265,34 @@ public class    MeshFrame3D {
         this.hud = g->{};
         canvas.repaint();
     }
+    public Component asJPanel(JFrame frame){
+        System.out.println("once");
+        this.frame = frame;
+        return asJPanel((Window)frame);
+    }
 
     public Component asJPanel(Window parent){
-        GraphicsConfiguration gc = DataCanvas.getBestConfigurationOnSameDevice(parent);
-        Color3f background = new Color3f(1.0f,0.0f,1.0f);
-        canvas = new DataCanvas(gc, background){
-            @Override
-            public void postRender(){
-                super.postRender();
-                J3DGraphics2D g = getGraphics2D();
-                hud.draw(g);
-                g.flush(false);
-            }
-            @Override
-            public Dimension getPreferredSize(){
-                return new Dimension(480, 480);
-            }
+        if(canvas == null) {
+            GraphicsConfiguration gc = DataCanvas.getBestConfigurationOnSameDevice(parent);
+            Color3f background = new Color3f(1.0f, 0.0f, 1.0f);
+            canvas = new DataCanvas(gc, background) {
+                @Override
+                public void postRender() {
+                    super.postRender();
+                    J3DGraphics2D g = getGraphics2D();
+                    hud.draw(g);
+                    g.flush(false);
+                }
 
-        };
-        canvas.addViewListener(this::syncDirectionalLight);
+                @Override
+                public Dimension getPreferredSize() {
+                    return new Dimension(480, 480);
+                }
+
+            };
+            canvas.addViewListener(this::syncDirectionalLight);
+        }
+
         return canvas;
     }
     public void removeLights(){

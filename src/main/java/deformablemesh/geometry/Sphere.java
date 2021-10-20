@@ -25,12 +25,17 @@ public class Sphere implements Projectable, Interceptable{
         this.radius = radius;
     }
 
+    /**
+     * Creates a new data object or re-uses the old one.
+     * @return
+     */
     public SphereDataObject createDataObject(){
         if(obj==null){
             obj=new SphereDataObject(center, radius);
         }
         return obj;
     }
+
 
     public Shape getProjection(FurrowTransformer transformer){
         double[] xy = transformer.getPlaneCoordinates(center);

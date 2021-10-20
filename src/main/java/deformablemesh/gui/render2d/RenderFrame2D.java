@@ -15,6 +15,8 @@ import javax.swing.JPanel;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.geom.Path2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -25,6 +27,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 public class RenderFrame2D {
+    volatile boolean keepRendering = true;
+    volatile int frame;
     double [] cameraView;
     double [] cameraUp;
     double [] cameraRight;
@@ -43,7 +47,7 @@ public class RenderFrame2D {
     Image drawing = new BufferedImage(preferredSize.width, preferredSize.height, BufferedImage.TYPE_INT_ARGB);
 
     Camera camera;
-    List<Track> tracks;
+    List<Track> tracks = new ArrayList<>();
     JPanel panel;
     Color backgoundColor = Color.WHITE;
     public RenderFrame2D(){
@@ -109,6 +113,15 @@ public class RenderFrame2D {
             return new DepthObject<>(c, 0.5*(getCameraCoordinates(c.A.getCoordinates())[2] + getCameraCoordinates(c.B.getCoordinates())[2]));
         }
 
+    }
+
+    /**
+     * Only meshes existing in the current frame are rendered.
+     *
+     * @param frame
+     */
+    public void setFrame(int frame){
+        this.frame = frame;
     }
 
     public void renderConnections(Camera camera, List<Connection3D> list, Color color){
@@ -270,12 +283,10 @@ public class RenderFrame2D {
     class Staging{
         AtomicReference<Runnable> job = new AtomicReference<>();
         public void post(Runnable j){
-            System.out.println("post");
             job.set(j);
             synchronized (job) {
                 job.notifyAll();
             }
-            System.out.println("notified");
         }
 
         public Runnable take() throws InterruptedException {
@@ -283,7 +294,6 @@ public class RenderFrame2D {
                 Runnable r = job.getAndSet(null);
                 while(r==null) {
                     job.wait();
-                    System.out.println("woke");
                     r = job.getAndSet(null);
                 }
                 return r;
@@ -293,7 +303,7 @@ public class RenderFrame2D {
 
     void startRenderLoop(){
         Thread renderLoop = new Thread(()->{
-            while(!Thread.currentThread().isInterrupted()){
+            while(!Thread.currentThread().isInterrupted() && keepRendering){
                 try{
                     staging.take().run();
                 }catch(InterruptedException e){
@@ -304,18 +314,31 @@ public class RenderFrame2D {
         renderLoop.setDaemon(true);
         renderLoop.start();
     }
-
-    public static void main(String[] args) throws IOException {
+    public void stopRunning(){
+        keepRendering = false;
+        staging.post( () -> {}); //unblock the queue.
+    }
+    public static RenderFrame2D createRenderingMeshFrame(){
         JFrame frame = new JFrame();
         RenderFrame2D render = new RenderFrame2D();
         render.startRenderLoop();
 
-
-        List<Track> tracks = MeshWriter.loadMeshes(new File(args[0]));
-        render.setTracks(tracks);
         frame.setContentPane(render.panel);
         frame.pack();
         frame.setVisible(true);
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                render.stopRunning();
+            }
+        });
+        return render;
+    }
+    public static void main(String[] args) throws IOException {
+        RenderFrame2D render = createRenderingMeshFrame();
+        List<Track> tracks = MeshWriter.loadMeshes(new File(args[0]));
+        render.setTracks(tracks);
+
     }
 
 
@@ -324,6 +347,8 @@ public class RenderFrame2D {
         staging.post(()->renderMeshes(camera));
 
     }
+
+
 
     public void renderMeshes(Camera camera){
         BufferedImage replacement = new BufferedImage(
@@ -334,7 +359,7 @@ public class RenderFrame2D {
 
         Map<DeformableMesh3D, Color> colorMap = new HashMap<>();
 
-        List<DeformableMesh3D> meshes = tracks.stream().filter(t->t.containsKey(0)).map(t->{
+        List<DeformableMesh3D> meshes = tracks.stream().filter(t->t.containsKey(frame)).map(t->{
             DeformableMesh3D mesh = t.getMesh(0);
             colorMap.put(mesh, t.getColor());
             return mesh;
@@ -415,7 +440,7 @@ public class RenderFrame2D {
 
     }
 
-    private void setTracks(List<Track> tracks) {
+    public void setTracks(List<Track> tracks) {
         this.tracks = tracks;
         render();
 
