@@ -153,7 +153,23 @@ controls.submit( function(){
 });
 
 ```
+
 # Changes
+0.6.0
+- Feature preview modifier and limited controls to the furrow panel. Debugging for next release.
+- created 2d svg/image view and exposed through javascript
+- added normals to the data object, that need to be updated.
+- light tracks the display.
+- objects are lit by a single directional light, and an ambient light.
+- lighting can be adjusted in the mesh viewer to find better lighting settings.
+- moved the ring controller to be in the controlframe
+- exposed mesh sculpting via the furrow3d view input
+- BUG FIX slice view 3d scrolling
+- made the modification cursor size adjustable.
+- ui overhaul
+- track manager has select all/ select all before/ and select all after
+- track manager modifies names to avoid duplicates.
+
 0.5.0
 - moved initializer to a new frame.
 - Created a non-3d mode
