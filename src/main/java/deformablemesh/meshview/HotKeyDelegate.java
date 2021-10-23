@@ -57,6 +57,7 @@ public class HotKeyDelegate {
             this.action = action;
             comp.getInputMap().put(k, name);
             comp.getActionMap().put(name, action);
+
             activation = createActivationString();
         }
 
@@ -85,7 +86,14 @@ public class HotKeyDelegate {
 
         }
     }
-
+    Runnable ifEnabled(Runnable r){
+        return r;
+        /*return () -> {
+            if (accessControl.isReady()) {
+                r.run();
+            }
+        };*/
+    }
 
     public HotKeyDelegate(MeshFrame3D frame, SegmentationController controller, ControlFrame gui){
         this.comp = (JPanel) frame.frame.getContentPane();
@@ -96,19 +104,19 @@ public class HotKeyDelegate {
                 KeyStroke.getKeyStroke(KeyEvent.VK_N, 0, true),
                 "NEXT_MESH",
                 "Selects next mesh",
-                ()->controller.selectNextMeshTrack()
+                controller::selectNextMeshTrack
         );
         createActionMapKey(
                 KeyStroke.getKeyStroke(KeyEvent.VK_O, 0, true),
                 "TOGGLE_SURFACE",
                 "Show/Hide current mesh surface",
-                ()->controller.toggleSurface()
+                controller::toggleSurface
             );
         createActionMapKey(
                 KeyStroke.getKeyStroke(KeyEvent.VK_S, 0, true),
                 "SNAPSHOT",
                 "Snapshot of current scene.",
-                ()->controller.takeSnapShot()
+                controller::takeSnapShot
             );
 
         createActionMapKey(
@@ -144,7 +152,7 @@ public class HotKeyDelegate {
                 KeyStroke.getKeyStroke(KeyEvent.VK_I, 0, true),
                 "INITIALIZE_MESHES",
                 "Initialize new meshes",
-                ()->accessControl.initializeMeshAction()
+                accessControl::initializeMeshAction
         );
 
         createActionMapKey(
@@ -172,7 +180,7 @@ public class HotKeyDelegate {
                 KeyStroke.getKeyStroke(KeyEvent.VK_Z, KeyEvent.CTRL_MASK, true),
                 "UNDO",
                 "Undo most recent action.",
-                accessControl::undoAction
+                ifEnabled(accessControl::undoAction)
         );
 
         createActionMapKey(
@@ -305,7 +313,9 @@ public class HotKeyDelegate {
         ActionMapKey key = new ActionMapKey(k, name, description, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                run.run();
+                if(accessControl.isReady()) {
+                    run.run();
+                }
             }
         });
         actions.add(key);

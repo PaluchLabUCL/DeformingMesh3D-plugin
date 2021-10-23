@@ -321,9 +321,15 @@ public class    MeshFrame3D {
     public void syncDirectionalLight(){
         if(directionalLight!= null) {
             double[] up = canvas.getUp();
-
-            directionalLight.setDirection(-(float) up[0], -(float) up[1], -(float) up[2]);
+            double[] forward = canvas.getForward();
+            double[] tilt = Vector3DOps.add(up, forward, -0.6);
+            Vector3DOps.normalize(tilt);
+            directionalLight.setDirection(-(float) tilt[0], -(float) tilt[1], -(float) tilt[2]);
         }
+    }
+
+    public double[] getForward(){
+        return canvas.getForward();
     }
 
     public void addLights(){

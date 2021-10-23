@@ -518,6 +518,15 @@ public class DataCanvas extends Canvas3D {
         return new double[]{up.x, up.y, up.z};
     }
 
+    public double[] getForward(){
+        TransformGroup ctg = universe.getViewingPlatform().getViewPlatformTransform();
+        Transform3D transform = new Transform3D();
+        ctg.getTransform(transform);
+        Vector3d forward = new Vector3d(0, 0, -1);
+        transform.transform(forward);
+        return new double[]{forward.x, forward.y, forward.z};
+    }
+
 }
 enum StationaryViews{
     XY, XZ, YZ, THREEQUARTER;

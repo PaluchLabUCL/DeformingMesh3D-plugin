@@ -294,8 +294,10 @@ public class SegmentationModel {
     }
 
     private void notifyFrameListeners(){
-        for(FrameListener listener: frameListeners){
-            listener.frameChanged(stack.CURRENT);
+        synchronized (frameListeners) {
+            for (FrameListener listener : frameListeners) {
+                listener.frameChanged(stack.CURRENT);
+            }
         }
 
     }
@@ -696,7 +698,9 @@ public class SegmentationModel {
     }
 
     public void addFrameListener(FrameListener listener) {
-        frameListeners.add(listener);
+        synchronized (frameListeners){
+            frameListeners.add(listener);
+        }
     }
 
     public void addMeshListener(FrameListener listener){
@@ -969,7 +973,9 @@ public class SegmentationModel {
 
 
     public void removeFrameListener(FrameListener listener) {
-        frameListeners.remove(listener);
+        synchronized (frameListeners){
+            frameListeners.remove(listener);
+        }
     }
 
     public void selectMeshTrack(Track track) {

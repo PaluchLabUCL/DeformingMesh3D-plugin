@@ -142,4 +142,19 @@ public class Vector3DOps {
         if(v==0) return 0;
         return v<0?-v:v;
     }
+
+    public static double[] average(double[]... v ) {
+        int l = v.length;
+        double[] f = new double[v[0].length];
+        for(double[] c : v){
+            f[0] += c[0];
+            f[1] += c[1];
+            f[2] += c[2];
+        }
+        f[0] = f[0]/l;
+        f[1] = f[1]/l;
+        f[2] = f[2]/l;
+
+        return f;
+    }
 }
