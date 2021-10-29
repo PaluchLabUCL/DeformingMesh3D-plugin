@@ -63,9 +63,17 @@ public class InterceptingMesh3D implements Interceptable{
     public List<Intersection> getIntersections(double[] origin, double[] direction) {
         List<Intersection> sections = new ArrayList<>();
         for(InterceptingTriangle3D triangle: triangles){
+            List<Intersection> old = new ArrayList(sections);
             triangle.getIntersection(origin, direction, sections);
+            /*for(int j = 0; j<old.size(); j++) {
+                for (int i = old.size(); i < sections.size(); i++) {
+                    double m = Vector3DOps.mag(Vector3DOps.difference(sections.get(i).location, sections.get(j).location));
+                    if (m <= 0) {
+                        System.out.println("borked " + m);
+                    }
+                }
+            }*/
         }
-
         return sections;
     }
 
@@ -109,7 +117,8 @@ class InterceptingTriangle3D{
     double[] a,b,c;
     double uv,uu, vv;
     double denom;
-    final static double tolerance = 1e-8;
+    final static double tolerance = 1e-10;
+
     public InterceptingTriangle3D(Triangle3D triangle){
         this(
             triangle.A.getCoordinates(),
@@ -155,8 +164,24 @@ class InterceptingTriangle3D{
         double s1 = (uv*wv - vv*wu)*denom;
         double t1 = (uv*wu - uu*wv)*denom;
 
-        if(s1>=-tolerance&&t1>=-tolerance&&t1+s1<=1+2*tolerance){
-            result.add(new Intersection(intercept, normal));
+        if( s1 >= -tolerance && t1 >= -tolerance && t1+s1 <= 1+2*tolerance ){
+            Intersection toAdd = new Intersection(intercept, normal);
+            result.add(toAdd);
+
+            if(s1 < tolerance || t1 < tolerance || t1 + s1 > 1 - 2 * tolerance){
+                double dirty = 0;
+                if(s1<tolerance){
+                    dirty -= s1;
+                }
+                if(t1 < tolerance ){
+                    dirty -= t1;
+                }
+                if(t1+s1 > 1 - 2*tolerance){
+                    dirty += t1 + s1 - 1;
+                };
+
+                toAdd.setDirty(dirty);
+            }
         }
 
     }

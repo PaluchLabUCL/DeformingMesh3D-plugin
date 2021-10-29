@@ -360,7 +360,7 @@ public class RenderFrame2D {
         Map<DeformableMesh3D, Color> colorMap = new HashMap<>();
 
         List<DeformableMesh3D> meshes = tracks.stream().filter(t->t.containsKey(frame)).map(t->{
-            DeformableMesh3D mesh = t.getMesh(0);
+            DeformableMesh3D mesh = t.getMesh(frame);
             colorMap.put(mesh, t.getColor());
             return mesh;
         }).collect(Collectors.toList());

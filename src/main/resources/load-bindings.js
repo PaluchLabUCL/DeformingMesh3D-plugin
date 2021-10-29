@@ -20,18 +20,16 @@ var MeshAnalysis = Java.type("deformablemesh.util.MeshAnalysis");
 function echo(obj){
     terminal.echo(obj);
 }
+
+
 function snapshotsThreeSixty(steps){
+    total = 1260
     mf3d = controls.getMeshFrame3D();
     stack = 0;
-    dt = 2*3.141592/steps;
-
+    perStep = 1260/steps;
     for(var i = 0; i<steps; i++){
 
-        c = Math.cos(i*dt)*Math.cos(0.2);
-        s = Math.sin(i*dt)*Math.cos(0.2);
-        z = Math.sin(0.2)
-        mf3d.lookTowards([c, s, z], [0, 0, 1]);
-
+        mf3d.rotateView(perStep, 0);
         img = mf3d.snapShot();
         proc = new ColorProcessor(img);
         if(stack==0){

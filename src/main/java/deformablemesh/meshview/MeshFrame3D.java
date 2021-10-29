@@ -508,7 +508,7 @@ public class    MeshFrame3D {
         segmentationController = control;
     }
 
-    public void syncMesh(int currentFrame){
+        public void syncMesh(int currentFrame){
         List<Track> tracks = segmentationController.getAllTracks();
 
         Set<DeformableMesh3D> current = tracks.stream().filter(t->t.containsKey(currentFrame)).map(t->t.getMesh(currentFrame)).collect(Collectors.toSet());

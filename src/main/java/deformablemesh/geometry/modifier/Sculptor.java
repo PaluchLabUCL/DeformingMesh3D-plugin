@@ -29,6 +29,7 @@ class Sculptor implements ModificationState {
     Map<Node3D, Sphere> markers = new HashMap<>();
     MeshFrame3D meshFrame3D = null;
 
+
     public Sculptor(MeshModifier modifier){
         this.modifier = modifier;
     }
@@ -134,6 +135,7 @@ class Sculptor implements ModificationState {
         //FurrowTransformer ft = modifier.getFurrowTransformer();
         Furrow3D furrow = modifier.furrow;
         for(int i = 0; i<contained.size(); i++){
+
             Sphere mark;
             Node3D node = contained.get(i);
             if (markers.containsKey(node)) {

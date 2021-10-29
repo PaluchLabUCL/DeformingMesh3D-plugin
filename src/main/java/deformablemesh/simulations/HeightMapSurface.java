@@ -1,13 +1,24 @@
 package deformablemesh.simulations;
 
+import deformablemesh.MeshImageStack;
 import deformablemesh.externalenergies.ExternalEnergy;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Node3D;
+import deformablemesh.io.MeshWriter;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.meshview.TexturedPlaneDataObject;
+import deformablemesh.meshview.VolumeDataObject;
+import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;
+import ij.ImagePlus;
 import ij.process.ImageProcessor;
 
+import java.awt.Color;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.lang.invoke.MethodHandle;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -15,10 +26,10 @@ import java.util.List;
 public class HeightMapSurface implements ExternalEnergy {
     double[][] heightMap;
     int width, height;
-    double minx = -1;
-    double miny = -1;
-    double maxx = 1;
-    double maxy = 1;
+    double minx = -0.5;
+    double miny = -0.5;
+    double maxx = 0.5;
+    double maxy = 0.5;
 
     double xfactor = 0.5;
     double yfactor = 0.5;
@@ -296,24 +307,42 @@ public class HeightMapSurface implements ExternalEnergy {
         };
     }
 
-    public static void main(String[] args){
-        double[][] points = {
-                                { 0, 0.5, 1  },
-                                { 0.5, 1, 1.5 },
-                                { 1, 1.5, 2 }
-                            };
-        HeightMapSurface hms = new HeightMapSurface(points, 1);
-        hms.createHeighMapDataObject();
-        double[] f = hms.getForce(0, 0, 0, new double[3]);
-        System.out.println(Arrays.toString(f));
-        hms.surfaceGeometry.addExternalEnergy(hms.getEdgeForce(hms.surfaceGeometry));
+    public static void main(String[] args) throws IOException {
+
+        ImagePlus plus = new ImagePlus(Paths.get(args[0]).toAbsolutePath().toString());
+        MeshImageStack reference = new MeshImageStack(
+                new ImagePlus(Paths.get(args[1]).toAbsolutePath().toString())
+        );
+
+        double[][] points = new double[plus.getHeight()][plus.getWidth()];
+
         MeshFrame3D frame = new MeshFrame3D();
         frame.showFrame(true);
         frame.addLights();
-        frame.addDataObject(hms.surfaceGeometry.data_object);
-        while(true){
-            hms.surfaceGeometry.update();
+        Track track = new Track("blue-height-map");
+        for(int n = 1; n<=plus.getNFrames(); n++){
+            ImageProcessor proc = plus.getStack().getProcessor(n);
+            for(int i = 0; i<points.length; i++){
+                for(int j = 0; j<points[0].length; j++){
+                    points[i][j] = reference.getNormalizedCoordinate(new double[]{i, j, proc.getPixelValue(i, j)-1})[2];
+                }
+            }
+
+            HeightMapSurface hms = new HeightMapSurface(points, 1);
+            hms.createHeighMapDataObject();
+            //double[] f = hms.getForce(0, 0, 0, new double[3]);
+            //System.out.println(Arrays.toString(f));
+            //hms.surfaceGeometry.addExternalEnergy(hms.getEdgeForce(hms.surfaceGeometry));
+
+            hms.surfaceGeometry.setShowSurface(true);
+            frame.addDataObject(hms.surfaceGeometry.data_object);
+            track.addMesh(n-1, hms.surfaceGeometry);
+            System.out.println("frame: " + n);
         }
+        MeshWriter.saveMeshes(new File("height-maps.bmf"), Arrays.asList(track));
+        //while(true){
+        //    hms.surfaceGeometry.update();
+        //}
     }
 
 }

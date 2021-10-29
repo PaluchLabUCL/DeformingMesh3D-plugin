@@ -309,10 +309,14 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         nodeSelect.addActionListener(evt->{
             ringController.selectNodes(evt);
             if(ringController.modifyingMesh()){
+                setReady(false);
+
                 buttons.forEach(b->b.setEnabled(false));
-                sculpt.setEnabled(true);
-                finish.setEnabled(true);
-                cancel.setEnabled(true);
+                EventQueue.invokeLater(() -> {
+                    sculpt.setEnabled(true);
+                    finish.setEnabled(true);
+                    cancel.setEnabled(true);
+                });
             }
 
         });

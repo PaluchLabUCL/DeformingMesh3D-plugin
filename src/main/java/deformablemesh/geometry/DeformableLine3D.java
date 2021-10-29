@@ -154,6 +154,8 @@ public class DeformableLine3D {
         data_object = new LineDataObject(nodes);
     }
     public DataObject getDataObject(){
+        if(data_object == null) createDataObject();
+
         return data_object;
     }
 

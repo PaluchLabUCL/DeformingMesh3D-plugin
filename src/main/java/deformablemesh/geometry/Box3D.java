@@ -156,6 +156,10 @@ public class Box3D implements Interceptable{
     public double getVolume() {
         return (high[0] - low[0])*(high[1]-low[1])*(high[2] - low[2]);
     }
+
+    public double[] getCenter() {
+        return Vector3DOps.average(high, low);
+    }
 }
 
 class AxisPlane implements Interceptable{

@@ -104,7 +104,7 @@ public class HotKeyDelegate {
                 KeyStroke.getKeyStroke(KeyEvent.VK_N, 0, true),
                 "NEXT_MESH",
                 "Selects next mesh",
-                controller::selectNextMeshTrack
+                ifEnabled(controller::selectNextMeshTrack)
         );
         createActionMapKey(
                 KeyStroke.getKeyStroke(KeyEvent.VK_O, 0, true),
@@ -116,7 +116,7 @@ public class HotKeyDelegate {
                 KeyStroke.getKeyStroke(KeyEvent.VK_S, 0, true),
                 "SNAPSHOT",
                 "Snapshot of current scene.",
-                controller::takeSnapShot
+                ifEnabled(controller::takeSnapShot)
             );
 
         createActionMapKey(
@@ -137,7 +137,7 @@ public class HotKeyDelegate {
                 KeyStroke.getKeyStroke(KeyEvent.VK_T, 0, true),
                 "TRACK_FORWARD",
                 "Track selected mesh forward.",
-                accessControl::trackMeshAction
+                ifEnabled(accessControl::trackMeshAction)
         );
 
 
@@ -145,35 +145,35 @@ public class HotKeyDelegate {
                 KeyStroke.getKeyStroke(KeyEvent.VK_B, 0, true),
                 "TRACK_BACKWARD",
                 "Track selected mesh backwards.",
-                accessControl::trackMeshBackwardsAction
+                ifEnabled(accessControl::trackMeshBackwardsAction)
         );
 
         createActionMapKey(
                 KeyStroke.getKeyStroke(KeyEvent.VK_I, 0, true),
                 "INITIALIZE_MESHES",
                 "Initialize new meshes",
-                accessControl::initializeMeshAction
+                ifEnabled(accessControl::initializeMeshAction)
         );
 
         createActionMapKey(
                 KeyStroke.getKeyStroke(KeyEvent.VK_R, 0, true),
                 "REMESH",
                 "Raycast selected mesh",
-                accessControl::remeshAction
+                ifEnabled(accessControl::remeshAction)
         );
 
         createActionMapKey(
                 KeyStroke.getKeyStroke(KeyEvent.VK_M, 0, true),
                 "CONNECTION_REMESH",
                 "Remesh Connections of selected mesh.",
-                ()->accessControl.connectionRemesh(false)
+                ifEnabled(()->accessControl.connectionRemesh(false))
         );
 
         createActionMapKey(
                 KeyStroke.getKeyStroke(KeyEvent.VK_M, KeyEvent.CTRL_DOWN_MASK, true),
                 "CONNECTION_REMESH_ALL",
                 "Remesh Connections of all meshes.",
-                ()->accessControl.connectionRemesh(true)
+                ifEnabled(()->accessControl.connectionRemesh(true))
         );
 
         createActionMapKey(
@@ -187,7 +187,7 @@ public class HotKeyDelegate {
                 KeyStroke.getKeyStroke(KeyEvent.VK_Z, KeyEvent.CTRL_MASK | KeyEvent.SHIFT_MASK, true),
                 "REDO",
                 "Redo most recently undone action.",
-                accessControl::redoAction
+                ifEnabled(accessControl::redoAction)
         );
 
 
@@ -195,14 +195,14 @@ public class HotKeyDelegate {
                 KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0, true),
                 "CLEAR_MESH",
                 "Clear selected mesh from frame. (backspace)",
-                controller::clearSelectedMesh
+                ifEnabled(controller::clearSelectedMesh)
         );
 
         createActionMapKey(
                 KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0, true),
                 "CLEAR_MESH2",
                 "Clear selected mesh from frame. (delete)",
-                controller::clearSelectedMesh
+                ifEnabled(controller::clearSelectedMesh)
         );
 
         createActionMapKey(
@@ -216,14 +216,14 @@ public class HotKeyDelegate {
                 KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0, true),
                 "PREVIOUS_FRAME",
                 "Previous frame.",
-                accessControl::previousFrameAction
+                ifEnabled(accessControl::previousFrameAction)
         );
 
         createActionMapKey(
                 KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0, true),
                 "NEXT_FRAME",
                 "Next frame.",
-                accessControl::nextFrameAction
+                ifEnabled(accessControl::nextFrameAction)
         );
 
         createActionMapKey(
@@ -271,7 +271,6 @@ public class HotKeyDelegate {
     }
     public void toggleHud(){
         if(hudShowing){
-
             display3D.setNoHud();
             hudShowing = false;
         } else {
@@ -313,9 +312,7 @@ public class HotKeyDelegate {
         ActionMapKey key = new ActionMapKey(k, name, description, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if(accessControl.isReady()) {
-                    run.run();
-                }
+                run.run();
             }
         });
         actions.add(key);

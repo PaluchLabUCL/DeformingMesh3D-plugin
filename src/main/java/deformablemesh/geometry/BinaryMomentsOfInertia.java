@@ -285,4 +285,9 @@ public class BinaryMomentsOfInertia {
         return sum/count;
 
     }
+
+    public double volume() {
+
+        return size*pxSizes[0]*pxSizes[1]*pxSizes[2];
+    }
 }

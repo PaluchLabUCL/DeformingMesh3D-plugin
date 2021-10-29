@@ -185,32 +185,6 @@ public class FurrowInitializer extends JDialog {
         dispose();
     }
 
-    public static void main(String[] args){
-        SegmentationModel model = new SegmentationModel();
-        SegmentationController controls = new SegmentationController(model);
-        RingController rc = new RingController(controls);
-        model.setRingController(rc);
-        rc.startUI();
-        String o = new File(args[0]).getAbsolutePath();
-        ImagePlus p = new ImagePlus(o);
-        p.show();
-        controls.setOriginalPlus(p);
-
-        EventQueue.invokeLater(()->{
-            //MeshFrame3D mf3 = new MeshFrame3D();
-            //mf3.showFrame(true);
-            //model.setMeshFrame3D(mf3);
-            //model.showVolume();
-            JFrame frame = new JFrame("test");
-            JButton d = new JButton("dialog");
-            d.addActionListener((evt)->new FurrowInitializer(frame, controls, ()->{}).start());
-            frame.add(d);
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.pack();
-            frame.setVisible(true);
-        });
-    }
-
     class Initializer implements MouseListener, MouseMotionListener {
 
         Map<JPanel, SlicePicker> pickers = new HashMap<>();

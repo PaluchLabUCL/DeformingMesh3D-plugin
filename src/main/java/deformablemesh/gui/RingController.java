@@ -70,9 +70,9 @@ public class RingController implements FrameListener, ListDataListener {
     double thresh = 128;
     JLabel frame;
     int currentFrame;
-    final Slice3DView sliceView = new Slice3DView();
+    Slice3DView sliceView;
 
-    HistogramInput histControls = new HistogramInput(this);
+    HistogramInput histControls;
     JPanel contentPane;
     FurrowInput furrowInput;
     JFrame parent;
@@ -155,11 +155,13 @@ public class RingController implements FrameListener, ListDataListener {
 
     public void sculptClicked(ActionEvent evt){
         if(modifier==null ) return;
-        System.out.println("setting sculpt");
         modifier.setSculptMode();
     }
 
     public JPanel getHistControlsPanel(){
+        if(histControls == null){
+            histControls = new HistogramInput(this);
+        }
         return histControls.panel;
     }
 
@@ -188,173 +190,13 @@ public class RingController implements FrameListener, ListDataListener {
     public boolean isTextureShowing(){
         return showTexture;
     }
-    public GuiTools.LocaleNumericTextField createNumericInputField(double initial){
-        JTextField ret = new JTextField();
-        Dimension d = new Dimension(30, 20);
-        ret.setMinimumSize(d);
-        ret.setMaximumSize(d);
-        ret.setPreferredSize(d);
-        return new GuiTools.LocaleNumericTextField(ret, initial);
-    }
+
 
     public Slice3DView getSliceView(){
-
+        if(sliceView == null){
+            sliceView = new Slice3DView();
+        }
         return sliceView;
-    }
-    public void startUI(){
-        JPanel content = new JPanel();
-        content.setLayout(new BorderLayout());
-
-        JPanel buttons = new JPanel();
-        buttons.setLayout( new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        JButton showFurrowButton = new JButton("show");
-        buttons.add(showFurrowButton, gbc);
-        gbc.gridx++;
-        gbc.gridwidth = 2;
-
-        JCheckBox box = new JCheckBox("textured");
-        box.addActionListener(evt ->{
-            if(furrowShowing){
-                showFurrow(box.isSelected());
-            }
-        });
-
-        buttons.add(box, gbc);
-
-        showFurrowButton.addActionListener(evt->{
-            if(showFurrowButton.getText().equals("show")){
-                showFurrowButton.setText("hide");
-                showFurrow(box.isSelected());
-            } else{
-                showFurrowButton.setText("show");
-                hideFurrow();
-            }
-        });
-
-        gbc.gridx = 0;
-        gbc.gridwidth = 1;
-        gbc.gridy++;
-
-        frame = new JLabel("1");
-        buttons.add(frame, gbc);
-        gbc.gridx++;
-
-        JButton prev = new JButton("prev");
-        prev.setMnemonic(KeyEvent.VK_COMMA);
-        prev.addActionListener(evt->model.previousFrame());
-        buttons.add(prev, gbc);
-        gbc.gridx++;
-
-        JButton next = new JButton("next");
-        next.setMnemonic(KeyEvent.VK_PERIOD);
-        next.addActionListener(evt->model.nextFrame());
-        buttons.add(next, gbc);
-        gbc.gridy++;
-        gbc.gridx = 0;
-
-        gbc.gridwidth = 1;
-        JButton initialize = new JButton("init furrow");
-        initialize.addActionListener((event)->new FurrowInitializer(parent, model, ()->{}).start());
-        buttons.add(initialize, gbc);
-        gbc.gridx++;
-        JButton center = new JButton("center");
-        center.addActionListener(evt->{
-            DeformableMesh3D mesh = model.getSelectedMesh();
-            if(mesh == null){
-                setFurrow(getInputNormal(), new double[]{0, 0, 0});
-            } else{
-                double[] loc = DeformableMesh3DTools.centerAndRadius(mesh.nodes);
-                setFurrow(getInputNormal(), loc);
-            }
-        });
-        buttons.add(center, gbc);
-        gbc.gridx++;
-        JButton split = new JButton("split");
-        split.addActionListener(evt->model.splitMesh());
-        buttons.add(split, gbc);
-
-        //Mesh modification code.
-
-        gbc.gridwidth=1;
-        gbc.gridx = 0;
-        gbc.gridy++;
-
-        JButton nodeSelect = new JButton("select nodes");
-        nodeSelect.addActionListener(evt->{
-            if(modifier == null){
-                modifier = new MeshModifier();
-                modifier.setMeshFrame3D(model.getMeshFrame3D());
-                modifier.setFurrow(getFurrow());
-                setSliceListener(new MouseAdapter(){
-                    @Override
-                    public void mousePressed(MouseEvent evt){
-                        double[] pt = getNormalizedVolumeCoordiante(evt.getPoint());
-                        modifier.updatePressed(pt, evt);
-                    }
-                    @Override
-                    public void mouseReleased(MouseEvent evt){
-                        double[] pt = getNormalizedVolumeCoordiante(evt.getPoint());
-                        modifier.updateReleased(pt, evt);
-                    }
-                    @Override
-                    public void mouseClicked(MouseEvent evt){
-                        double[] pt = getNormalizedVolumeCoordiante(evt.getPoint());
-                        modifier.updateClicked(pt, evt);
-                    }
-                    @Override
-                    public void mouseMoved(MouseEvent evt){
-                        double[] pt = getNormalizedVolumeCoordiante(evt.getPoint());
-                        modifier.updateMoved(pt, evt);
-                    }
-                    @Override
-                    public void mouseDragged(MouseEvent evt){
-                        double[] pt = getNormalizedVolumeCoordiante(evt.getPoint());
-                        modifier.updateDragged(pt, evt);
-                    }
-                });
-            }
-
-            modifier.setMesh( model.getSelectedMesh() );
-            modifier.setSelectNodesMode();
-
-        });
-
-        buttons.add(nodeSelect, gbc);
-        gbc.gridx++;
-
-        JButton sculpt = new JButton("sculpt");
-        sculpt.addActionListener( evt ->{
-                if(modifier==null) return;
-                modifier.setSculptMode();
-            }
-        );
-        buttons.add(sculpt, gbc);
-        gbc.gridx++;
-
-        JButton finish = new JButton("finish");
-        finish.addActionListener(evt->{
-            modifier.deactivate();
-            activateSelectMeshMode();
-        });
-        buttons.add(finish, gbc);
-
-
-
-        gbc.gridwidth=3;
-        gbc.gridx = 0;
-        gbc.gridy++;
-        buttons.add(createFurrowInput(), gbc);
-        gbc.gridy++;
-        buttons.add(histControls.panel, gbc);
-        content.add(buttons, BorderLayout.EAST);
-
-        content.add(new JScrollPane(sliceView.panel), BorderLayout.CENTER);
-
-        contentPane = content;
-        activateSelectMeshMode();
     }
 
     double[] getNormalizedVolumeCoordiante(Point p){

@@ -1,14 +1,8 @@
 package deformablemesh;
 
-import deformablemesh.geometry.DeformableMesh3D;
-import deformablemesh.geometry.Triangle3D;
-import deformablemesh.geometry.Node3D;
-import deformablemesh.geometry.RayCastMesh;
-import deformablemesh.geometry.InterceptingMesh3D;
-import deformablemesh.geometry.Box3D;
-import deformablemesh.geometry.Connection3D;
-import deformablemesh.geometry.Intersection;
+import deformablemesh.geometry.*;
 
+import deformablemesh.io.MeshWriter;
 import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;
 import deformablemesh.util.astar.AStarBasic;
@@ -18,6 +12,7 @@ import deformablemesh.util.astar.Boundary;
 import deformablemesh.util.astar.ChoiceGenerator;
 import deformablemesh.util.astar.History;
 import deformablemesh.util.astar.PossiblePath;
+import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.measure.Calibration;
@@ -26,6 +21,8 @@ import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 
 import java.awt.Color;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -1405,7 +1402,42 @@ public class DeformableMesh3DTools {
         return plus;
     }
 
+    /**
+     * This puts topographical constraints on the intersections. When an intersection is 'dirty' it means it was
+     * decided at a region of low confidence.
+     *
+     * @param sections
+     */
+    public static void scanDirty(List<Intersection> sections){
+        for(int i = 0; i<sections.size(); i++){
+            Intersection section = sections.get(i);
+            if(section.dirty != 0){
+                for(int j = 0; j<sections.size(); j++){
+                    if(j == i){
+                        continue;
+                    }
+                    double m = Vector3DOps.mag(Vector3DOps.difference(sections.get(j).location, section.location));
+
+                    if( m < Math.abs(section.dirty) ){
+
+                        System.out.println("removing: " + i + ", " + m + " < " + section.dirty);
+                        sections.remove(i);
+                        i--;
+                        break;
+                    }
+                }
+            }
+        }
+
+
+    }
+
+
     public static void mosaicBinary(MeshImageStack stack, ImageStack out, DeformableMesh3D mesh, int rgb){
+        Box3D box = mesh.getBoundingBox();
+        double[] lowI = stack.getImageCoordinates(box.low);
+        double[] highI = stack.getImageCoordinates(box.high);
+
         InterceptingMesh3D picker = new InterceptingMesh3D(mesh);
         double[] xdirection = {1,0,0};
 
@@ -1413,21 +1445,48 @@ public class DeformableMesh3DTools {
         int w = out.getWidth();
         int h = out.getHeight();
         double center[] = new double[3];
-        for(int slice = 0; slice<slices; slice++){
+
+        int sliceLow = (int)lowI[2];
+        int sliceHigh = (int)highI[2];
+        //verify
+        sliceLow = sliceLow < 0 ? 0 : sliceLow;
+        sliceHigh = sliceHigh <= out.getSize() ? sliceHigh : out.getSize();
+
+        int jlo = (int)lowI[1];
+        int jhi = (int)highI[1];
+        jlo = jlo < 0 ? 0 : jlo;
+        jhi = jhi <= h ? jhi : h;
+
+        int xlo = (int)lowI[0];
+        int xhi = (int)highI[0];
+        xlo = xlo < 0 ? 0: xlo;
+        xhi = xhi > w ? w : xhi;
+
+        for(int slice = sliceLow; slice<sliceHigh; slice++){
+
             int[] pixels = (int[])(out.getProcessor(slice+1).getPixels());
             center[2] = slice;
-            for(int j = 0; j<h; j++){
+
+
+            for(int j = jlo; j<jhi; j++){
+
                 int offset = j*w;
                 center[1] = j;
+
                 List<Intersection> sections = picker.getIntersections(stack.getNormalizedCoordinate(center), xdirection);
+                scanDirty(sections);
                 sections.sort((a,b)->Double.compare(a.location[0], b.location[0]));
 
                 boolean startInside = false;
                 double count = 0;
                 double[] boundaries = new double[sections.size()+1];
+
+                //the number of boundaries that switch the state from inside to outside.
                 int valid = 0;
+
                 for(int k = 0; k<sections.size(); k++){
 
+                    double[] ic = stack.getImageCoordinates(sections.get(k).location);
                     double bound = stack.getImageCoordinates(sections.get(k).location)[0];
                     boolean facingLeft = sections.get(k).surfaceNormal[0]<0;
                     boolean facingRight = !facingLeft;
@@ -1459,7 +1518,13 @@ public class DeformableMesh3DTools {
                     }
                 }
                 boolean inside = startInside;
+                if(lowI[0] < 0 && !inside){
+                    //should be true!
+                    System.out.println("Inconsistent topography! Box starts before edge of picture, but not inside!");
+                }
+
                 boundaries[valid] = w;
+                boolean finishesOutsideImage = lowI[0] < w && highI[0] > w ;
 
                 int current = 0;
 
@@ -1473,6 +1538,16 @@ public class DeformableMesh3DTools {
                         pixels[p + offset] = rgb;
                     }
                 }
+                if(finishesOutsideImage && !inside){
+                    System.out.println("topography warning: bounds outside image, but not inside the shape at end");
+                }
+                if(!finishesOutsideImage && inside){
+                    System.out.println("Inconsistent bounding box: End of image is out of bounds, but state is inside the shape");
+
+                    System.out.println(Arrays.toString(lowI) + " [~] " + Arrays.toString(highI));
+
+                }
+
             }
 
         }
@@ -1555,7 +1630,25 @@ public class DeformableMesh3DTools {
         return new DeformableMesh3D(points, connections, triangles);
     }
 
+    public static void main(String[] args) throws IOException {
+        new ImageJ();
+        ImagePlus plus = new ImagePlus("/home/smithm3/Desktop/riya-working/fucci-sample.tif");
+        List<Track> tracks = MeshWriter.loadMeshes(
+                new File(
+                        "/home/smithm3/Desktop/riya-working/riya-corrected-tracked.bmf"
+                )
+        );
 
+        long start = System.currentTimeMillis();
+        ImagePlus p1 = createMosaicRepresentation(new MeshImageStack(plus), plus, tracks);
+        p1.setTitle("first");
+        p1.setOpenAsHyperStack(true);
+        p1.show();
+        System.out.println(" processed in " + ( ( System.currentTimeMillis() - start)/1000 ) + " s" );
+        //ImagePlus p2 = createBinaryRepresentation( new MeshImageStack(plus), tracks.get(1).getMesh(0));
+        //p2.setTitle("second");
+        //p2.show();
+    }
 
 }
 

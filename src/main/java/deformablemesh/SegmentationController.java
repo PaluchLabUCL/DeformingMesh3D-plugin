@@ -1,5 +1,7 @@
 package deformablemesh;
 
+import Jama.LUDecomposition;
+import Jama.Matrix;
 import deformablemesh.externalenergies.ExternalEnergy;
 import deformablemesh.externalenergies.ImageEnergyType;
 import deformablemesh.geometry.*;
@@ -29,6 +31,7 @@ import ij.process.ImageProcessor;
 import ij.process.LUT;
 import lightgraph.DataSet;
 import lightgraph.Graph;
+import lightgraph.GraphPoints;
 
 import java.awt.Color;
 import java.awt.Image;
@@ -650,6 +653,118 @@ public class SegmentationController {
 
     public void plotElongationsVsTime(){
         MeshAnalysis.plotElongationsVsTime(getAllTracks());
+    }
+
+    public double[] showInertialVector(){
+        List<Track> tracks = getAllTracks();
+        int i = getCurrentFrame();
+        double[] center0 = { 0, 0, 0};
+        double[] center1 = { 0, 0, 0};
+
+        double volume0 = 0;
+        double volume1 = 0;
+        for(Track t: tracks){
+            if(t.containsKey(i-1) && t.containsKey(i+1)){
+                DeformableMesh3D start = t.getMesh(i-1);
+                DeformableMesh3D fin = t.getMesh(i+1);
+
+                double v0 = start.calculateVolume();
+                double[] c = DeformableMesh3DTools.centerAndRadius(start.nodes);
+                center0[0] += c[0]*v0;
+                center0[1] += c[1]*v0;
+                center0[2] += c[2]*v0;
+                volume0 += v0;
+
+                double v1 = fin.calculateVolume();
+                c = DeformableMesh3DTools.centerAndRadius(fin.nodes);
+                center1[0] += c[0]*v1;
+                center1[1] += c[1]*v1;
+                center1[2] += c[2]*v1;
+                volume1 += v1;
+
+            }
+        }
+        //weighted center of mass for all of the objects.
+        center0[0] = center0[0]/volume0;
+        center0[1] = center0[1]/volume0;
+        center0[2] = center0[2]/volume0;
+
+        center1[0] = center1[0]/volume1;
+        center1[1] = center1[1]/volume1;
+        center1[2] = center1[2]/volume1;
+
+        double[] moment = new double[3];
+
+        double[][] inertialMatrix = new double[3][3];
+
+        for(Track t: tracks){
+            if(t.size()<2){
+                continue;
+            }
+            if(t.containsKey(i-1) && t.containsKey(i+1)){
+                DeformableMesh3D start = t.getMesh(i-1);
+                DeformableMesh3D fin = t.getMesh(i+1);
+                double[] cs = DeformableMesh3DTools.centerAndRadius(start.nodes);
+                double[] cf = DeformableMesh3DTools.centerAndRadius(fin.nodes);
+
+                double[] csp = Vector3DOps.difference(cs, center0);
+                double[] cfp = Vector3DOps.difference(cf, center1);
+
+                double[] v = Vector3DOps.difference(cfp, csp);
+
+
+                double[] r = Vector3DOps.average(csp, cfp);
+
+                double v1 = fin.calculateVolume();
+                double v2 = start.calculateVolume();
+                double factor = 0.5*(v1+v2);
+                for(int k = 0; k<3; k++){
+                    int a = k;
+                    int b = (k+1)%3;
+                    int c = (k+2)%3;
+
+                    inertialMatrix[a][a] += ( r[b]*r[b] + r[c]*r[c] ) * factor;
+                    inertialMatrix[b][a] += -r[b]*r[a]*factor;
+                    inertialMatrix[c][a] += -r[c]*r[a]*factor;
+                }
+
+                double[] angMom = Vector3DOps.cross(r, v);
+                double vave = 0.5*(v1 + v2);
+                moment[0] += angMom[0]*vave;
+                moment[1] += angMom[1]*vave;
+                moment[2] += angMom[2]*vave;
+
+                DeformableLine3D lines = new DeformableLine3D(Arrays.asList(cs, cf), Arrays.asList(new int[]{0,1}));
+
+                meshFrame3D.addTransientObject(lines.getDataObject());
+            }
+
+        }
+
+        Matrix iM = new Matrix(inertialMatrix);
+        LUDecomposition lu = new LUDecomposition(iM);
+        try {
+            Matrix s = lu.solve(new Matrix(moment, 3));
+            double [] angularVelocity = s.getRowPackedCopy();
+
+            Vector3DOps.normalize(angularVelocity);
+            Arrow a = new Arrow(1, 0.01);
+            a.pointAlong(angularVelocity);
+            a.moveTo(center0[0], center0[1], center0[2]);
+            a.setColor(Color.RED);
+
+            double momentum = Vector3DOps.normalize(moment);
+            Arrow a2 = new Arrow(1, 0.01);
+            a2.setColor(Color.CYAN);
+            a2.moveTo(center0[0], center0[1], center0[2]);
+            a2.pointAlong(moment);
+
+            meshFrame3D.addTransientObject(a);
+            meshFrame3D.addTransientObject(a2);
+            return moment;
+        }catch(Exception e){
+            return moment;
+        }
     }
 
     public void selectNone(){

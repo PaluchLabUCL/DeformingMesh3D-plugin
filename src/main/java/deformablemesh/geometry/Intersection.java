@@ -7,7 +7,7 @@ public class Intersection {
     private static double[] INFINITY = {Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY};
     public double[] location;
     public double[] surfaceNormal;
-
+    public double dirty = 0;
     /**
      * Provides the relevant information about where a colision occured.
      *
@@ -19,7 +19,9 @@ public class Intersection {
         surfaceNormal = n;
 
     }
-
+    public void setDirty(double d){
+        dirty = d;
+    }
     public static Intersection inf(double[] normal){
         return new Intersection(INFINITY, normal);
     }

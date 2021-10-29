@@ -7,6 +7,7 @@ import org.scijava.java3d.*;
 import org.scijava.vecmath.Color3f;
 
 import java.awt.Color;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -109,8 +110,9 @@ public class DeformableMeshDataObject implements DataObject {
                 specular,
                 0f);
         a.setMaterial(mat);
-
-
+        if(rgb[3] != 1f){
+            a.setTransparencyAttributes(new TransparencyAttributes(TransparencyAttributes.NICEST, 1-rgb[3]));
+        }
         return a;
 
     }
@@ -195,14 +197,17 @@ public class DeformableMeshDataObject implements DataObject {
 
     public Appearance createLineAppearance(){
         Appearance a = new Appearance();
-        float[] r = new float[3];
-        r = wires.getColorComponents(r);
+        float[] r = new float[4];
+        r = wires.getRGBComponents(r);
         ColoringAttributes c_at = new ColoringAttributes(r[0], r[1], r[2], ColoringAttributes.NICEST);
         c_at.setCapability(ColoringAttributes.ALLOW_COLOR_WRITE);
         LineAttributes la = new LineAttributes();
         la.setLineWidth(1);
         a.setColoringAttributes(c_at);
         a.setLineAttributes(la);
+        if(r[3] != 1f){
+            a.setTransparencyAttributes(new TransparencyAttributes(TransparencyAttributes.NICEST, (1f - r[3])));
+        }
         return a;
 
     }
@@ -217,9 +222,13 @@ public class DeformableMeshDataObject implements DataObject {
 
     public void setWireColor(Color color) {
         wires = color;
-        float[] r = new float[3];
-        r = wires.getColorComponents(r);
-        mesh_object.getAppearance().getColoringAttributes().setColor(r[0], r[1], r[2]);
+        //float[] r = new float[4];
+        //r = wires.getColorComponents(r);
+
+        mesh_object.setAppearance(createLineAppearance());
+
+        //mesh_object.getAppearance().getColoringAttributes().setColor(r[0], r[1], r[2]);
+
     }
 
     public void setShowSurface(boolean showSurface) {

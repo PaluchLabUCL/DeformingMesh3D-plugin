@@ -221,26 +221,10 @@ public class Slice3DView{
 
     static public BufferedImage createNoImage(){
         BufferedImage img = new BufferedImage(400, 400, BufferedImage.TYPE_BYTE_GRAY);
-
-        Graphics g = img.getGraphics();
-        g.setColor(Color.BLACK);
-        g.fillRect(0, 0, 400, 400);
-
-        g.setColor(Color.LIGHT_GRAY);
-        g.drawString("no image", 170, 200);
-        g.setColor(Color.DARK_GRAY);
-        g.drawOval(150, 180, 75, 50);
-        g.dispose();
         return img;
     }
     static public BufferedImage createNullImage(){
         BufferedImage img = new BufferedImage(1, 1, BufferedImage.TYPE_BYTE_GRAY);
-
-        Graphics g = img.getGraphics();
-        g.setColor(Color.BLACK);
-        g.fillRect(0, 0, 1, 1);
-
-        g.dispose();
         return img;
     }
 
