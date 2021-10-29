@@ -42,3 +42,12 @@ function snapshotsThreeSixty(steps){
     plus.setTitle("rotating snapshot");
     plus.show();
 }
+
+function meshToNewTrack(){
+  track = controls.getSelectedMeshTrack();
+  mesh = controls.getSelectedMesh();
+  frame = controls.getCurrentFrame();
+  controls.clearMeshFromTrack(track, frame);
+  controls.startNewMeshTrack(frame, mesh);
+  controls.selectMesh(mesh);
+}
