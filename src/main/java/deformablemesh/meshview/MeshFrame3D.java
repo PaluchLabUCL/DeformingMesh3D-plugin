@@ -79,7 +79,7 @@ public class    MeshFrame3D {
 
     DataObject lights;
     float ambient = 0.6f;
-    float directional = 0.5f;
+    float directional = 0.25f;
 
     List<ChannelVolume> channelVolumes = new ArrayList<>();
 
@@ -266,7 +266,6 @@ public class    MeshFrame3D {
         canvas.repaint();
     }
     public Component asJPanel(JFrame frame){
-        System.out.println("once");
         this.frame = frame;
         return asJPanel((Window)frame);
     }
@@ -296,7 +295,8 @@ public class    MeshFrame3D {
         return canvas;
     }
     public void removeLights(){
-        directionalLight = null;
+        directionalLightA = null;
+        directionalLightB = null;
         removeDataObject(lights);
     }
     public void setAmbientBrightness(float delta){
@@ -315,16 +315,25 @@ public class    MeshFrame3D {
         addLights();
     }
 
-    DirectionalLight directionalLight;
+    DirectionalLight directionalLightA, directionalLightB;
     AmbientLight ambientLight;
 
     public void syncDirectionalLight(){
-        if(directionalLight!= null) {
+        if(directionalLightA!= null) {
             double[] up = canvas.getUp();
             double[] forward = canvas.getForward();
+            double[] camber = Vector3DOps.cross(up, forward);
+
             double[] tilt = Vector3DOps.add(up, forward, -0.6);
-            Vector3DOps.normalize(tilt);
-            directionalLight.setDirection(-(float) tilt[0], -(float) tilt[1], -(float) tilt[2]);
+
+            double[] tA = Vector3DOps.add(tilt, camber, 0.5);
+            double[] tB = Vector3DOps.add(tilt, camber, -0.5);
+
+            Vector3DOps.normalize(tA);
+            Vector3DOps.normalize(tB);
+
+            directionalLightA.setDirection(-(float) tA[0], -(float) tA[1], -(float) tA[2]);
+            directionalLightB.setDirection(-(float) tB[0], -(float) tB[1], -(float) tB[2]);
         }
     }
 
@@ -339,7 +348,8 @@ public class    MeshFrame3D {
             ambientLight.setColor(new Color3f(new float[]{
                     ambient, ambient, ambient
             }));
-            directionalLight.setColor(new Color3f(directional, directional, directional));
+            directionalLightA.setColor(new Color3f(directional, directional, directional));
+            directionalLightB.setColor(new Color3f(directional, directional, directional));
         } else{
             BranchGroup bg = new BranchGroup();
             BoundingSphere bounds =	new BoundingSphere (new Point3d(0, 0.0, 0.0), 25.0);
@@ -354,13 +364,20 @@ public class    MeshFrame3D {
             double[] up = canvas.getUp();
             Vector3f dir = new Vector3f(-(float)up[0], -(float)up[1], -(float)up[2]);
 
-            directionalLight = new DirectionalLight(
+            directionalLightA = new DirectionalLight(
                     new Color3f(directional, directional, directional),
                     dir);
-            directionalLight.setCapability(DirectionalLight.ALLOW_DIRECTION_WRITE);
-            directionalLight.setCapability(DirectionalLight.ALLOW_COLOR_WRITE);
-            directionalLight.setInfluencingBounds(bounds);
-            bg.addChild(directionalLight);
+            directionalLightA.setCapability(DirectionalLight.ALLOW_DIRECTION_WRITE);
+            directionalLightA.setCapability(DirectionalLight.ALLOW_COLOR_WRITE);
+            directionalLightA.setInfluencingBounds(bounds);
+            bg.addChild(directionalLightA);
+            directionalLightB = new DirectionalLight(
+                    new Color3f(directional, directional, directional),
+                    dir);
+            directionalLightB.setCapability(DirectionalLight.ALLOW_DIRECTION_WRITE);
+            directionalLightB.setCapability(DirectionalLight.ALLOW_COLOR_WRITE);
+            directionalLightB.setInfluencingBounds(bounds);
+            bg.addChild(directionalLightB);
 
             lights = () -> bg;
             addDataObject(lights);

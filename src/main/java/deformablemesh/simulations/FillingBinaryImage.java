@@ -82,9 +82,7 @@ public class FillingBinaryImage {
         }
     }
 
-    public static DeformableMesh3D fillBinaryWithMesh(ImagePlus plus, List<int[]> points){
-
-        MeshImageStack stack = new MeshImageStack(plus);
+    public static DeformableMesh3D fillBinaryWithMesh(MeshImageStack stack, List<int[]> points){
         double[] xyz = new double[3];
 
         for(int[] pt: points){
@@ -96,7 +94,7 @@ public class FillingBinaryImage {
         xyz[0] = xyz[0]/points.size();
         xyz[1] = xyz[1]/points.size();
         xyz[2] = xyz[2]/points.size();
-        BinaryInterceptible bi = new BinaryInterceptible(points, new MeshImageStack(plus), 1);
+        BinaryInterceptible bi = new BinaryInterceptible(points, stack, 1);
 
         double[] c = stack.getNormalizedCoordinate(xyz);
         double pv = stack.pixel_dimensions[0]*stack.pixel_dimensions[1]*stack.pixel_dimensions[2];
@@ -108,6 +106,13 @@ public class FillingBinaryImage {
         mesh.BETA = 0.0;
 
         return mesh;
+
+    }
+
+    public static DeformableMesh3D fillBinaryWithMesh(ImagePlus plus, List<int[]> points){
+
+        MeshImageStack stack = new MeshImageStack(plus);
+        return fillBinaryWithMesh(stack, points);
 
 
     }

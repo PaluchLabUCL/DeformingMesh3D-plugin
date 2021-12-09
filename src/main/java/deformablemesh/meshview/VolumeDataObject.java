@@ -31,6 +31,8 @@ public class VolumeDataObject implements DataObject {
     double min  = 0;
     double max = 1;
 
+    double tLow = 1;
+    double tHigh = 1;
 
     public VolumeDataObject(Color c) {
         color = c;
@@ -175,6 +177,14 @@ public class VolumeDataObject implements DataObject {
         updateVolume();
     }
 
+    public void setTransparencyTrim(double low, double high){
+        tLow = low;
+        tHigh = high;
+        if(volume != null){
+            volume.setTransparencyRange(0, tLow, tHigh);
+            surface.setTexture(volume);
+        }
+    }
     /**
      * Creates the 3D representation of the data in "texture_data"
      *
@@ -184,6 +194,7 @@ public class VolumeDataObject implements DataObject {
         //size of the texture backing data.
 
          volume = new MultiChannelVolumeTexture(texture_data, min, max, new Color3f(volumeColor));
+
 
         if(surface==null){
             /*

@@ -1,6 +1,8 @@
 package deformablemesh.gui;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created on 31/07/18.
@@ -8,7 +10,6 @@ import javax.swing.*;
 public class ParameterControl extends JPanel {
     String name;
     JTextField field;
-
     public void prepareValue(JLabel label, JTextField field){
         this.name = label.getText();
         this.field = field;
@@ -20,6 +21,9 @@ public class ParameterControl extends JPanel {
         add(field);
     }
 
+    public double getValue(){
+        return Double.parseDouble(field.getText());
+    }
     public void updateValue(double value){
         field.setText(GuiTools.displayFormat(value));
     }

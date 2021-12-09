@@ -49,10 +49,6 @@ public class RingController implements FrameListener, ListDataListener {
     final ContractileRingDetector detector;
     public SegmentationController model;
 
-    public void setCursorRadius(double r) {
-        if(modifier == null) return;
-        modifier.setCursorRadius(r);
-    }
 
     static class DoubleValue{
         double value;
@@ -86,6 +82,13 @@ public class RingController implements FrameListener, ListDataListener {
     public RingController(SegmentationController model){
         this.model = model;
         detector = new ContractileRingDetector();
+        sliceView = new Slice3DView();
+        activateSelectMeshMode();
+    }
+
+    public void setCursorRadius(double r) {
+        if(modifier == null) return;
+        modifier.setCursorRadius(r);
     }
 
     public void showFurrow(boolean textured){
@@ -193,9 +196,6 @@ public class RingController implements FrameListener, ListDataListener {
 
 
     public Slice3DView getSliceView(){
-        if(sliceView == null){
-            sliceView = new Slice3DView();
-        }
         return sliceView;
     }
 
@@ -295,7 +295,7 @@ public class RingController implements FrameListener, ListDataListener {
 
 
     void syncSliceViewBoxController(){
-        sliceView.  repaint();
+        sliceView.repaint();
     }
 
     public double[] getInputNormal(){

@@ -87,12 +87,11 @@ public class HotKeyDelegate {
         }
     }
     Runnable ifEnabled(Runnable r){
-        return r;
-        /*return () -> {
+        return () -> {
             if (accessControl.isReady()) {
                 r.run();
             }
-        };*/
+        };
     }
 
     public HotKeyDelegate(MeshFrame3D frame, SegmentationController controller, ControlFrame gui){

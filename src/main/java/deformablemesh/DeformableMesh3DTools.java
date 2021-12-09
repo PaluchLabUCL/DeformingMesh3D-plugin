@@ -1366,12 +1366,12 @@ public class DeformableMesh3DTools {
 
         Set<Integer> frames = new TreeSet<>();
 
-        for(Track t: allMeshTracks){
-            for(Integer i = 0; i<stack.FRAMES; i++){
-
+        for(Integer i = 0; i<stack.FRAMES; i++){
+            for(Track t: allMeshTracks){
                 if(t.containsKey(i)){
                     frames.add(i);
                 }
+                break;
             }
         }
 
@@ -1474,6 +1474,10 @@ public class DeformableMesh3DTools {
                 center[1] = j;
 
                 List<Intersection> sections = picker.getIntersections(stack.getNormalizedCoordinate(center), xdirection);
+                if(sections.size()==0){
+                    //No intersections. No points inside.
+                    continue;
+                }
                 scanDirty(sections);
                 sections.sort((a,b)->Double.compare(a.location[0], b.location[0]));
 
@@ -1483,19 +1487,27 @@ public class DeformableMesh3DTools {
 
                 //the number of boundaries that switch the state from inside to outside.
                 int valid = 0;
+                double lowestEntry = Double.MAX_VALUE;
+                double highestExit = -Double.MAX_VALUE;
 
                 for(int k = 0; k<sections.size(); k++){
 
-                    double[] ic = stack.getImageCoordinates(sections.get(k).location);
                     double bound = stack.getImageCoordinates(sections.get(k).location)[0];
+
                     boolean facingLeft = sections.get(k).surfaceNormal[0]<0;
                     boolean facingRight = !facingLeft;
                     //going through all interfaces, and either going further in
                     //or back out.
                     if(facingLeft){
                         count++;
+                        if(bound < lowestEntry){
+                            lowestEntry = bound;
+                        }
                     } else{
                         count--;
+                        if(bound > highestExit){
+                            highestExit = bound;
+                        }
                     }
                     if(bound>0) {
                         //check if it is actually a boundary
@@ -1517,16 +1529,29 @@ public class DeformableMesh3DTools {
 
                     }
                 }
+
                 boolean inside = startInside;
-                if(lowI[0] < 0 && !inside){
-                    //should be true!
-                    System.out.println("Inconsistent topography! Box starts before edge of picture, but not inside!");
+
+
+                if(lowestEntry < lowI[0]){
+                    System.out.println("Topo Error: lowest entry is less than bounding box!");
+                }
+                if( (int)highestExit > highI[0] ){
+                    System.out.println("Topo Error: highest exit is outside of bounding box!");
+                }
+
+                if(startInside && lowestEntry>0){
+                    System.out.println("Topo Error: Lower bound above zero but mesh starts inside.");
                 }
 
                 boundaries[valid] = w;
-                boolean finishesOutsideImage = lowI[0] < w && highI[0] > w ;
+
+                //This isn't necessarily true.
+                //lowestIntersection >= lowI[0] and highestIntersection <= highI[0]
+                boolean finishesOutsideImage = lowestEntry <= (w-1) && highestExit >= (w - 1) ;
 
                 int current = 0;
+
 
                 for(int p = 0; p<w; p++){
                     if(p>boundaries[current]){
@@ -1541,11 +1566,10 @@ public class DeformableMesh3DTools {
                 if(finishesOutsideImage && !inside){
                     System.out.println("topography warning: bounds outside image, but not inside the shape at end");
                 }
+                
                 if(!finishesOutsideImage && inside){
                     System.out.println("Inconsistent bounding box: End of image is out of bounds, but state is inside the shape");
-
                     System.out.println(Arrays.toString(lowI) + " [~] " + Arrays.toString(highI));
-
                 }
 
             }

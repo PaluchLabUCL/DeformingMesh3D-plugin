@@ -2,6 +2,7 @@ package deformablemesh.util;
 
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.measure.Calibration;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 
@@ -31,6 +32,12 @@ public class DistanceTransformMosaicImage {
         if(fullTransform){
             background = getBackgroundBlob();
             background.createGrowingCascade(1);
+        }
+    }
+
+    public void createGrowingCascades(){
+        for(Blob blob: blobs.values()){
+            blob.createGrowingCascade(1);
         }
     }
 
@@ -180,6 +187,7 @@ public class DistanceTransformMosaicImage {
             w = hx - lx + 1;
             h = hy - ly + 1;
             d = hz - lz + 1;
+            System.out.println("creating stack");
             stack = new byte[w*h*d];
             for(int[] f: full){
                 set(f, (byte)1);
@@ -195,7 +203,7 @@ public class DistanceTransformMosaicImage {
                     replacements.add(pt);
                 }
             }
-
+            System.out.println("separated out pixels.");
 
             for(int[] pt: current){
                 set(pt, (byte)0);
@@ -205,6 +213,7 @@ public class DistanceTransformMosaicImage {
 
             while(level<maxLevel) {
                 List<int[]> next = new ArrayList<>();
+                System.out.print(".");
                 if((level +1)%scale == 0){
                     for(int[] pt: current) {
                         List<int[]> pts = neighbors(pt);
@@ -222,6 +231,7 @@ public class DistanceTransformMosaicImage {
                         }
                     }
                 }
+                System.out.println("-");
                 cascade.put(level, next);
                 level++;
                 current = next;
@@ -318,12 +328,21 @@ public class DistanceTransformMosaicImage {
             d = hz - lz + 1;
             stack = new byte[w*h*d];
             double start = points.size();
+
+            long time = System.currentTimeMillis();
+
             for(int[] f: full){
                 set(f, (byte)1);
             }
 
+            System.out.println( ((System.currentTimeMillis() - time)/1000.0) + " seconds");
+            time = System.currentTimeMillis();
             int level = 0;
             while(full.size()>0){
+                if(level > maxLevel){
+                    cascade.get(maxLevel).addAll(full);
+                    break;
+                }
                 List<int[]> region = new ArrayList<>();
                 List<int[]> next = new ArrayList<>(full.size());
                 for(int[] pt: full){
@@ -333,7 +352,8 @@ public class DistanceTransformMosaicImage {
                         next.add(pt);
                     }
                 }
-
+                System.out.println( ((System.currentTimeMillis() - time)/1000.0) + " to find " + region.size() + " px of " + full.size());
+                time = System.currentTimeMillis();
                 if(region.size() == 0){
                     //no edge points
                     region.addAll(full);
@@ -345,7 +365,10 @@ public class DistanceTransformMosaicImage {
 
                 cascade.put(level, region);
                 level++;
+                System.out.println( ((System.currentTimeMillis() - time)/1000.0) + " to remove " + region.size() + " from " + full.size());
+                time = System.currentTimeMillis();
                 full = next;
+
             }
 
 

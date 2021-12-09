@@ -51,3 +51,11 @@ function meshToNewTrack(){
   controls.startNewMeshTrack(frame, mesh);
   controls.selectMesh(mesh);
 }
+
+function normalizeColors(){
+  tracks = controls.getAllTracks();
+  for(i = 0; i<tracks.size(); i++){
+      track = tracks.get(i);
+      track.setColor( new Color(i+1));
+  }
+}

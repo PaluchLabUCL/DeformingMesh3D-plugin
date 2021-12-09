@@ -1,6 +1,7 @@
 package deformablemesh.gui;
 
 import deformablemesh.DeformableMesh3DTools;
+import deformablemesh.MeshImageStack;
 import deformablemesh.SegmentationController;
 import deformablemesh.externalenergies.ImageEnergyType;
 import deformablemesh.geometry.DeformableMesh3D;
@@ -111,7 +112,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         status.setLayout(new BoxLayout(status, BoxLayout.PAGE_AXIS));
 
         JPanel colorStatusRow = new JPanel();
-        colorStatusRow.add(new JLabel("selected color: " ));
+        colorStatusRow.add(new JLabel("selected mesh: " ));
         JLabel selectedColorLabel = new JLabel("");
         colorStatusRow.add(selectedColorLabel);
         status.add(colorStatusRow);
@@ -137,46 +138,65 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         JPanel volumeDisplay = buildVolumeControls();
         JPanel energyDisplay = buildDeformControls();
         JPanel furrowDisplay = buildFurrowControls();
+        JPanel radiusSlider = buildRadiusValueSelector();
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new GridBagLayout());
         GridBagConstraints bcon = new GridBagConstraints();
+        bcon.fill=GridBagConstraints.HORIZONTAL;
+        bcon.gridwidth = 2;
+        buttonPanel.add(imageControls, bcon);
+        bcon.gridy = 1;
+        buttonPanel.add(volumeDisplay, bcon);
 
+        bcon.gridwidth = 2;
+        bcon.gridx = 0;
+        bcon.gridy = 2;
         buttonPanel.add(meshControls, bcon);
 
-        bcon.gridy = 1;
-        buttonPanel.add(energyDisplay, bcon);
-        bcon.gridy = 2;
-        buttonPanel.add(imageControls, bcon);
+        JPanel subPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints sc = new GridBagConstraints();
+
+        subPanel.add(energyDisplay, sc);
+
+        sc.gridx = 1;
+        sc.gridheight=2;
+
+        subPanel.add(radiusSlider, sc);
+        sc.gridx = 0;
+        sc.gridy = 1;
+        sc.gridheight = 1;
+        subPanel.add(furrowDisplay, sc);
+
+        bcon.gridx = 0;
         bcon.gridy = 3;
-        buttonPanel.add(volumeDisplay, bcon);
+        buttonPanel.add(subPanel, bcon);
+
         buttonPanel.setBorder(BorderFactory.createLineBorder(Color.BLUE));
-        bcon.gridy = 4;
-        bcon.gridwidth = 1;
-        buttonPanel.add(furrowDisplay, bcon);
         return buttonPanel;
     }
 
     private JPanel buildImageStatus(){
         JPanel topBottom = new JPanel(new GridBagLayout());
         GridBagConstraints bcon = new GridBagConstraints();
-        bcon.gridwidth = 2;
+        bcon.gridwidth = 3;
         topBottom.add(frameIndicator.imageName, bcon);
-        bcon.gridx = 2;
-        bcon.gridwidth = 1;
-        topBottom.add(frameIndicator.channelLabel, bcon);
 
+        bcon.gridwidth = 1;
         bcon.gridx = 0;
         bcon.gridy = 1;
-
-        topBottom.add(frameIndicator.getTextField(), bcon);
+        topBottom.add(new JLabel("frame: "), bcon);
         bcon.gridx = 1;
+        topBottom.add(frameIndicator.getTextField(), bcon);
+        bcon.gridx = 2;
         topBottom.add(frameIndicator.getMaxLabel(), bcon);
         bcon.gridy = 2;
         bcon.gridx = 0;
         topBottom.add( createButtonPrevious(), bcon);
         bcon.gridx = 1;
         topBottom.add( createButtonNext(), bcon);
+        bcon.gridx = 2;
+        topBottom.add(frameIndicator.channelLabel, bcon);
         topBottom.setBorder(BorderFactory.createLineBorder(Color.GREEN));
 
         return topBottom;
@@ -188,18 +208,17 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         buttonPanel.add(createButtonDeform(), bcon );
         bcon.gridx = 1;
         buttonPanel.add( createButtonInitializeMesh2(), bcon );
-
-        bcon.gridwidth = 2;
+        bcon.gridx = 2;
+        buttonPanel.add( createButtonClearMesh(), bcon );
         bcon.gridy = 1;
         bcon.gridx = 0;
-
-        buttonPanel.add( createConnectionRemesh(), bcon);
-        bcon.gridy = 2;
-        bcon.gridx = 0;
-        bcon.gridwidth = 1;
-        buttonPanel.add( createButtonRemesh(), bcon );
+        buttonPanel.add( new JLabel("remesh: "), bcon);
         bcon.gridx = 1;
-        buttonPanel.add( createButtonClearMesh(), bcon );
+        bcon.gridheight = 3;
+        buttonPanel.add( createConnectionRemesh(), bcon);
+        bcon.gridx = 2;
+        bcon.gridheight = 1;
+        buttonPanel.add( createButtonRemesh(), bcon );
 
         buttonPanel.setBorder(BorderFactory.createLineBorder(Color.GREEN));
 
@@ -311,7 +330,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             if(ringController.modifyingMesh()){
                 setReady(false);
 
-                buttons.forEach(b->b.setEnabled(false));
+                //buttons.forEach(b->b.setEnabled(false));
                 EventQueue.invokeLater(() -> {
                     sculpt.setEnabled(true);
                     finish.setEnabled(true);
@@ -339,30 +358,22 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             ringController.cancel();
             finished();
         });
-
         gbc.gridx = 0;
         gbc.gridy = 0;
-        JPanel showSplit = new JPanel(new GridLayout(1, 2));
+        JPanel showSplit = new JPanel(new GridLayout(2, 2));
         showSplit.add(showFurrowButton);
         showSplit.add(split);
-        components.add(showSplit);
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.gridwidth =1;
-        components.add(box, gbc);
-        gbc.gridy = 0;
+        showSplit.add(box);
+        components.add(showSplit, gbc);
         gbc.gridx = 1;
-        gbc.gridheight = 2;
-        gbc.gridwidth = 2;
+        gbc.gridy = 0;
         components.add( ringController.getHistControlsPanel() , gbc);
 
-        gbc.gridy = 2;
+        gbc.gridy = 1;
         gbc.gridwidth = 1;
         gbc.gridx = 0;
         gbc.gridheight = 3;
         components.add( ringController.createFurrowInput(), gbc);
-
-
 
         JPanel keys = new JPanel(new GridLayout(3, 2));
         keys.add(center);
@@ -372,14 +383,11 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         keys.add(cancel);
         keys.add(finish);
         gbc.gridx = 1;
-        gbc.gridwidth = 2;
-        components.add(keys, gbc);
-        gbc.gridy = 0;
-        gbc.gridx = 3;
-        gbc.gridheight = 5;
         gbc.gridwidth = 1;
-        //components.add( buildRadiusValueSelector(), gbc);
+        components.add(keys, gbc);
+
         components.setBorder(BorderFactory.createLineBorder(Color.GREEN));
+
         return components;
     }
 
@@ -588,19 +596,66 @@ public class ControlFrame implements ReadyObserver, FrameListener {
     public JPanel createConnectionRemesh(){
         JButton action = new JButton("connection remesh");
         buttons.add(action);
-        JPanel minValue = GuiTools.createInputField(
+
+        JLabel scaledMinUnits = new JLabel("");
+        JLabel scaledMaxUnits = new JLabel("");
+
+
+
+        ParameterControl minValue = GuiTools.createInputField(
                 "min length",
-                segmentationController::setMinConnectionLength,
+                v->{
+                    MeshImageStack stack = segmentationController.getMeshImageStack();
+                    if(stack != null){
+                        double scale = stack.SCALE;
+                        String unit = stack.getUnits();
+                        scaledMinUnits.setText("" + scale*v + " " + unit );
+                    } else{
+                        scaledMinUnits.setText("");
+                    }
+                    segmentationController.setMinConnectionLength(v);
+                },
                 segmentationController.getMinConnectionLength(),
                 this
         );
 
-        JPanel maxValue = GuiTools.createInputField(
+        ParameterControl maxValue = GuiTools.createInputField(
                 "max length",
-                segmentationController::setMaxConnectionLength,
+                v->{
+                    MeshImageStack stack = segmentationController.getMeshImageStack();
+                    if(stack != null){
+                        double scale = stack.SCALE;
+                        String unit = stack.getUnits();
+                        scaledMaxUnits.setText("" + scale*v + " " + unit );
+                    } else{
+                        scaledMaxUnits.setText("");
+                    }
+                    segmentationController.setMaxConnectionLength(v);
+                },
                 segmentationController.getMaxConnectionLength(),
                 this
         );
+
+        Runnable updateScaledUnitsText = ()->{
+            double scale;
+            MeshImageStack stack = segmentationController.getMeshImageStack();
+            if(stack != null){
+                scale = stack.SCALE;
+                String unit = stack.getUnits();
+                scaledMaxUnits.setText("" + scale*maxValue.getValue() + " " + unit );
+                scaledMinUnits.setText("" + scale*minValue.getValue() + " " + unit );
+            } else{
+                scaledMinUnits.setText("");
+                scaledMaxUnits.setText("");
+            }
+        };
+
+        segmentationController.addFrameListener(frame->{
+            updateScaledUnitsText.run();
+        });
+
+
+
         JPanel p = new JPanel();
         p.setLayout(new GridBagLayout());
         GridBagConstraints con = new GridBagConstraints();
@@ -615,11 +670,16 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         con.gridy = 1;
         con.gridx = 0;
         con.gridwidth = 2;
-        p.add(minValue, con);
 
+        p.add(minValue, con);
+        con.gridx = 2;
+        p.add(scaledMinUnits, con);
+
+        con.gridx = 0;
         con.gridy = 2;
         p.add(maxValue, con);
-
+        con.gridx =2;
+        p.add(scaledMaxUnits, con);
 
         action.addActionListener(evt->{
             boolean reMeshAll = ( evt.getModifiers() & ActionEvent.CTRL_MASK ) > 0;
@@ -1538,7 +1598,9 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         JTextField field = new JTextField("-");
         JLabel max = new JLabel("/-");
         JLabel imageName = new JLabel("xxx");
-        JLabel channelLabel = new JLabel("-:-");
+        JPanel channelLabel = new JPanel();
+        ButtonGroup csg = new ButtonGroup();
+        List<JRadioButton> channelSelectors = new ArrayList<>();
         FrameIndicator() {
             Dimension size = new Dimension(60, 30);
             field.setMinimumSize(size);
@@ -1581,6 +1643,8 @@ public class ControlFrame implements ReadyObserver, FrameListener {
                     }
                 }
             });
+            channelLabel.setLayout(new BoxLayout(channelLabel, BoxLayout.LINE_AXIS));
+            channelLabel.add(new JLabel("channel: "));
         }
         public JTextField getTextField() {
             return field;
@@ -1596,12 +1660,50 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             String title = segmentationController.getShortImageName();
             imageName.setText(title);
 
-            int channel = segmentationController.getCurrentChannel() + 1;
-            int n = segmentationController.getNChannels();
-            channelLabel.setText(channel + ":" + n);
             field.setEnabled(false);
             field.setText(String.format("%d", (frame+1)));
             max.setText("/ " + total);
+            updateChannelSelectors();
+        }
+
+        void updateChannelSelectors(){
+            int n = segmentationController.getNChannels();
+
+            if(channelSelectors.size() != n){
+                int s = channelSelectors.size();
+                if(s < n){
+                    for(int i = 0; i<(n - s); i++){
+                        JRadioButton button = new JRadioButton();
+                        channelSelectors.add(button);
+                        csg.add(button);
+
+                        channelLabel.add(button);
+                        button.addActionListener(evt->{
+                            int channel = segmentationController.getCurrentChannel();
+                            if(evt.getSource() == channelSelectors.get(channel)){
+                                //Already selected skip!
+                            } else{
+                                int c = channelSelectors.indexOf(evt.getSource());
+                                if(c >= 0) {
+                                    segmentationController.selectChannel(c);
+                                }
+                            }
+                        });
+                    }
+                } else{
+                    for(int i = 0; i<(s-n); i++){
+                        int dex = channelSelectors.size()-1;
+                        JRadioButton b = channelSelectors.remove(dex);
+
+                        csg.remove(b);
+                        channelLabel.remove(b);
+                    }
+                }
+                channelLabel.revalidate();
+            }
+            int channel = segmentationController.getCurrentChannel() + 1;
+            channelSelectors.get(segmentationController.getCurrentChannel()).setSelected(true);
+
         }
 
     }

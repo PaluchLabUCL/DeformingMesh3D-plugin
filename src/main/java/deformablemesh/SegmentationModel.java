@@ -270,12 +270,14 @@ public class SegmentationModel {
      * @param channel
      */
     public void setOriginalPlus(ImagePlus plus, int channel){
-        setOriginalPlus(plus, getCurrentFrame(), channel);
+        int frame = plus.getNFrames() > getCurrentFrame() ? getCurrentFrame() : 0;
+        setOriginalPlus(plus, frame, channel);
     }
 
     public void setOriginalPlus(ImagePlus plus, int frame, int channel){
         original_plus = plus;
         stack = new MeshImageStack(original_plus, frame, channel);
+
         if(stack.CURRENT != getCurrentFrame()){
             setFrame(stack.CURRENT);
         } else {

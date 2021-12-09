@@ -297,7 +297,6 @@ public class FrameToFrameDisplacement {
         return builder.toString();
     }
     public static void main(String[] args) throws IOException {
-        new ImageJ();
         List<Track> meshes;
         String filename;
         if(args.length == 1) {

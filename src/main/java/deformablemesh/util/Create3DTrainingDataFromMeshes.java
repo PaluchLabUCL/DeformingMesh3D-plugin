@@ -30,11 +30,16 @@ public class Create3DTrainingDataFromMeshes {
     ImageStack membrane;
     ImageStack distance;
     boolean categoricalDistanceLabels = true;
+    double relativeDepth;
     public Create3DTrainingDataFromMeshes(List<Track> tracks, ImagePlus plus){
         this.tracks = tracks;
         this.stack = new MeshImageStack(plus);
         original = plus;
-
+        Calibration cb = plus.getCalibration();
+        if(cb.pixelHeight != cb.pixelWidth){
+            System.out.println("warning! x and y resolutions are not equal");
+        }
+        relativeDepth = cb.pixelDepth / cb.pixelWidth;
 
     }
 
@@ -217,12 +222,12 @@ public class Create3DTrainingDataFromMeshes {
         ImagePlus container = original.createImagePlus();
         container.setStack(mosaic);
         DistanceTransformMosaicImage dtmi = new DistanceTransformMosaicImage(container);
-        System.out.println("starting");
         dtmi.findBlobs();
-        System.out.println("blobbed");
-        dtmi.createCascades();
-        System.out.println("cascading");
-        //dtmi.createScaledCascades(2); //TODO make this non-fixed.
+        int scale = (int)relativeDepth;
+        if(scale < 1){
+            scale = 1;
+        }
+        dtmi.createScaledCascades(scale); //TODO make this non-fixed.
         System.out.println("Creating image!");
         ImagePlus plus = dtmi.createLabeledImage();
         System.out.println("Image Created");

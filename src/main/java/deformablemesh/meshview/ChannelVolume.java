@@ -28,4 +28,8 @@ public class ChannelVolume implements FrameListener {
     public String toString(){
         return name;
     }
+
+    public VolumeDataObject getVolumeDataObject(){
+        return vdo;
+    }
 }

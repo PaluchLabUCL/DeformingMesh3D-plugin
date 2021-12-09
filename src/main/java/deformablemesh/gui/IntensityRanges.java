@@ -23,16 +23,15 @@ public class IntensityRanges {
     HistogramPanel panel;
     double lowIntensity = 0;
     double highIntensity = 0;
+    List<Contrastable> listeners = new ArrayList<>();
 
     public interface Contrastable{
         public void setMinMax(double min, double max);
     }
-    List<Contrastable> listeners = new ArrayList<>();
 
     public IntensityRanges(double[][][] intensityValues){
         histogram = new Histogram(intensityValues);
         panel = new HistogramPanel(histogram);
-
     }
 
     public void setClipValues(double min, double max ){

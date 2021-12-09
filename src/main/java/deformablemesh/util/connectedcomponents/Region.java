@@ -63,6 +63,12 @@ public class Region {
         };
 
     }
+    public double[] getLowCorner(){
+        return new double[]{lx, ly, lz};
+    }
+    public double[] getHighCorner(){
+        return new double[]{hx, hy, hz};
+    }
     public DataObject getDataObject(MeshImageStack stack){
         if(dataObject==null){
             dataObject = new VolumeDataObject(c);
@@ -73,6 +79,28 @@ public class Region {
 
         return dataObject;
     }
+
+    public void translate(int dx, int dy, int dz){
+        lx += dx;
+        hx += dy;
+
+        ly += dy;
+        hy += dy;
+
+        lz += dz;
+        hz += dz;
+
+        for(int[] pt: pts){
+            pt[0] += dx;
+            pt[1] += dy;
+            pt[2] += dz;
+        }
+        center[0] += dx;
+        center[1] += dy;
+        center[2] += dz;
+
+    }
+
     public Drawable getXYSlice(int[] pt){
         int z = pt[2];
         if(z<lz||z>=hz){

@@ -41,17 +41,24 @@ public class VolumeContrastSetter{
         content.setBackground(Color.BLACK);
         content.setOpaque(true);
         range = new IntensityRanges(vdo.texture_data);
+
+
         JPanel flow = new JPanel();
         flow.setOpaque(false);
         flow.add(range.getPanel());
 
         content.add(flow, BorderLayout.NORTH);
-        Component comp = create3DPreviewer(dialog);
 
-        content.add(comp, BorderLayout.CENTER);
+
+        //Component comp = create3DPreviewer(dialog);
+
+        //content.add(comp, BorderLayout.CENTER);
         content.add(createButtons(), BorderLayout.SOUTH);
 
-        range.addContrastableListener(preview::setMinMaxClipping);
+        if(preview != null){
+            range.addContrastableListener(preview::setMinMaxClipping);
+        }
+
         range.setClipValues(vdo.min, vdo.max);
         dialog.setContentPane(content);
         dialog.pack();
@@ -63,15 +70,16 @@ public class VolumeContrastSetter{
         panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
         JButton accept = new JButton("accept");
         accept.addActionListener(evt->{
-            double[] clamped = preview.previewVdo.getClampedMinMax();
+            //double[] clamped = preview.previewVdo.getClampedMinMax();
+            double[] clip = range.getClipValues();
             //using the original vdo we want to find clip values that give the same clamped values.
             double[] mm = vdo.getMaxRangeMinMax();
 
-            double rmin = ( clamped[0] - mm[0] )/(mm[1] - mm[0]);
-            double rmax = ( clamped[1] - mm[0])/(mm[1] - mm[0]);
-            System.out.println(" : global clips: " + rmin + ", " + rmax);
+            //double rmin = ( clamped[0] - mm[0] )/(mm[1] - mm[0]);
+            //double rmax = ( clamped[1] - mm[0])/(mm[1] - mm[0]);
+            //System.out.println(" : global clips: " + rmin + ", " + rmax);
             dialog.dispose();
-            vdo.setMinMaxRange(rmin, rmax);
+            vdo.setMinMaxRange(clip[0], clip[1]);
 
         });
         JButton cancel = new JButton("cancel");

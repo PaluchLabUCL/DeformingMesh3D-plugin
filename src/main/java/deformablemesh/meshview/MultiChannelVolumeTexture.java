@@ -34,10 +34,7 @@ public class MultiChannelVolumeTexture extends Texture3D{
         return new double[] {c.requestedMin, c.requestedMax};
 
     }
-    public void setAbsoluteMinMax(int channel, double clampedMin, double clampedMax){
-        Calibration c = calibrations.get(channel);
 
-    }
     public double[] getAbsoluteMinMax(int channel){
         Calibration c = calibrations.get(channel);
 
@@ -91,7 +88,13 @@ public class MultiChannelVolumeTexture extends Texture3D{
             this.opaque = opaque;
         }
 
+        /**
+         * Determines the transparency of the provided value by
+         * @param scale
+         * @return
+         */
         public int alphaFromScale( double scale){
+
             if(scale < clear){
                 return 0;
             } if(scale > opaque){
@@ -115,6 +118,7 @@ public class MultiChannelVolumeTexture extends Texture3D{
      */
     public MultiChannelVolumeTexture(double[][][] double3d, double cl_min, double cl_max, Color3f c){
         super(Texture.BASE_LEVEL, Texture.RGBA, double3d.length, double3d[0].length, double3d[0][0].length);
+        setCapability(ALLOW_IMAGE_WRITE);
         textures.add(double3d);
 
         this.xDim = double3d.length;
@@ -130,6 +134,14 @@ public class MultiChannelVolumeTexture extends Texture3D{
         cal.setRange(cl_min, cl_max);
 
         clamp();
+
+        setEnable(true);
+        setMinFilter(Texture.BASE_LEVEL_LINEAR);
+        setMagFilter(Texture.BASE_LEVEL_LINEAR);
+        setBoundaryModeS(Texture.CLAMP);
+        setBoundaryModeT(Texture.CLAMP);
+        setBoundaryModeR(Texture.CLAMP);
+
     }
 
     public void addChannel(double[][][] channelValues, double cl_min, double cl_max, Color3f c){
@@ -223,7 +235,6 @@ public class MultiChannelVolumeTexture extends Texture3D{
                         double scale = (data - cal.clampedMin) / (cal.clampedMax - cal.clampedMin);
 
                         Vector4f v = new Vector4f(color4f);
-                        //System.out.println(data + ", " + scale + ", " + v);
                         v.scale((float) scale);
                         //Vector4f v = new Vector4f(color4f.x, color4f.y, color4f.z, (float)(scale*255));
                         //R
@@ -248,14 +259,6 @@ public class MultiChannelVolumeTexture extends Texture3D{
         }
 
         setImage(0, pArray);
-        setEnable(true);
-        setMinFilter(Texture.BASE_LEVEL_LINEAR);
-        setMagFilter(Texture.BASE_LEVEL_LINEAR);
-        setBoundaryModeS(Texture.CLAMP);
-        setBoundaryModeT(Texture.CLAMP);
-        setBoundaryModeR(Texture.CLAMP);
-
-
     }
 
     public void setColor(int channel, double x, double y, double z){
@@ -263,5 +266,17 @@ public class MultiChannelVolumeTexture extends Texture3D{
         cal.color = new Color3f((float)x,(float)y,(float)z);
     }
 
+    /**
+     * Sets the transparency to the range associated relative to the clamped min and max.
+     * 0 and 1 will be same range.
+     * @param channel
+     * @param low
+     * @param high
+     */
+    public void setTransparencyRange(int channel, double low, double high){
+        Calibration c = calibrations.get(channel);
+        c.setTransparencyRange(low, high);
+        clamp();
+    }
 
 }

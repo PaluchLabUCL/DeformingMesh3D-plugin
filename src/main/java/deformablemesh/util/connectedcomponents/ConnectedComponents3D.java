@@ -258,10 +258,15 @@ public class ConnectedComponents3D {
      * @param stack
      */
     private void secondPass(ImageStack stack){
+        short[][] pixels = new short[stack.getSize()][];
+        for(int i = 0; i<pixels.length; i++){
+            pixels[i] = (short[])stack.getPixels(i+1);
+        }
         for(Integer key: log.keySet()){
             List<int[]> px = log.get(key);
             for(int[] x: px){
-                stack.getProcessor(x[2]).set(x[0], x[1], key);
+                pixels[x[2] - 1][x[0] + width*x[1]] = key.shortValue();
+                //stack.getProcessor(x[2]).set(x[0], x[1], key);
             }
         }
     }

@@ -37,6 +37,8 @@ import java.awt.Color;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -421,7 +423,7 @@ public class SegmentationController {
             ImagePlus frame = getMeshImageStack().getCurrentFrame();
             DistanceTransformMosaicImage dtmi = new DistanceTransformMosaicImage(frame);
             dtmi.findBlobs();
-            dtmi.createCascades();
+            dtmi.createGrowingCascades();
             ImageStack frames = dtmi.createLabeledImage().getStack();
             for(int j = 1; j<=frames.getSize(); j++){
                 result.addSlice(frames.getSliceLabel(j), frames.getProcessor(j));
@@ -571,7 +573,9 @@ public class SegmentationController {
             }
         });
     }
+    public void autotrack(){
 
+    }
     /**
      * Starts processing a single frame at a time.
      *
@@ -585,9 +589,21 @@ public class SegmentationController {
         List<Track> tracks = getAllTracks();
         Path baseFolder = Paths.get(IJ.getDirectory("Select root folder"));
         Create3DTrainingDataFromMeshes creator = new Create3DTrainingDataFromMeshes(tracks, getMeshImageStack().original);
+        Path labelPath = baseFolder.resolve("labels");
+        Path imagePath = baseFolder.resolve("images");
+        try {
+            if(!Files.exists(imagePath)){
+                Files.createDirectory(imagePath);
+            }
+            if(!Files.exists(labelPath)){
+                Files.createDirectory(labelPath);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("unable to create directories for output", e);
+        }
 
-        File labelFolder = baseFolder.resolve("labels").toFile();
-        File imageFolder = baseFolder.resolve("images").toFile();
+        File labelFolder = labelPath.toFile();
+        File imageFolder = imagePath.toFile();
         String name = original.getTitle().replace(".tif", "");
 
         for(int i = start; i<=finish; i++){
@@ -596,12 +612,12 @@ public class SegmentationController {
             ImagePlus maskPlus = original.createImagePlus();
             maskPlus.setStack(creator.getLabeledStack());
             IJ.save(maskPlus, new File(labelFolder, sliceName).getAbsolutePath());
-            System.out.println("finished working");
+            System.out.println("finished frame: " + i);
             //maskPlus.show();
             try {
                 ImagePlus scaled = creator.getOriginalFrame(i);
+                //scaled.setOpenAsHyperStack(true);
                 scaled.setLut(LUT.createLutFromColor(Color.WHITE));
-                scaled.setOpenAsHyperStack(true);
                 IJ.save(scaled, new File(imageFolder, sliceName).getAbsolutePath());
 
             } catch(Exception e){
@@ -772,106 +788,23 @@ public class SegmentationController {
     }
 
     public ImagePlus guessMeshes(int level) {
+        MeshDetector detector = new MeshDetector(getMeshImageStack());
 
-        MeshImageStack stack = getMeshImageStack();
+        int frame = getCurrentFrame();
+        List<Box3D> current = getAllTracks().stream().filter(
+                t->t.containsKey(frame)
+        ).map(
+                t->t.getMesh(frame).getBoundingBox()
+        ).collect(Collectors.toList());
 
-        int cutoff = 200;
-        int frame = model.getCurrentFrame();
-        //Get the current image stack for this frame/channel.
-        //create a thresholded version.
-        ImageStack currentFrame = getMeshImageStack().getCurrentFrame().getStack();
-        ImageStack threshed = new ImageStack(currentFrame.getWidth(), currentFrame.getHeight());
-        for(int i = 1; i<= currentFrame.size(); i++){
-            ImageProcessor proc = currentFrame.getProcessor(i).convertToShort(false);
-            proc.threshold(level);
-            threshed.addSlice(proc);
-        }
+        detector.addRegionsToAvoid(current);
 
-        List<Region> regions = ConnectedComponents3D.getRegions(threshed);
-
-        Integer biggest = -1;
-        int size = 0;
-
-
-        List<Region> toRemove = new ArrayList<>();
-        System.out.println(regions.size() + " regions detected");
-        int small = 0;
-        for (Region region : regions) {
-            Integer key = region.getLabel();
-            List<int[]> points = region.getPoints();
-
-            if (points.size() < cutoff) {
-                small++;
-            }
-
-            if (points.size() < cutoff) {
-
-                toRemove.add(region);
-                for (int[] pt : points) {
-                    threshed.getProcessor(pt[2]).set(pt[0], pt[1], 0);
-                }
-            } else {
-                for (int[] pt : points) {
-                    threshed.getProcessor(pt[2]).set(pt[0], pt[1], key);
-                }
-            }
-
-            if (points.size() > size) {
-                size = points.size();
-                biggest = key;
-            }
-        }
-        System.out.println(small + " to small. Biggest: " + biggest + " size of: " + size);
-        for (Region region : toRemove) {
-            regions.remove(region);
-        }
-
-        ImageStack growing = new ImageStack(currentFrame.getWidth(), currentFrame.getHeight());
-        int nlev = 2*level/3;
-        for(int i = 1; i<= currentFrame.size(); i++){
-            ImageProcessor proc = currentFrame.getProcessor(i).convertToShort(false);
-            proc.threshold(nlev);
-            growing.addSlice(proc);
-        }
-        RegionGrowing rg = new RegionGrowing(threshed, growing);
-        rg.setRegions(regions);
-        for(int st = 0; st<2; st++){
-            rg.step();
-        }
-
-        List<DeformableMesh3D> guessed = new ArrayList<>();
-        for (Region region : regions) {
-            int label = region.getLabel();
-            List<int[]> rs = region.getPoints();
-
-            //Collections.sort(rs, (a,b)->Integer.compare(a[2], b[2]));
-            ImagePlus original = getMeshImageStack().original;
-            ImagePlus plus = original.createImagePlus();
-            int w = original.getWidth();
-            int h = original.getHeight();
-            ImageStack new_stack = new ImageStack(w, h);
-
-            for (int dummy = 0; dummy < original.getNSlices(); dummy++) {
-                new_stack.addSlice(new ByteProcessor(w, h));
-            }
-            for (int[] pt : rs) {
-                new_stack.getProcessor(pt[2]).set(pt[0], pt[1], 1);
-            }
-
-            plus.setStack(new_stack);
-            plus.setTitle("label: " + label);
-            //plus.show();
-
-            DeformableMesh3D mesh = FillingBinaryImage.fillBinaryWithMesh(plus, rs);
-            mesh.clearEnergies();
-            guessed.add(mesh);
-        }
-
+        List<DeformableMesh3D> guessed = detector.guessMeshes(level);
 
         startNewMeshTracks(guessed);
 
         //add all of the guessed meshes to new tracks in this frame.
-        return new ImagePlus("threshold", threshed);
+        return new ImagePlus("threshold", detector.getThreshedStack());
     }
 
     /**
@@ -1882,6 +1815,10 @@ public class SegmentationController {
         );
     }
 
+    public void selectChannel(int c){
+        setOriginalPlus(model.original_plus, c);
+    }
+
     /**
      * Development. This is for isolating regions to see them better. Possibly will not be finished.
      *
@@ -2113,6 +2050,7 @@ public class SegmentationController {
      * @param replacements
      */
     public void setMeshTracks(List<Track> replacements){
+
         submit(()->{
             actionStack.postAction(new UndoableActions(){
                 final List<Track> old = new ArrayList<>(model.getAllTracks());

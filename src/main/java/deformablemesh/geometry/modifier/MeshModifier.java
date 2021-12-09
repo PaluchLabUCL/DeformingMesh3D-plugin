@@ -70,7 +70,7 @@ public class MeshModifier {
     ModificationState state;
     TexturedPlaneDataObject slice;
     List<Sphere> markers = new ArrayList<>();
-
+    double cursorRadius = 0.1;
     public MeshModifier(){
         manager = new StateManager();
     }
@@ -79,9 +79,10 @@ public class MeshModifier {
     }
 
     public void setCursorRadius(double f){
-        sculptor.setRadius(f);
-        selector.setRadius(f);
-
+        cursorRadius = f;
+        System.out.println("to here!" + f);
+        sculptor.setRadius(cursorRadius);
+        selector.setRadius(cursorRadius);
     }
 
     public List<Node3D> getSelected() {
