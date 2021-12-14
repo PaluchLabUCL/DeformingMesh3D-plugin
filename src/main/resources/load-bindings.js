@@ -52,6 +52,14 @@ function meshToNewTrack(){
   controls.selectMesh(mesh);
 }
 
+
+function restartOffscreenCanvas(){
+  mf3d = controls.getMeshFrame3D();
+  can = mf3d.getCanvas();
+  can.destroyOffscreenCanvas();
+  can.createOffscreenCanvas();
+}
+
 function normalizeColors(){
   tracks = controls.getAllTracks();
   for(i = 0; i<tracks.size(); i++){

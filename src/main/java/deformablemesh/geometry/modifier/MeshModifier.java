@@ -60,7 +60,6 @@ public class MeshModifier {
     MeshImageStack mis;
     private boolean running = true;
     List<Node3D> selected = new ArrayList<>();
-    LineDataObject obj;
     Furrow3D furrow;
     StateManager manager;
     ActionStack stack = new ActionStack();
@@ -80,15 +79,12 @@ public class MeshModifier {
 
     public void setCursorRadius(double f){
         cursorRadius = f;
-        System.out.println("to here!" + f);
         sculptor.setRadius(cursorRadius);
         selector.setRadius(cursorRadius);
     }
 
     public List<Node3D> getSelected() {
-
         return selected;
-
     }
 
     public void deactivate(){

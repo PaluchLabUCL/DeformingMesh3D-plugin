@@ -138,6 +138,9 @@ class Sculptor implements ModificationState {
 
             Sphere mark;
             Node3D node = contained.get(i);
+            if(ignoring.contains(node)){
+                continue;
+            }
             if (markers.containsKey(node)) {
                 mark = markers.get(node);
             } else{
@@ -192,7 +195,21 @@ class Sculptor implements ModificationState {
         return Vector3DOps.proximity(pt, cPt, r);
     }
     List<Node3D> containedNodes(){
-        return modifier.mesh.nodes.stream().filter( this::contained ).collect(Collectors.toList());
+        List<Node3D> nodes = new ArrayList<>();
+        if(modifier.getSelected().size() > 0){
+            for(Node3D n: modifier.getSelected()){
+                if(contained(n)){
+                    nodes.add(n);
+                }
+            }
+        } else{
+            for(Node3D n: modifier.mesh.nodes){
+                if(contained(n)){
+                    nodes.add(n);
+                }
+            }
+        }
+        return nodes;
     }
 
 

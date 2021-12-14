@@ -23,6 +23,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -40,6 +41,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.util.stream.IntStream;
@@ -192,10 +194,21 @@ public class GuiTools {
     }
 
     public static void showAboutWindow(JFrame owner){
-        JDialog log = new JDialog(owner, "about Mesh3D");
+        JDialog log = new JDialog(owner, "about DM3D");
         log.setModal(false);
         JEditorPane svg = new JEditorPane("text/html", versionHTML);
         svg.setEditable(false);
+        svg.addHyperlinkListener(hyperlinkEvent ->{
+            try {
+                if(hyperlinkEvent.getEventType()== HyperlinkEvent.EventType.ACTIVATED){
+                    Desktop.getDesktop().browse(hyperlinkEvent.getURL().toURI());
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
+            }
+        });
         log.setContentPane(svg);
         log.pack();
         log.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);

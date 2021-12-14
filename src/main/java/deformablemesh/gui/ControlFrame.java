@@ -29,10 +29,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
@@ -66,6 +64,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
     HotKeyDelegate mf3DInterface;
     RingController ringController;
 
+    Color darkerBG = new Color(220, 220, 220);
     public ControlFrame( SegmentationController model){
         this.segmentationController = model;
         try{
@@ -156,7 +155,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
 
         JPanel subPanel = new JPanel(new GridBagLayout());
         GridBagConstraints sc = new GridBagConstraints();
-
+        sc.fill = GridBagConstraints.HORIZONTAL;
         subPanel.add(energyDisplay, sc);
 
         sc.gridx = 1;
@@ -197,8 +196,8 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         topBottom.add( createButtonNext(), bcon);
         bcon.gridx = 2;
         topBottom.add(frameIndicator.channelLabel, bcon);
-        topBottom.setBorder(BorderFactory.createLineBorder(Color.GREEN));
-
+        topBottom.setOpaque(true);
+        topBottom.setBackground(darkerBG);
         return topBottom;
     }
 
@@ -215,13 +214,16 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         buttonPanel.add( new JLabel("remesh: "), bcon);
         bcon.gridx = 1;
         bcon.gridheight = 3;
-        buttonPanel.add( createConnectionRemesh(), bcon);
+        JPanel[] remButtonUnits = createConnectionRemesh();
+        buttonPanel.add( remButtonUnits[0], bcon);
         bcon.gridx = 2;
         bcon.gridheight = 1;
         buttonPanel.add( createButtonRemesh(), bcon );
-
-        buttonPanel.setBorder(BorderFactory.createLineBorder(Color.GREEN));
-
+        bcon.gridheight = 2;
+        bcon.gridy = 2;
+        buttonPanel.add(remButtonUnits[1], bcon);
+        buttonPanel.setOpaque(true);
+        buttonPanel.setBackground(darkerBG);
         return buttonPanel;
     }
 
@@ -237,7 +239,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         buttonPanel.add( createButtonAdjustMinimum(), bcon);
         bcon.gridx = 1;
         buttonPanel.add( createButtonAdjustMaximum(), bcon);
-        buttonPanel.setBorder(BorderFactory.createLineBorder(Color.GREEN));
         return buttonPanel;
     }
     private JPanel buildRadiusValueSelector(){
@@ -274,6 +275,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
     }
     private JPanel buildFurrowControls(){
         JPanel components = new JPanel(new GridBagLayout());
+
         GridBagConstraints gbc = new GridBagConstraints();
         JButton showFurrowButton = new JButton("show");
         buttons.add(showFurrowButton);
@@ -386,15 +388,17 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         gbc.gridwidth = 1;
         components.add(keys, gbc);
 
-        components.setBorder(BorderFactory.createLineBorder(Color.GREEN));
-
         return components;
     }
 
     private JPanel buildDeformControls(){
         JPanel buttonPanel = new JPanel(new GridBagLayout());
+        buttonPanel.setOpaque(true);
+        buttonPanel.setBackground(darkerBG);
         GridBagConstraints bcon = new GridBagConstraints();
+        bcon.fill = GridBagConstraints.HORIZONTAL;
         bcon.gridwidth = 3;
+
         buttonPanel.add( createEnergySelector(), bcon);
         bcon.gridy = 1;
         bcon.gridwidth = 2;
@@ -402,8 +406,8 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         bcon.gridx = 2;
         bcon.gridwidth = 1;
         buttonPanel.add( createButtonShowForces(), bcon);
-        bcon.gridx = 0;
-        buttonPanel.setBorder(BorderFactory.createLineBorder(Color.GREEN));
+        bcon.gridx = 3;
+        buttonPanel.add( createButtonClearTransients(), bcon);
         return buttonPanel;
     }
 
@@ -484,6 +488,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             segmentationController.setRigidBoundaries(check.isSelected());
         });
         buttons.add(check);
+        check.setOpaque(false);
         return check;
     }
 
@@ -593,8 +598,8 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         });
     }
 
-    public JPanel createConnectionRemesh(){
-        JButton action = new JButton("connection remesh");
+    public JPanel[] createConnectionRemesh(){
+        JButton action = new JButton("connection");
         buttons.add(action);
 
         JLabel scaledMinUnits = new JLabel("");
@@ -609,7 +614,8 @@ public class ControlFrame implements ReadyObserver, FrameListener {
                     if(stack != null){
                         double scale = stack.SCALE;
                         String unit = stack.getUnits();
-                        scaledMinUnits.setText("" + scale*v + " " + unit );
+
+                        scaledMinUnits.setText(String.format(Locale.US, "%3.3f %s", scale*v, unit ));
                     } else{
                         scaledMinUnits.setText("");
                     }
@@ -626,7 +632,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
                     if(stack != null){
                         double scale = stack.SCALE;
                         String unit = stack.getUnits();
-                        scaledMaxUnits.setText("" + scale*v + " " + unit );
+                        scaledMaxUnits.setText(String.format(Locale.US, "%3.3f %s", scale*v, unit ));
                     } else{
                         scaledMaxUnits.setText("");
                     }
@@ -642,8 +648,8 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             if(stack != null){
                 scale = stack.SCALE;
                 String unit = stack.getUnits();
-                scaledMaxUnits.setText("" + scale*maxValue.getValue() + " " + unit );
-                scaledMinUnits.setText("" + scale*minValue.getValue() + " " + unit );
+                scaledMaxUnits.setText(String.format(Locale.US, "%3.3f %s",  scale*maxValue.getValue(), unit ));
+                scaledMinUnits.setText(String.format(Locale.US, "%3.3f %s",  scale*minValue.getValue(), unit ));
             } else{
                 scaledMinUnits.setText("");
                 scaledMaxUnits.setText("");
@@ -657,35 +663,24 @@ public class ControlFrame implements ReadyObserver, FrameListener {
 
 
         JPanel p = new JPanel();
-        p.setLayout(new GridBagLayout());
-        GridBagConstraints con = new GridBagConstraints();
-        p.add(Box.createHorizontalGlue(), con);
+        p.setLayout(new BoxLayout(p, BoxLayout.PAGE_AXIS));
 
-        con.gridx = 1;
-        con.gridy = 0;
-        con.gridwidth = 1;
-        p.add(action, con);
+        p.add(action);
+        p.add(minValue);
+        p.add(maxValue);
 
-
-        con.gridy = 1;
-        con.gridx = 0;
-        con.gridwidth = 2;
-
-        p.add(minValue, con);
-        con.gridx = 2;
-        p.add(scaledMinUnits, con);
-
-        con.gridx = 0;
-        con.gridy = 2;
-        p.add(maxValue, con);
-        con.gridx =2;
-        p.add(scaledMaxUnits, con);
+        JPanel p2 = new JPanel();
+        p2.setLayout(new BoxLayout(p2, BoxLayout.PAGE_AXIS));
+        p2.add(scaledMinUnits);
+        p2.add(scaledMaxUnits);
 
         action.addActionListener(evt->{
             boolean reMeshAll = ( evt.getModifiers() & ActionEvent.CTRL_MASK ) > 0;
             connectionRemesh(reMeshAll);
         });
-        return p;
+        p.setOpaque(false);
+        p2.setOpaque(false);
+        return new JPanel[]{p, p2};
 
     }
 
@@ -707,7 +702,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
     }
 
     public JButton createButtonRemesh(){
-        JButton button = new JButton("raycast remesh");
+        JButton button = new JButton("raycast");
         buttons.add(button);
         button.addActionListener((evt)->{
             setReady(false);
@@ -718,7 +713,8 @@ public class ControlFrame implements ReadyObserver, FrameListener {
     }
 
     public JButton createButtonClearTransients(){
-        JButton clearTransients = new JButton("clear transient objects");
+        JButton clearTransients = new JButton("X");
+        clearTransients.setToolTipText("Clear all force vectors.");
         buttons.add(clearTransients);
         clearTransients.addActionListener((evt)->{
             setReady(false);
@@ -775,6 +771,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
     public JPanel createEnergySelector(){
 
         JPanel panel = new JPanel();
+        panel.setOpaque(false);
         panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
         JLabel l = new JLabel("external energy");
         l.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -1645,6 +1642,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             });
             channelLabel.setLayout(new BoxLayout(channelLabel, BoxLayout.LINE_AXIS));
             channelLabel.add(new JLabel("channel: "));
+            channelLabel.setOpaque(false);
         }
         public JTextField getTextField() {
             return field;
@@ -1674,6 +1672,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
                 if(s < n){
                     for(int i = 0; i<(n - s); i++){
                         JRadioButton button = new JRadioButton();
+                        button.setOpaque(false);
                         channelSelectors.add(button);
                         csg.add(button);
 
@@ -1700,6 +1699,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
                     }
                 }
                 channelLabel.revalidate();
+
             }
             int channel = segmentationController.getCurrentChannel() + 1;
             channelSelectors.get(segmentationController.getCurrentChannel()).setSelected(true);

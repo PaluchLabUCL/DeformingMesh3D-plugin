@@ -9,6 +9,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 
 /**
@@ -20,6 +21,7 @@ class HistogramInput {
     final int border = 5;
     Histogram gram;
     final RingController rc;
+    Color highlight = new Color(0, 0, 0, 175);
     public HistogramInput(RingController rc){
         this.rc = rc;
         Graphics2D g2d = img.createGraphics();
@@ -30,11 +32,22 @@ class HistogramInput {
         panel = new JPanel(){
             @Override
             public void paintComponent(Graphics g){
-                int baseline = 3*img.getHeight()/4;
-                int centerX = img.getWidth()/2;
-                g.drawImage(img, 0, 0, this);
+                int h = getHeight();
+                int w = getWidth();
+                int padX = (img.getWidth() - w)/2;
+                int padY = (img.getHeight() - h)/2;
+                int baseline = 3*img.getHeight()/4 + padY;
+                g.drawImage(img, padX, padY, this);
+
+                String sel = String.format("%3.3f", rc.getThresh());
+                double f = gram.getFraction(rc.getThresh());
+                int start = (int)(img.getWidth()*f);
+
+                Rectangle2D b = g.getFontMetrics().getStringBounds(sel, g);
+                g.setColor(highlight);
+                g.fillRect(start - 1, (int)(baseline - b.getHeight() - 1), (int)b.getWidth() + 2, (int)b.getHeight() + 2);
                 g.setColor(Color.WHITE);
-                g.drawString(String.format("%3.3f", rc.getThresh()), centerX, baseline);
+                g.drawString(sel, start, baseline);
 
             }
         };
@@ -55,8 +68,15 @@ class HistogramInput {
                 int bins = gram.getNBins();
                 double scale = bins / (img.getWidth() - 2 * border);
                 int i = (int)(( e.getX() - border )*scale);
+
                 if(i>=0&&i<bins) {
                     rc.setThreshold(gram.getValue(i));
+                    panel.repaint();
+                } else if(i<0){
+                    rc.setThreshold(gram.minValue);
+                    panel.repaint();
+                } else if(i >= bins){
+                    rc.setThreshold(gram.maxValue);
                     panel.repaint();
                 }
             }
@@ -90,10 +110,22 @@ class HistogramInput {
         for(int i = 0; i<n; i++){
             g2d.drawLine(i+border, height, i+border, height-gram.bins[i]);
         }
+
+        String max = String.format("%3.3f", gram.maxValue);
+        Rectangle2D mxb = g2d.getFontMetrics().getStringBounds(max, g2d);
+        String min = String.format("%3.3f", gram.minValue);
+        Rectangle2D mnb = g2d.getFontMetrics().getStringBounds(min, g2d);
+
+        int baseline = (int)(mxb.getHeight() + 1);
+        int mxx = (int)(img.getWidth() - mxb.getWidth());
+        g2d.setColor(highlight);
+        g2d.fillRect(0, 0, (int)mnb.getWidth() + 2, baseline + 1);
+        g2d.fillRect(0, mxx - 1, (int)mxb.getWidth() + 2, baseline + 1);
+
         g2d.setPaint(Color.WHITE);
-        int center = img.getHeight()/2;
-        g2d.drawString(String.format("%3.3f", gram.minValue), 0, center);
-        g2d.drawString(String.format("%3.3f", gram.maxValue), (int)(0.8)*img.getWidth(), center);
+        g2d.drawString(min, 1, baseline);
+
+        g2d.drawString(max, mxx, baseline);
         g2d.dispose();
         panel.repaint();
     }
@@ -149,6 +181,10 @@ class Histogram{
 
     public int getNBins() {
         return bins.length;
+    }
+
+    public double getFraction(double thresh) {
+        return (thresh - minValue)/(maxValue - minValue);
     }
 }
 

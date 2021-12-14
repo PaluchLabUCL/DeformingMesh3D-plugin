@@ -19,6 +19,7 @@ public class ParameterControl extends JPanel {
         add(label);
         add(Box.createHorizontalGlue());
         add(field);
+        setOpaque(false);
     }
 
     public double getValue(){
