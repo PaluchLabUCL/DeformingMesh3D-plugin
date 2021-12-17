@@ -9,6 +9,7 @@ import deformablemesh.geometry.ProjectableMesh;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.ringdetection.FurrowTransformer;
 import deformablemesh.util.ColorSuggestions;
+import deformablemesh.util.actions.StateListener;
 
 import javax.swing.DefaultListSelectionModel;
 import javax.swing.ImageIcon;
@@ -52,7 +53,7 @@ import java.util.stream.Collectors;
  *
  * Created on 22/03/2017.
  */
-public class MeshTrackManager {
+public class MeshTrackManager implements StateListener{
     JTable trackTable;
     List<Track> tracks = new ArrayList<>();
     MeshListModel model;
@@ -62,6 +63,7 @@ public class MeshTrackManager {
     long lastUpdated = -1;
     static final int w = 32;
     static final int h = 32;
+    SegmentationController controller;
     private JLabel getNullLabel() {
         BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_4BYTE_ABGR);
         Graphics2D g2d = (Graphics2D)img.getGraphics();
@@ -185,9 +187,7 @@ public class MeshTrackManager {
             }
         };
     }
-    public void setSegmentationController( SegmentationController controller){
-        trackTable.addMouseListener( createMouseAdapter( controller ) );
-    }
+
     public void buildJFrameGui(){
         JFrame frame;
         frame = new JFrame();
@@ -560,21 +560,31 @@ public class MeshTrackManager {
         }
         return verified;
     }
-
+    public void manageSegmentationControllerTracks(SegmentationController controller ){
+        this.controller = controller;
+        controller.addUndoStateListener(this);
+        trackTable.addMouseListener( createMouseAdapter( controller ) );
+        stateUpdated(controller.getCurrentState());
+    }
+    @Override
+    public void stateUpdated(long stateId){
+        if(lastUpdated == stateId){
+            //prevents erasing pending changes, unless data was changed elsewhere.
+            return;
+        }
+        lastUpdated = stateId;
+        manageMeshTrackes(controller.getAllTracks());
+    }
     /**
      * Receives the list of tracks and creates duplicate tracks for managing.
      *
      * @param tracks
      */
-    public void manageMeshTrackes(SegmentationController controller, List<Track> tracks){
+    private void manageMeshTrackes(List<Track> tracks){
         List<Track> newTracks = new ArrayList<>();
-        if(lastUpdated == controller.getCurrentState()){
-            //prevents erasing pending changes, unless data was changed elsewhere.
-            return;
-        }
 
-        lastUpdated = controller.getCurrentState();
-        
+
+
         Map<DeformableMesh3D, JLabel> newLabels = new HashMap<>();
         int rows = 0;
         Set<String> names = new HashSet<>();
@@ -683,7 +693,7 @@ public class MeshTrackManager {
     public static void main(String[] args) throws IOException, InvocationTargetException, InterruptedException {
         MeshTrackManager manager = new MeshTrackManager();
         List<Track> tracks = MeshWriter.loadMeshes(new File("sample.bmf"));
-        manager.manageMeshTrackes(new SegmentationController(null), tracks);
+        manager.manageSegmentationControllerTracks(new SegmentationController(null));
         EventQueue.invokeAndWait(()->{
             manager.buildJFrameGui();
         });

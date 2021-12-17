@@ -1,2 +1,5 @@
-package deformablemesh.util.actions;public class StateListener {
+package deformablemesh.util.actions;
+@FunctionalInterface
+public interface StateListener {
+    public void stateUpdated(long state);
 }

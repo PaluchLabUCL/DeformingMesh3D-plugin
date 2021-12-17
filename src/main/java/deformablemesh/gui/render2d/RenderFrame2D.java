@@ -50,6 +50,7 @@ public class RenderFrame2D {
     List<Track> tracks = new ArrayList<>();
     JPanel panel;
     Color backgoundColor = Color.WHITE;
+    List<Runnable> closingTasks = new ArrayList<>();
     public RenderFrame2D(){
         setDefaultView();
         buildPanel();
@@ -315,8 +316,13 @@ public class RenderFrame2D {
         renderLoop.start();
     }
     public void stopRunning(){
+        closingTasks.forEach(Runnable::run);
         keepRendering = false;
         staging.post( () -> {}); //unblock the queue.
+    }
+
+    public void addCloseListener(Runnable r){
+        closingTasks.add(r);
     }
     public static RenderFrame2D createRenderingMeshFrame(){
         JFrame frame = new JFrame();

@@ -67,6 +67,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
     Color darkerBG = new Color(220, 220, 220);
     public ControlFrame( SegmentationController model){
         this.segmentationController = model;
+        segmentationController.addUndoStateListener(this::updateUndoRedo);
         try{
             terminal = new SwingJSTerm(model);
         } catch (Throwable e){
@@ -1468,9 +1469,8 @@ public class ControlFrame implements ReadyObserver, FrameListener {
 
         main.add(row, BorderLayout.SOUTH);
         MeshTrackManager manager = new MeshTrackManager();
-        manager.manageMeshTrackes(segmentationController, segmentationController.getAllTracks());
         manager.buildGui(frame, content);
-        manager.setSegmentationController(segmentationController);
+        manager.manageSegmentationControllerTracks(segmentationController);
 
         accept.addActionListener(evt->{
             //TODO remove this, but the action needs to be done at the end of each track change.
@@ -1479,22 +1479,18 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             finished();
         });
 
-        final FrameListener fl = i -> manager.manageMeshTrackes(segmentationController, segmentationController.getAllTracks());
-        segmentationController.addMeshListener(fl);
-
         main.add(content, BorderLayout.CENTER);
 
         tabbedPane.add(main, managerTitle);
         int dex = tabbedPane.indexOfComponent(main);
         ActionListener closeListener = evt->{
             tabbedPane.remove(main);
-            segmentationController.removeMeshListener(fl);
+            segmentationController.removeUndoStateListener(manager);
         };
         JPanel closableTab = GuiTools.getClosableTabComponent(managerTitle, closeListener);
         tabbedPane.setTabComponentAt(dex, closableTab);
         cancel.addActionListener(closeListener);
-
-
+        tabbedPane.setSelectedIndex(dex);
     }
 
     /**
@@ -1544,6 +1540,21 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         return ready;
     }
 
+    public void updateUndoRedo(long stateId){
+        String ut = segmentationController.getUndoName();
+        if(ut.isEmpty()){
+            undo.setText("<html>undo</html>");
+        } else{
+            undo.setText("<html>undo <span style='font-size:smaller;color:gray;'>\"" + ut + "\"</span></html>");
+        }
+
+        String rt = segmentationController.getRedoName();
+        if(rt.isEmpty()){
+            redo.setText("<html>redo</html>");
+        } else{
+            redo.setText("<html>redo <span style='font-size:smaller;color:gray;'>\"" + rt + "\"</span></html>");
+        }
+    }
     @Override
     public void setReady(final boolean ready){
         this.ready=ready;
@@ -1553,21 +1564,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
                 b.setEnabled(ready);
             }
 
-            String ut = segmentationController.getUndoName();
-            if(ut.isEmpty()){
-                undo.setText("<html>undo</html>");
-            } else{
-                undo.setText("<html>undo <span style='font-size:smaller;color:gray;'>\"" + ut + "\"</span></html>");
-            }
-
-            String rt = segmentationController.getRedoName();
-            if(rt.isEmpty()){
-                redo.setText("<html>redo</html>");
-            } else{
-                redo.setText("<html>redo <span style='font-size:smaller;color:gray;'>\"" + rt + "\"</span></html>");
-            }
-
-
             if(ready==false){
                 undo.setEnabled(false);
                 redo.setEnabled(false);
@@ -1575,7 +1571,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
                 undo.setEnabled(segmentationController.canUndo());
                 redo.setEnabled(segmentationController.canRedo());
             }
-
         });
     }
 

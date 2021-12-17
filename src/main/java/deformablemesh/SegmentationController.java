@@ -18,6 +18,7 @@ import deformablemesh.simulations.FillingBinaryImage;
 import deformablemesh.track.Track;
 import deformablemesh.util.*;
 import deformablemesh.util.actions.ActionStack;
+import deformablemesh.util.actions.StateListener;
 import deformablemesh.util.actions.UndoableActions;
 import deformablemesh.util.connectedcomponents.ConnectedComponents3D;
 import deformablemesh.util.connectedcomponents.Region;
@@ -282,7 +283,13 @@ public class SegmentationController {
 
         clearMeshFromTrack(old, f, mesh);
     }
+    public void addUndoStateListener(StateListener listener){
+        actionStack.addStateListener(listener);
+    }
 
+    public void removeUndoStateListener(StateListener listener){
+        actionStack.removeStateListener(listener);
+    }
     /**
      * Moves the action stack back.
      */
@@ -1503,6 +1510,17 @@ public class SegmentationController {
      *
      */
     public void deformAllMeshes(){
+        deformAllMeshes(-1);
+    }
+
+    /**
+     * Deforms all meshes in the current frame for steps number of iterations, sequentially.
+     * If steps is < 0 then it will deform for Integer.MAX_VALUE iterations...which will probably
+     * take forever.
+     *
+     * @param steps
+     */
+    public void deformAllMeshes(int steps){
 
 
         final List<DeformableMesh3D> meshes = new ArrayList<>();
@@ -1524,7 +1542,7 @@ public class SegmentationController {
                 @Override
                 public void perform() {
                     main.submit(() -> {
-                        model.deformMeshes(meshes);
+                        model.deformMeshes(meshes, steps);
                         for(DeformableMesh3D mesh: meshes){
                             newPositions.add(Arrays.copyOf(mesh.positions, mesh.positions.length));
                         }
@@ -2042,7 +2060,11 @@ public class SegmentationController {
 
         renderer.setTracks(getAllTracks());
         renderer.setFrame(getCurrentFrame());
-
+        FrameListener l = renderer::setFrame;
+        addFrameListener(l);
+        renderer.addCloseListener( ()->{
+            removeFrameListener(l);
+        } );
     }
     /**
      * Replaces the current tracks with the provided. Used for the mesh track manager.

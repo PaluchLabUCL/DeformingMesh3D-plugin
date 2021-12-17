@@ -112,8 +112,10 @@ public class SegmentationModel {
      * A generic method for deforming all of the meshes provided.
      * @param meshes
      */
-    public void deformMeshes(List<DeformableMesh3D> meshes){
-
+    public void deformMeshes(List<DeformableMesh3D> meshes, int steps){
+        if(steps<0){
+            steps = Integer.MAX_VALUE;
+        }
         stop = false;
         deformations = 0;
         Map<DeformableMesh3D, List<StericMesh>> stericEnergies = new HashMap<>();
@@ -164,6 +166,9 @@ public class SegmentationModel {
                 }
             }
             deformations++;
+            if(deformations >= steps){
+                break;
+            }
             if(stericNeighborWeight!=0) {
                 for (DeformableMesh3D mesh : meshes) {
                     for (StericMesh sm : stericEnergies.get(mesh)) {

@@ -1,6 +1,8 @@
 package deformablemesh.util.actions;
 
+import java.util.ArrayList;
 import java.util.Deque;
+import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -13,10 +15,12 @@ public class ActionStack {
     final Deque<ActionState> undone = new ConcurrentLinkedDeque<>();
     AtomicLong cumulativeStates = new AtomicLong(0);
     AtomicLong currentState = new AtomicLong(0);
-
+    List<StateListener> listeners = new ArrayList<>();
     public long getCurrentState() {
         return currentState.get();
     }
+
+
 
     private class ActionState{
         final UndoableActions action;
@@ -54,19 +58,22 @@ public class ActionStack {
         else
             return "";
     }
-
+    void setCurrentState( long id){
+        currentState.set(id);
+        listeners.forEach(l -> l.stateUpdated(id));
+    }
     public void undo(){
         ActionState state = history.pollLast();
         undone.add(state);
-        currentState.set(state.prevState);
         state.action.undo();
+        setCurrentState(state.prevState);
     }
 
     public void redo(){
         ActionState state = undone.pollLast();
         state.action.redo();
-        currentState.set(state.nextState);
         history.add(state);
+        setCurrentState(state.nextState);
     }
 
     public void postAction(UndoableActions action){
@@ -78,8 +85,8 @@ public class ActionStack {
         if(undone.size()>0){
             undone.clear();
         }
-        currentState.set(state.nextState);
         action.perform();
+        setCurrentState(state.nextState);
     }
 
     /**
@@ -117,6 +124,17 @@ public class ActionStack {
         };
     }
 
+    public void addStateListener( StateListener sl ){
+        listeners.add(sl);
+    }
+
+    public void removeStateListener(StateListener sl){
+        int before = listeners.size();
+        listeners.remove(sl);
+        if(before == listeners.size()){
+            System.out.println("warning: state listener not removed!");
+        }
+    }
 
 
 
