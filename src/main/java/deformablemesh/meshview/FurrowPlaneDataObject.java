@@ -16,6 +16,7 @@ import org.scijava.java3d.Transform3D;
 import org.scijava.java3d.TransformGroup;
 import org.scijava.java3d.TransparencyAttributes;
 import org.scijava.vecmath.Color3f;
+import org.scijava.vecmath.Point3d;
 import org.scijava.vecmath.Quat4d;
 import org.scijava.vecmath.Vector3d;
 
@@ -24,7 +25,6 @@ import java.awt.Color;
 
 /**
  * Date: 8/5/13
- * To change this template use File | Settings | File Templates.
  */
 public class FurrowPlaneDataObject implements DataObject {
     BranchGroup branchGroup;
@@ -35,13 +35,13 @@ public class FurrowPlaneDataObject implements DataObject {
     IndexedTriangleArray surface_back;
     double[] positions;
 
+    Shape3D front_shape;
 
     public FurrowPlaneDataObject(double[] cm, double[] normal){
         this(cm, normal, 0.125);
     }
     public FurrowPlaneDataObject(double[] cm, double[] normal, double length) {
         lines = new IndexedLineArray(4, GeometryArray.COORDINATES, 8 );
-
         positions = new double[]{
                 -length,-length,0,
                 length,-length,0,
@@ -75,12 +75,11 @@ public class FurrowPlaneDataObject implements DataObject {
         surface_front = new IndexedTriangleArray(4,GeometryArray.COORDINATES, 6);
         surface_front.setCoordinates(0, positions);
         surface_front.setCoordinateIndices(0, triangle_index_front);
-
         surface_back = new IndexedTriangleArray(4,GeometryArray.COORDINATES, 6);
         surface_back.setCoordinates(0, positions);
         surface_back.setCoordinateIndices(0, triangle_index_back);
 
-        Shape3D front_shape = new Shape3D(surface_front);
+        front_shape = new Shape3D(surface_front);
         front_shape.setAppearance(createFront());
 
         Shape3D back_shape = new Shape3D(surface_back);
@@ -131,9 +130,20 @@ public class FurrowPlaneDataObject implements DataObject {
         Quat4d rot = new Quat4d(new double[]{x.x*st2, x.y*st2, x.z*st2, ct2});
         tt.setRotation(rot);
         tt.setTranslation(new Vector3d(cm));
+
         transformGroup.setTransform(tt);
     }
 
+    public Shape3D getFrontShape(){
+        return front_shape;
+    }
+
+    public double[] getPickLocation( double[] r ){
+        Transform3D t = new Transform3D();
+        transformGroup.getTransform(t);
+        t.transform(new Point3d(r));
+        return r;
+    }
 
     private Appearance createFront(){
         Appearance a = new Appearance();

@@ -512,6 +512,10 @@ public class    MeshFrame3D {
         canvas.addSnakeListener(listener);
     }
 
+    public void removePickListener(CanvasView listener){
+        canvas.removeSnakeListener(listener);
+    }
+
     public void removeTransient(DataObject obj) {
         boolean i = transientObjects.remove(obj);
         if(i){

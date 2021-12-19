@@ -43,6 +43,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -70,6 +71,7 @@ public class MeshModifier {
     TexturedPlaneDataObject slice;
     List<Sphere> markers = new ArrayList<>();
     double cursorRadius = 0.1;
+    PointPicking canvasPicker;
     public MeshModifier(){
         manager = new StateManager();
     }
@@ -95,6 +97,9 @@ public class MeshModifier {
                 frame.addDataObject(original.data_object);
             }
             frame.setNoHud();
+            if(canvasPicker != null){
+                frame.removePickListener(canvasPicker);
+            }
         }
         selectNone();
     }
@@ -204,7 +209,11 @@ public class MeshModifier {
             deselectNode(i);
         }
     }
-
+    public void activate3DFramePicker(){
+        if(furrow != null && frame != null){
+            frame.addPickListener(getCanvasView());
+        }
+    }
     public void start(){
         frame = new MeshFrame3D();
 
@@ -507,7 +516,14 @@ public class MeshModifier {
             MeshModifier.this.updateDragged(pt, evt);
         }
     }
+    public CanvasView getCanvasView(){
+        if(furrow != null){
+            canvasPicker = new PointPicking();
+            return canvasPicker;
+        }
 
+        return null;
+    }
     /**
      * Looks for the position of the pick on the furrow plane. Returns null if none of
      * the intersections are on the plane.
@@ -516,18 +532,24 @@ public class MeshModifier {
      * @return
      */
     double[] getPlanePosition(PickResult[] results){
-        System.out.println(results.length);
+        if(furrow == null || furrow.getDataObject() == null){
+            return null;
+        }
+
+        Shape3D plane = furrow.getShape3D();
+        if(plane == null) return null;
+
         for(PickResult result: results){
             PickIntersection pick = result.getIntersection(0);
-            Point3d p = pick.getPointCoordinates();
 
-            if(result.getObject() == slice.getShape()){
-                return new double[]{p.x, p.y, p.z};
+            if( plane.equals( result.getObject() ) ){
+                Point3d p = pick.getPointCoordinates();
+                double[] r = furrow.getPickLocation( new double[]{p.x, p.y, p.z} );
+                return r;
             }
 
 
         }
-        System.out.println("returning null");
         return null;
     }
 

@@ -8,6 +8,7 @@ import deformablemesh.meshview.SphereDataObject;
 import deformablemesh.meshview.TexturedPlaneDataObject;
 import deformablemesh.ringdetection.FurrowTransformer;
 import deformablemesh.util.Vector3DOps;
+import org.scijava.java3d.Shape3D;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,9 +51,9 @@ public class Furrow3D implements Interceptable{
             texturedPlaneDataObject = null;
         }
     }
+
     public void create3DObject(){
         furrowPlaneDataObject = new FurrowPlaneDataObject(cm, normal);
-
     }
 
     public void createTexturedPlane3DObject(MeshImageStack mis){
@@ -71,6 +72,30 @@ public class Furrow3D implements Interceptable{
         } else{
             return texturedPlaneDataObject;
         }
+    }
+
+    public Shape3D getShape3D(){
+
+        if(!texturedPlane){
+            if(furrowPlaneDataObject != null){
+                return furrowPlaneDataObject.getFrontShape();
+            }
+        } else{
+            if(texturedPlaneDataObject != null){
+                return texturedPlaneDataObject.getShape();
+            }
+        }
+        return null;
+    }
+
+    public double[] getPickLocation(double[] r){
+
+        if(!texturedPlane){
+            if(furrowPlaneDataObject != null){
+                return furrowPlaneDataObject.getPickLocation(r);
+            }
+        }
+        return r;
     }
 
     public List<List<Triangle3D>> splitMesh(List<Triangle3D> triangles){

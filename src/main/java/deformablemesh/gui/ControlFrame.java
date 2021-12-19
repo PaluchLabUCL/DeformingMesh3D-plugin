@@ -5,6 +5,7 @@ import deformablemesh.MeshImageStack;
 import deformablemesh.SegmentationController;
 import deformablemesh.externalenergies.ImageEnergyType;
 import deformablemesh.geometry.DeformableMesh3D;
+import deformablemesh.geometry.Furrow3D;
 import deformablemesh.geometry.modifier.MeshModifier;
 import deformablemesh.gui.meshinitialization.CircularMeshInitializationDialog;
 import deformablemesh.gui.meshinitialization.FurrowInitializer;
@@ -339,6 +340,8 @@ public class ControlFrame implements ReadyObserver, FrameListener {
                     finish.setEnabled(true);
                     cancel.setEnabled(true);
                 });
+
+
             }
 
         });

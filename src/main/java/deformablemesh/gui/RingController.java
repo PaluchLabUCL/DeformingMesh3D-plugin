@@ -10,11 +10,14 @@ import deformablemesh.geometry.ProjectableMesh;
 import deformablemesh.geometry.modifier.MeshModifier;
 import deformablemesh.gui.meshinitialization.FurrowInitializer;
 import deformablemesh.io.FurrowWriter;
+import deformablemesh.meshview.CanvasView;
+import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.ringdetection.ContractileRingDetector;
 import deformablemesh.ringdetection.FurrowTransformer;
 import deformablemesh.track.Track;
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
+import org.scijava.java3d.utils.picking.PickResult;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -110,6 +113,7 @@ public class RingController implements FrameListener, ListDataListener {
     public boolean modifyingMesh(){
         return modifier != null;
     }
+
     /**
      * Startes the select nodes activity.
      *
@@ -124,6 +128,9 @@ public class RingController implements FrameListener, ListDataListener {
             modifier = new MeshModifier();
             modifier.setMeshFrame3D(model.getMeshFrame3D());
             modifier.setFurrow(getFurrow());
+
+            modifier.activate3DFramePicker();
+
             setSliceListener(new MouseAdapter(){
                 @Override
                 public void mousePressed(MouseEvent evt){
