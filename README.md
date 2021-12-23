@@ -1,7 +1,15 @@
-# DeformingMesh3D
+# DM3D
 ThreeD image segmentation algorithm, for roundish cells.
 
+The latest documentation can be found at:
+
+[DM3D Github pages](https://franciscrickinstitute.github.io/dm3d-pages/)
+
 ## Roadmap 1.0 Draft
+
+As of version 0.8.0 these features have been added. There are some details that need
+to be worked out. Especially documentation.
+
 This is the start of a draft for a 1.0 release version. Right now I have quite a few
 components that are nearly ready but need to be added. The two major features that I
 want included in a 1.0 release.
@@ -27,9 +35,25 @@ which can be found in "plugins"->"PL_Mesh3D"->"Deforming Mesh 3D", and JFilament
 
 ## Documentation
 
-
+[DM3D Github pages](https://franciscrickinstitute.github.io/dm3d-pages/)
 
 # Changes
+
+0.8.0
+- Select channel from main display.
+- Added 3D sculpting - feature preview version.
+- mesh track manager and undo/redo follow the state of the ActionManager.
+- deformAllMeshes has a limit, can be used in a script.
+- restartOffScreenCanvas javascript function to address bug in offscreen canvas.
+- scaled units are indicated for connection remesh.
+- histogram display improved.
+- 3D preview removed for now.
+- Meshes can have transparency.
+
+0.7.0
+- Creating Binary images algorithm improvement.
+- Visualization improvements.
+
 0.6.0
 - Feature preview modifier and limited controls to the furrow panel. Debugging for next release.
 - created 2d svg/image view and exposed through javascript
