@@ -213,7 +213,6 @@ public class DistanceTransformMosaicImage {
 
             while(level<maxLevel) {
                 List<int[]> next = new ArrayList<>();
-                System.out.print(".");
                 if((level +1)%scale == 0){
                     for(int[] pt: current) {
                         List<int[]> pts = neighbors(pt);
@@ -231,7 +230,6 @@ public class DistanceTransformMosaicImage {
                         }
                     }
                 }
-                System.out.println("-");
                 cascade.put(level, next);
                 level++;
                 current = next;
