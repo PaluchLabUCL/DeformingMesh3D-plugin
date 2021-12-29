@@ -13,7 +13,6 @@ import ij.process.ImageProcessor;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class MeshDetector {
     List<Box3D> current = new ArrayList<>();

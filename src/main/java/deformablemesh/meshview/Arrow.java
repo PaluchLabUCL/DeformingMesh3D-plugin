@@ -1,16 +1,8 @@
 package deformablemesh.meshview;
 
-import deformablemesh.geometry.DeformableMesh3D;
-import deformablemesh.util.Vector3DOps;
-import org.scijava.java3d.Appearance;
-import org.scijava.java3d.BranchGroup;
-import org.scijava.java3d.Material;
-import org.scijava.java3d.Transform3D;
-import org.scijava.java3d.TransformGroup;
-import org.scijava.java3d.TransparencyAttributes;
+import org.scijava.java3d.*;
 import org.scijava.java3d.utils.geometry.Cone;
 import org.scijava.java3d.utils.geometry.Cylinder;
-
 import org.scijava.vecmath.AxisAngle4d;
 import org.scijava.vecmath.Color3f;
 import org.scijava.vecmath.Vector3d;

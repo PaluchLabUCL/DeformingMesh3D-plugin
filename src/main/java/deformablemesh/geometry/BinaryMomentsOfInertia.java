@@ -10,15 +10,11 @@ import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.measure.Calibration;
-import ij.plugin.filter.Binary;
-import ij.process.FloatPolygon;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 
-import java.awt.Polygon;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 /**

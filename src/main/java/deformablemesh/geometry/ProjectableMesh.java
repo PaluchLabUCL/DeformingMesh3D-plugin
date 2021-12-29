@@ -6,12 +6,7 @@ import deformablemesh.util.Vector3DOps;
 import java.awt.Color;
 import java.awt.Shape;
 import java.awt.geom.Path2D;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by msmith on 6/23/16.

@@ -1,25 +1,12 @@
 package deformablemesh.ringdetection;
 
 import deformablemesh.MeshImageStack;
-import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Furrow3D;
-import deformablemesh.gui.GuiTools;
-import deformablemesh.util.connectedcomponents.ConnectedComponents2D;
-import deformablemesh.util.astar.AStarBasic;
-import deformablemesh.util.astar.AStarXY;
-import deformablemesh.util.astar.PossiblePath;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**

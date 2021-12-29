@@ -1,9 +1,5 @@
 package deformablemesh.gui;
 
-import deformablemesh.MeshImageStack;
-import deformablemesh.geometry.Box3D;
-import deformablemesh.meshview.MeshFrame3D;
-import deformablemesh.meshview.VolumeDataObject;
 import ij.ImageStack;
 import ij.process.ImageProcessor;
 
@@ -12,7 +8,6 @@ import javax.swing.JPanel;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;

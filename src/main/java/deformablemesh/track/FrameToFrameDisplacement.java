@@ -8,7 +8,6 @@ import deformablemesh.geometry.InterceptingMesh3D;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.util.ColorSuggestions;
 import deformablemesh.util.Vector3DOps;
-import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ColorProcessor;
@@ -17,17 +16,9 @@ import lightgraph.Graph;
 import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
-import java.lang.ref.WeakReference;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class FrameToFrameDisplacement {

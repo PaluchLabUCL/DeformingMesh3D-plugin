@@ -2,13 +2,7 @@ package deformablemesh.externalenergies;
 
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
-import deformablemesh.geometry.CompositeInterceptables;
-import deformablemesh.geometry.CurvatureCalculator;
-import deformablemesh.geometry.DeformableMesh3D;
-import deformablemesh.geometry.Interceptable;
-import deformablemesh.geometry.RayCastMesh;
-import deformablemesh.geometry.Sphere;
-import deformablemesh.geometry.Triangle3D;
+import deformablemesh.geometry.*;
 import deformablemesh.meshview.MeshFrame3D;
 
 import javax.imageio.ImageIO;

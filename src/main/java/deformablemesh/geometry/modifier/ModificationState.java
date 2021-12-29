@@ -1,8 +1,5 @@
 package deformablemesh.geometry.modifier;
 
-import deformablemesh.meshview.CanvasView;
-import org.scijava.java3d.utils.picking.PickResult;
-
 import java.awt.event.MouseEvent;
 
 public interface ModificationState {

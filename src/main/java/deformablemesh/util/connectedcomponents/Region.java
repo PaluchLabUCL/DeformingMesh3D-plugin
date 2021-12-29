@@ -1,7 +1,6 @@
 package deformablemesh.util.connectedcomponents;
 
 import deformablemesh.MeshImageStack;
-import deformablemesh.geometry.Box3D;
 import deformablemesh.gui.Drawable;
 import deformablemesh.meshview.DataObject;
 import deformablemesh.meshview.VolumeDataObject;

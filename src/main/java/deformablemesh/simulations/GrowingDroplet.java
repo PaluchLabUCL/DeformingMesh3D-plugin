@@ -1,6 +1,5 @@
 package deformablemesh.simulations;
 
-import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
 import deformablemesh.externalenergies.ExternalEnergy;
 import deformablemesh.externalenergies.SofterStericMesh;

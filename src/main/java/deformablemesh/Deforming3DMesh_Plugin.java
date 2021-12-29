@@ -2,7 +2,6 @@ package deformablemesh;
 
 import deformablemesh.gui.ControlFrame;
 import deformablemesh.gui.PropertySaver;
-import deformablemesh.gui.RingController;
 import deformablemesh.meshview.MeshFrame3D;
 import ij.IJ;
 import ij.ImagePlus;

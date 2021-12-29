@@ -5,7 +5,6 @@ import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.InterceptingMesh3D;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.track.Track;
-import lightgraph.DataSet;
 import lightgraph.Graph;
 
 import java.io.File;

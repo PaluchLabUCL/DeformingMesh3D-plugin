@@ -2,11 +2,9 @@ package deformablemesh.geometry;
 
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.meshview.MeshFrame3D;
-import deformablemesh.util.Vector3DOps;
 
 import java.awt.Color;
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * Creates a 'shell' mesh, which is essentially the original mesh + a mesh created by

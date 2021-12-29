@@ -7,7 +7,7 @@ import org.scijava.java3d.Texture3D;
 import org.scijava.vecmath.Color3f;
 import org.scijava.vecmath.Vector4f;
 
-import java.awt.*;
+import java.awt.Transparency;
 import java.awt.color.ColorSpace;
 import java.awt.image.*;
 

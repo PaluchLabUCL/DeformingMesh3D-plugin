@@ -2,40 +2,25 @@ package deformablemesh.geometry.modifier;
 
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
-import deformablemesh.SegmentationController;
-import deformablemesh.SegmentationModel;
-import deformablemesh.geometry.BinaryMeshGenerator;
-import deformablemesh.geometry.DeformableMesh3D;
-import deformablemesh.geometry.Furrow3D;
-import deformablemesh.geometry.Node3D;
-import deformablemesh.geometry.Sphere;
+import deformablemesh.geometry.*;
 import deformablemesh.gui.FurrowInput;
-import deformablemesh.gui.RingController;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.meshview.CanvasView;
 import deformablemesh.meshview.DataObject;
-import deformablemesh.meshview.LineDataObject;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.meshview.TexturedPlaneDataObject;
 import deformablemesh.ringdetection.FurrowTransformer;
 import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;
 import deformablemesh.util.actions.ActionStack;
-import deformablemesh.util.actions.UndoableActions;
 import ij.ImagePlus;
-import org.scijava.java3d.*;
+import org.scijava.java3d.Shape3D;
 import org.scijava.java3d.utils.picking.PickIntersection;
 import org.scijava.java3d.utils.picking.PickResult;
 import org.scijava.vecmath.Point3d;
-import org.scijava.vecmath.Vector3d;
 
 import javax.swing.*;
-import java.awt.Color;
-import java.awt.EventQueue;
-import java.awt.FileDialog;
-import java.awt.Graphics2D;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
@@ -43,11 +28,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.stream.Collectors;
 
 /**
  * This needs to be separated into a Controller/Model.

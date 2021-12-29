@@ -1,12 +1,10 @@
 package deformablemesh.gui.meshinitialization;
 
-import deformablemesh.geometry.Projectable;
 import deformablemesh.gui.Drawable;
 import deformablemesh.ringdetection.FurrowTransformer;
 import deformablemesh.util.Vector3DOps;
 
 import java.awt.Color;
-import java.awt.Graphics2D;
 import java.awt.Shape;
 import java.awt.geom.Path2D;
 import java.util.ArrayList;

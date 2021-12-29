@@ -3,10 +3,6 @@ package deformablemesh.externalenergies;
 import deformablemesh.geometry.CurvatureCalculator;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Node3D;
-import deformablemesh.geometry.Triangle3D;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by msmith on 2/29/16.

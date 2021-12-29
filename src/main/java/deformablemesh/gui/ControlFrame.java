@@ -5,8 +5,6 @@ import deformablemesh.MeshImageStack;
 import deformablemesh.SegmentationController;
 import deformablemesh.externalenergies.ImageEnergyType;
 import deformablemesh.geometry.DeformableMesh3D;
-import deformablemesh.geometry.Furrow3D;
-import deformablemesh.geometry.modifier.MeshModifier;
 import deformablemesh.gui.meshinitialization.CircularMeshInitializationDialog;
 import deformablemesh.gui.meshinitialization.FurrowInitializer;
 import deformablemesh.io.ImportType;
@@ -15,23 +13,16 @@ import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.track.MeshTrackManager;
 import deformablemesh.track.Track;
 import ij.IJ;
-import ij.ImageJ;
 import ij.ImagePlus;
-import ij.WindowManager;
 import ij.io.OpenDialog;
 
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
-import javax.swing.plaf.MenuItemUI;
-import javax.swing.plaf.basic.BasicButtonUI;
-import javax.swing.plaf.basic.BasicMenuItemUI;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
@@ -991,12 +982,12 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         newMeshes.addActionListener(evt->{
             segmentationController.restartMeshes();
         });
-        JMenuItem exportFor = new JMenuItem("export for:");
-        exportFor.setToolTipText("For exporting meshes to be used in a larger image.");
-        file.add(exportFor);
-        exportFor.addActionListener(evt->{
-            exportFor();
-        });
+        //JMenuItem exportFor = new JMenuItem("export for:");
+        //exportFor.setToolTipText("For exporting meshes to be used in a larger image.");
+        //file.add(exportFor);
+        //exportFor.addActionListener(evt->{
+        //    exportFor();
+        //});
 
 
 
@@ -1356,7 +1347,9 @@ public class ControlFrame implements ReadyObserver, FrameListener {
 
 
     }
+    /*
     public void exportFor(){
+
         setReady(false);
         String shortTitle = segmentationController.getShortImageName();
         double[] viewBox = getDimensionsFromTitle(shortTitle);
@@ -1371,9 +1364,9 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             return;
         }
         File f = new File(fd.getDirectory(),fd.getFile());
-        segmentationController.exportTo(f, viewBox);
+        //segmentationController.exportTo(f, viewBox);
         finished();
-    }
+    }*/
     public void saveAs(){
         setReady(false);
         FileDialog fd = new FileDialog(frame,"File to save mesh too");

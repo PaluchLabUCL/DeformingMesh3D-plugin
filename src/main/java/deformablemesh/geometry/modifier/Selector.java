@@ -3,17 +3,12 @@ package deformablemesh.geometry.modifier;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Node3D;
 import deformablemesh.geometry.Sphere;
-import deformablemesh.meshview.DataCanvas;
 import deformablemesh.meshview.DataObject;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.util.Vector3DOps;
-import org.scijava.java3d.BranchGroup;
-import org.scijava.java3d.Node;
-import org.scijava.java3d.PickConeRay;
 import org.scijava.java3d.utils.picking.PickIntersection;
 import org.scijava.java3d.utils.picking.PickResult;
 import org.scijava.vecmath.Point3d;
-import org.scijava.vecmath.Vector3d;
 
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;

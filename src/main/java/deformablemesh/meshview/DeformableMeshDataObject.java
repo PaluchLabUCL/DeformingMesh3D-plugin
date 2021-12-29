@@ -7,7 +7,6 @@ import org.scijava.java3d.*;
 import org.scijava.vecmath.Color3f;
 
 import java.awt.Color;
-import java.util.Arrays;
 import java.util.List;
 
 /**

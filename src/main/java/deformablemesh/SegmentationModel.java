@@ -7,7 +7,6 @@ import deformablemesh.gui.GuiTools;
 import deformablemesh.gui.RingController;
 import deformablemesh.io.FurrowWriter;
 import deformablemesh.io.MeshWriter;
-import deformablemesh.ringdetection.FurrowTransformer;
 import deformablemesh.track.MeshTracker;
 import deformablemesh.track.Track;
 import deformablemesh.util.IntensitySurfacePlot;
@@ -22,7 +21,6 @@ import lightgraph.DataSet;
 import lightgraph.Graph;
 
 import java.awt.Color;
-import java.awt.Image;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -930,9 +928,9 @@ public class SegmentationModel {
                 set.setLabel(tracks.get(key).getName());
 
             }
-            g.setTitle("Epoc vs " + labels[j+1] + " for track: " + target.getName());
+            g.setTitle("Frame vs " + labels[j+1] + " for track: " + target.getName());
 
-            g.show(false, "Epoc vs " + labels[j+1] + " for track: " + target.getName());
+            g.show(false, "Frame vs " + labels[j+1] + " for track: " + target.getName());
         }
 
     }

@@ -1,15 +1,14 @@
 package deformablemesh.meshview;
 
 import deformablemesh.MeshImageStack;
-import deformablemesh.geometry.Box3D;
 import org.scijava.java3d.BranchGroup;
 import org.scijava.java3d.Transform3D;
 import org.scijava.java3d.TransformGroup;
 import org.scijava.vecmath.Color3f;
 import org.scijava.vecmath.Vector3d;
 
-import java.awt.*;
-import java.util.*;
+import java.awt.Color;
+import java.util.IntSummaryStatistics;
 import java.util.List;
 
 /**

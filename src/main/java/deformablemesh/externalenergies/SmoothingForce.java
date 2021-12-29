@@ -1,15 +1,9 @@
 package deformablemesh.externalenergies;
 
-import deformablemesh.geometry.Connection3D;
 import deformablemesh.geometry.CurvatureCalculator;
 import deformablemesh.geometry.DeformableMesh3D;
-import deformablemesh.geometry.Node3D;
 
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 public class SmoothingForce implements ExternalEnergy{
     double magnitude;

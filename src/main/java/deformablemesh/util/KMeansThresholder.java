@@ -3,11 +3,7 @@ package deformablemesh.util;
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * For guessing a threshold based on a kmeans algorithm.

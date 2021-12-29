@@ -3,8 +3,6 @@ package deformablemesh.externalenergies;
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.geometry.CurvatureCalculator;
 import deformablemesh.geometry.DeformableMesh3D;
-import deformablemesh.geometry.Node3D;
-import deformablemesh.geometry.Triangle3D;
 
 public class VolumeConservation  implements ExternalEnergy{
     final DeformableMesh3D mesh;

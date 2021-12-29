@@ -1,7 +1,6 @@
 package deformablemesh.gui.meshinitialization;
 
 import deformablemesh.MeshImageStack;
-import deformablemesh.SegmentationController;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Projectable;
 import deformablemesh.geometry.ProjectableMesh;

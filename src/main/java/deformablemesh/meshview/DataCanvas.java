@@ -1,17 +1,6 @@
 package deformablemesh.meshview;
 
-import org.scijava.java3d.Background;
-import org.scijava.java3d.BoundingSphere;
-import org.scijava.java3d.BranchGroup;
-import org.scijava.java3d.Canvas3D;
-import org.scijava.java3d.GraphicsConfigTemplate3D;
-import org.scijava.java3d.Group;
-import org.scijava.java3d.ImageComponent;
-import org.scijava.java3d.ImageComponent2D;
-import org.scijava.java3d.Screen3D;
-import org.scijava.java3d.Transform3D;
-import org.scijava.java3d.TransformGroup;
-import org.scijava.java3d.View;
+import org.scijava.java3d.*;
 import org.scijava.java3d.utils.picking.PickCanvas;
 import org.scijava.java3d.utils.picking.PickResult;
 import org.scijava.java3d.utils.picking.PickTool;

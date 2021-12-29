@@ -3,7 +3,6 @@ package deformablemesh.geometry;
 import deformablemesh.meshview.SphereDataObject;
 import deformablemesh.ringdetection.FurrowTransformer;
 import deformablemesh.util.Vector3DOps;
-import org.scijava.vecmath.Point3d;
 
 import java.awt.Shape;
 import java.awt.geom.Ellipse2D;

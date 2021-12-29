@@ -1,11 +1,6 @@
 package deformablemesh.meshview;
 
-import org.scijava.java3d.Appearance;
-import org.scijava.java3d.BranchGroup;
-import org.scijava.java3d.Material;
-import org.scijava.java3d.Transform3D;
-import org.scijava.java3d.TransformGroup;
-import org.scijava.java3d.TransparencyAttributes;
+import org.scijava.java3d.*;
 import org.scijava.java3d.utils.geometry.Sphere;
 import org.scijava.vecmath.Color3f;
 import org.scijava.vecmath.Point3d;

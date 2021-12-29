@@ -1,9 +1,7 @@
 package deformablemesh.geometry;
 
-import deformablemesh.MeshImageStack;
 import deformablemesh.meshview.DeformableMeshDataObject;
 import deformablemesh.meshview.MeshFrame3D;
-import ij.ImagePlus;
 
 import java.awt.Color;
 import java.util.*;

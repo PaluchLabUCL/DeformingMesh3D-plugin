@@ -1,6 +1,5 @@
 package deformablemesh.externalenergies;
 
-import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.geometry.CurvatureCalculator;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.InterceptingMesh3D;

@@ -1,15 +1,6 @@
 package deformablemesh.meshview;
 
-import org.scijava.java3d.Appearance;
-import org.scijava.java3d.BranchGroup;
-import org.scijava.java3d.ColoringAttributes;
-import org.scijava.java3d.GeometryArray;
-import org.scijava.java3d.LineArray;
-import org.scijava.java3d.LineAttributes;
-import org.scijava.java3d.Node;
-import org.scijava.java3d.Shape3D;
-import org.scijava.java3d.Transform3D;
-import org.scijava.java3d.TransformGroup;
+import org.scijava.java3d.*;
 import org.scijava.vecmath.Point3d;
 import org.scijava.vecmath.Vector3d;
 

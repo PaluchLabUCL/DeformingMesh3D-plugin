@@ -1,13 +1,8 @@
 package deformablemesh.meshview;
 
-import deformablemesh.MeshImageStack;
-import deformablemesh.geometry.Box3D;
 import deformablemesh.geometry.DeformableMesh3D;
-import deformablemesh.geometry.RayCastMesh;
-import deformablemesh.gui.IntensityRanges;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.track.Track;
-import ij.ImagePlus;
 import org.scijava.java3d.Appearance;
 import org.scijava.java3d.Material;
 import org.scijava.vecmath.Color3f;

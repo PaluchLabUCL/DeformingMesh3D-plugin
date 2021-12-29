@@ -1,17 +1,12 @@
 package deformablemesh.meshview;
 
 import deformablemesh.SegmentationController;
-import deformablemesh.SegmentationModel;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.track.Track;
-import ij.plugin.filter.PlugInFilter;
 import org.scijava.java3d.GeometryArray;
 import org.scijava.java3d.utils.picking.PickResult;
 
 import java.awt.event.MouseEvent;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * Created by smithm3 on 24/05/18.

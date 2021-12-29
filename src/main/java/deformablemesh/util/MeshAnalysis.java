@@ -11,17 +11,12 @@ import deformablemesh.track.Track;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ByteProcessor;
-import ij.process.ColorProcessor;
 import lightgraph.DataSet;
 import lightgraph.Graph;
 import lightgraph.GraphPoints;
-import lightgraph.painters.GraphPainter;
 
 import java.awt.EventQueue;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;

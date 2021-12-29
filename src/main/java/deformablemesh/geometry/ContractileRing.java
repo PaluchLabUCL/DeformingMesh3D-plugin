@@ -1,19 +1,10 @@
 package deformablemesh.geometry;
 
 import deformablemesh.DeformableMesh3DTools;
-import deformablemesh.MeshImageStack;
 import deformablemesh.ringdetection.PlaneFitter;
 import deformablemesh.util.Vector3DOps;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.*;
 
 /**
  * This is a class that holds 3d line data, it will be used for applying a force to

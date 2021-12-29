@@ -1,11 +1,7 @@
 package deformablemesh.geometry;
 
 import deformablemesh.MeshImageStack;
-import deformablemesh.meshview.DataObject;
-import deformablemesh.meshview.FurrowPlaneDataObject;
-import deformablemesh.meshview.MeshFrame3D;
-import deformablemesh.meshview.SphereDataObject;
-import deformablemesh.meshview.TexturedPlaneDataObject;
+import deformablemesh.meshview.*;
 import deformablemesh.ringdetection.FurrowTransformer;
 import deformablemesh.util.Vector3DOps;
 import org.scijava.java3d.Shape3D;

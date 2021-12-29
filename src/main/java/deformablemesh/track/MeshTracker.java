@@ -3,7 +3,6 @@ package deformablemesh.track;
 import deformablemesh.geometry.DeformableMesh3D;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 

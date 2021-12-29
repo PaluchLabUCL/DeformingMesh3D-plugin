@@ -1,26 +1,17 @@
 package deformablemesh.simulations;
 
 import deformablemesh.MeshImageStack;
-import deformablemesh.externalenergies.ExternalEnergy;
-import deformablemesh.externalenergies.TriangleAreaDistributor;
-import deformablemesh.geometry.*;
+import deformablemesh.geometry.BinaryInterceptible;
+import deformablemesh.geometry.DeformableMesh3D;
+import deformablemesh.geometry.RayCastMesh;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.meshview.MeshFrame3D;
-import deformablemesh.meshview.VolumeDataObject;
 import deformablemesh.track.Track;
-import deformablemesh.util.DistanceTransformMosaicImage;
-import ij.ImageJ;
 import ij.ImagePlus;
 
-import javax.imageio.ImageIO;
-import java.awt.Color;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**

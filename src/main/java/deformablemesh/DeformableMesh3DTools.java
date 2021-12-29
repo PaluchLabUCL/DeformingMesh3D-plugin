@@ -1,35 +1,20 @@
 package deformablemesh;
 
 import deformablemesh.geometry.*;
-
 import deformablemesh.io.MeshWriter;
 import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;
-import deformablemesh.util.astar.AStarBasic;
-import deformablemesh.util.astar.BasicCost;
-import deformablemesh.util.astar.BasicHeuristic;
-import deformablemesh.util.astar.Boundary;
-import deformablemesh.util.astar.ChoiceGenerator;
-import deformablemesh.util.astar.History;
-import deformablemesh.util.astar.PossiblePath;
+import deformablemesh.util.astar.*;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.measure.Calibration;
-import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 
-import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**

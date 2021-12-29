@@ -1,13 +1,11 @@
 package deformablemesh.util;
 
-import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Node3D;
 import deformablemesh.geometry.Triangle3D;
 import deformablemesh.gui.GuiTools;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.meshview.PlotSurface;
-import deformablemesh.track.Track;
 import ij.io.OpenDialog;
 
 import javax.swing.JFrame;
@@ -23,8 +21,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 
 /**

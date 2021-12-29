@@ -2,23 +2,14 @@ package deformablemesh.util;
 
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.*;
-import deformablemesh.gui.GuiTools;
 import deformablemesh.io.MeshWriter;
-import deformablemesh.meshview.MeshFrame3D;
-import deformablemesh.meshview.PlotSurface;
 import deformablemesh.track.Track;
 import ij.ImagePlus;
 
-import javax.swing.JFrame;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.stream.Collectors;
 
 public class IntensitySurfacePlot extends SurfacePlot{

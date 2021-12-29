@@ -3,23 +3,12 @@ package deformablemesh.geometry.modifier;
 import deformablemesh.geometry.Furrow3D;
 import deformablemesh.geometry.Node3D;
 import deformablemesh.geometry.Sphere;
-import deformablemesh.meshview.DataCanvas;
 import deformablemesh.meshview.DataObject;
 import deformablemesh.meshview.MeshFrame3D;
-import deformablemesh.ringdetection.FurrowTransformer;
 import deformablemesh.util.Vector3DOps;
-import org.scijava.java3d.utils.picking.PickResult;
 
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.*;
 
 class Sculptor implements ModificationState {
     double cursorRadius = 0.05;

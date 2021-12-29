@@ -2,11 +2,9 @@ package deformablemesh;
 
 import Jama.LUDecomposition;
 import Jama.Matrix;
-import deformablemesh.externalenergies.ExternalEnergy;
 import deformablemesh.externalenergies.ImageEnergyType;
 import deformablemesh.geometry.*;
 import deformablemesh.gui.FrameListener;
-import deformablemesh.gui.GuiTools;
 import deformablemesh.gui.PropertySaver;
 import deformablemesh.gui.RingController;
 import deformablemesh.gui.render2d.RenderFrame2D;
@@ -14,25 +12,19 @@ import deformablemesh.io.ImportType;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.meshview.*;
 import deformablemesh.ringdetection.FurrowTransformer;
-import deformablemesh.simulations.FillingBinaryImage;
 import deformablemesh.track.Track;
 import deformablemesh.util.*;
 import deformablemesh.util.actions.ActionStack;
 import deformablemesh.util.actions.StateListener;
 import deformablemesh.util.actions.UndoableActions;
-import deformablemesh.util.connectedcomponents.ConnectedComponents3D;
-import deformablemesh.util.connectedcomponents.Region;
-import deformablemesh.util.connectedcomponents.RegionGrowing;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
-import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
 import lightgraph.DataSet;
 import lightgraph.Graph;
-import lightgraph.GraphPoints;
 
 import java.awt.Color;
 import java.awt.Image;
@@ -54,13 +46,12 @@ import java.util.stream.Collectors;
  * This manages the SegmentationModel and provides an interface for interacting with meshes through an action stack
  * such that changes can be un-done.
  *
- * Created by msmith on 2/11/16.
  */
 public class SegmentationController {
 
     final SegmentationModel model;
 
-    private ActionStack actionStack = new ActionStack();
+    private final ActionStack actionStack = new ActionStack();
 
     MeshFrame3D meshFrame3D;
 
@@ -72,7 +63,7 @@ public class SegmentationController {
     /**
      * Creates a controller for the supplied model.
      *
-     * @param model
+     * @param model data that will be controlled.
      */
     public SegmentationController(SegmentationModel model){
         this.model = model;
@@ -81,7 +72,7 @@ public class SegmentationController {
 
     /**
      * Deformation parameter, high values limit the rate of deformation.
-     * @param gamma
+     * @param gamma a number greater than 0.
      */
     public void setGamma(double gamma){
         model.setGamma(gamma);
@@ -90,15 +81,17 @@ public class SegmentationController {
     /**
      * Deformation parameter, effectively the spring-like stiffness connections.
      *
-     * @param d
+     * @param d a number greater than 0
      */
     public void setAlpha(double d) {
         model.setAlpha(d);
     }
 
     /**
-     * Non-zero values create an effective force that either causes the mesh to expand (positive) or shrink (negative).
-     * @param d
+     * For shrinking or growing a mesh.
+     *
+     * @param d Non-zero values create an effective force that either causes the mesh to expand (positive) or
+     *          shrink (negative).
      */
     public void setPressure(double d) {
         model.setPressure(d);
@@ -108,7 +101,7 @@ public class SegmentationController {
      * Causes a 'steric' force from neighboring meshes to prevent mesh overlap.
      *
      *
-     * @param d
+     * @param d magnitude of repulsion. 0 turns off effect.
      */
     public void setStericNeighborWeight(double d){
         model.setStericNeighborWeight(d);
@@ -117,7 +110,7 @@ public class SegmentationController {
     /**
      * Sets the magnitude of force the image causes on the mesh.
      *
-     * @param d
+     * @param d can be positive or negative.
      */
     public void setWeight(double d) {
         model.setWeight(d);
@@ -128,8 +121,7 @@ public class SegmentationController {
      * Each division divides the triangles into 4, so there will be 20*4**N triangles. 5 divisions is 20480 triangles,
      * which displays fine, but not practical for deforming.
      *
-     * TODO: Add a limit.
-     * @param d
+     * @param d number of times mesh is subdivided.
      */
     public void setDivisions(int d) {
         model.setDivisions(d);
@@ -157,7 +149,7 @@ public class SegmentationController {
      * Gets the minimum connection length when doing a connection remesh. Connections shorter that
      * this will be replaced if possible.
      *
-     * @param mcl
+     * @param mcl must be greater than 0 less than max.
      */
     public void setMinConnectionLength(double mcl){
         minConnectionLength = mcl;
@@ -171,7 +163,9 @@ public class SegmentationController {
      * Set the maximum connection length that is used when doing a connection remesh. Connections
      * longer than this length will be split.
      *
-     * @param
+     * Should probably be more than to about double the minimum length.
+     *
+     * @param mcl greater than zero, greater than minimum length.
      */
 
     public void setMaxConnectionLength(double mcl){
@@ -184,9 +178,11 @@ public class SegmentationController {
      * For example during track changes where a mesh is added or removed; When mesh tracks are set;
      * When the selected track is changed; When clearTransientObjects is called.
      *
-     * @param listener
+     * @param listener cannot be null.
      */
     public void addMeshListener(FrameListener listener ){
+
+        if(listener == null) throw new NullPointerException();
         model.addMeshListener(listener);
     }
 
@@ -208,7 +204,7 @@ public class SegmentationController {
      *
      * @see SegmentationController#clearMeshFromTrack(Track, int, DeformableMesh3D)
      *
-     * @param mesh
+     * @param mesh mesh that will be removed from a track.
      */
     public void clearMesh(DeformableMesh3D mesh){
         for(Track track: getAllTracks()){
@@ -223,8 +219,8 @@ public class SegmentationController {
     /**
      * @see SegmentationController#clearMeshFromTrack(Track, int, DeformableMesh3D)
      *
-     * @param f
-     * @param t
+     * @param t track that will lose a mesh
+     * @param f frame the mesh will be removed from if a mesh exists.
      */
     public void clearMeshFromTrack(Track t, int f){
         if(t.containsKey(f)) {
@@ -608,9 +604,7 @@ public class SegmentationController {
             }
         });
     }
-    public void autotrack(){
 
-    }
     /**
      * Training data consists of two images. The original image, and a labelled image which is an a bit image.
      * The first bit represents the mesh, the second bit represents inside, or outside of the mesh and the last 6
@@ -667,8 +661,8 @@ public class SegmentationController {
      * Remesh the selected mesh to the provided min and max connection lengths.
      *
      * @see SegmentationController#reMeshConnections(Track, int, double, double)
-     * @param minConnectionLength
-     * @param maxConnectionLength
+     * @param minConnectionLength normalized length
+     * @param maxConnectionLength normalized length
      */
     public void reMeshConnections(double minConnectionLength, double maxConnectionLength){
         int f = model.getCurrentFrame();
@@ -697,6 +691,11 @@ public class SegmentationController {
     public int getCurrentChannel(){
         return getMeshImageStack().channel;
     }
+
+    /**
+     * Creates a plot of mesh count vs time.
+     *
+     */
     public void plotCellCount(){
         MeshAnalysis.plotMeshesOverTime(getAllTracks(), getMeshImageStack());
     }
@@ -735,9 +734,10 @@ public class SegmentationController {
     }
 
     /**
-     * Shows a vector indicating the moment of inertia of the collective mesh rotation.
+     * Shows a two vectors. One indicating the moment of inertia of the collective mesh rotation.
+     * One indicates the angular momentum of an equivalent rigid body rotation.
      *
-     * @return
+     * @return {px, py, pz}
      */
     public double[] showInertialVector(){
         List<Track> tracks = getAllTracks();
@@ -837,7 +837,6 @@ public class SegmentationController {
             a.moveTo(center0[0], center0[1], center0[2]);
             a.setColor(Color.RED);
 
-            double momentum = Vector3DOps.normalize(moment);
             Arrow a2 = new Arrow(1, 0.01);
             a2.setColor(Color.CYAN);
             a2.moveTo(center0[0], center0[1], center0[2]);
@@ -887,10 +886,11 @@ public class SegmentationController {
     }
 
     /**
-     * Remeshes all meshes in the current frame using connection remesh.
+     * Applies the connection remesh algorith to all meshes in the current frame.
      *
-     * @param minConnectionLength
-     * @param maxConnectionLength
+     * @see SegmentationController#reMeshConnections(Track, int, double, double)
+     * @param minConnectionLength normalized length for min connection lengths.
+     * @param maxConnectionLength normalized length for max connection lengths.
      */
     public void reMeshConnectionsAllMeshes(double minConnectionLength, double maxConnectionLength){
         int f = model.getCurrentFrame();
@@ -953,9 +953,6 @@ public class SegmentationController {
 
             cc = new CurvatureCalculator(m2);
 
-            //cc.setMaxCurvature(5);
-            //cc.setMinCurvature(-5);
-
             xy = cc.createCurvatureHistogram();
 
             set = curvatures.addData(xy.get(0), xy.get(1));
@@ -980,10 +977,7 @@ public class SegmentationController {
             return null;
         }
 
-        CurvatureSurfacePlot plot = new CurvatureSurfacePlot(mesh);
-        return plot;
-
-
+        return new CurvatureSurfacePlot(mesh);
     }
 
     /**
@@ -1104,8 +1098,8 @@ public class SegmentationController {
     public void startNewMeshTrack(int frame, DeformableMesh3D mesh){
 
         actionStack.postAction(new UndoableActions(){
-            DeformableMesh3D m = mesh;
-            int f = frame;
+            final DeformableMesh3D m = mesh;
+            final int f = frame;
             Track track;
             @Override
             public void perform() {
@@ -1149,7 +1143,7 @@ public class SegmentationController {
     }
     /**
      * Overload for convenience.
-     * @param track
+     * @param track track that will be selected. can be null
      */
     public void selectMeshTrack(Track track){
         submit( () -> model.selectMeshTrack(track));
@@ -1260,9 +1254,10 @@ public class SegmentationController {
 
     /**
      * Starts a new Track for each of provided meshes. Used with guess meshes.
-     * @param meshes
+     * @param meshes If the list is empty, this is a non-op.
      */
     public void startNewMeshTracks(List<DeformableMesh3D> meshes){
+        if(meshes.size() == 0 ) return;
 
         actionStack.postAction(new UndoableActions() {
             final int frame = getCurrentFrame();
@@ -1315,7 +1310,7 @@ public class SegmentationController {
      *
      * @param pos center of plane
      * @param normal direction of normal
-     * @return
+     * @return sliced image.
      */
     public Image createSlice(double[] pos, double[] normal) {
         return getMeshImageStack().createSlice(pos, normal);
@@ -1333,10 +1328,10 @@ public class SegmentationController {
     }
 
     /**
-     * Adds a data object to the current meshframe, the object is "transient" and can be cleared independent of the
-     * model.
+     * Adds a data object to the current meshframe, the object is "transient" and will be removed
+     * when clear transient objects is called.
      *
-     * @param dataObject
+     * @param dataObject 3d display object
      */
     public void addTransientObject(DataObject dataObject) {
         submit( ()->meshFrame3D.addTransientObject(dataObject) );
@@ -1363,7 +1358,7 @@ public class SegmentationController {
 
 
     /**
-     * Iterates over all of the messes and performs the calculation. (a bit intense.)
+     * Iterates over all of the meshes and calculates intensity. (a bit intense.)
      */
     public void calculateAllInterfaceTimeScans(){
         submit(model::calculateInterfaceLineScans);
@@ -2654,7 +2649,7 @@ public class SegmentationController {
 
     /**
      * Checks for a MeshFrame3D.
-     * 
+     *
      * @return
      */
     public boolean has3DViewer() {
@@ -2771,7 +2766,7 @@ class ExceptionThrowingService{
             return;
         }
 
-        final Future f = main.submit(()->execute(r));
+        final Future<?> f = main.submit(()->execute(r));
 
         main.submit(() -> {
             try {

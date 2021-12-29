@@ -1,24 +1,11 @@
 package deformablemesh.gui;
 
-import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.geometry.Furrow3D;
-import deformablemesh.geometry.Node3D;
 import deformablemesh.util.Vector3DOps;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.GradientPaint;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.LinearGradientPaint;
-import java.awt.Paint;
-import java.awt.Point;
-import java.awt.RadialGradientPaint;
-import java.awt.RenderingHints;
-import java.awt.Stroke;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Ellipse2D;

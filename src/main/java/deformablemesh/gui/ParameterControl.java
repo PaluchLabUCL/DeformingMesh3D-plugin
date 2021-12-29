@@ -1,8 +1,6 @@
 package deformablemesh.gui;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created on 31/07/18.

@@ -1,33 +1,17 @@
 package deformablemesh.gui.meshinitialization;
 
 import deformablemesh.SegmentationController;
-import deformablemesh.SegmentationModel;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Projectable;
 import deformablemesh.geometry.ProjectableMesh;
 import deformablemesh.gui.RingController;
 import deformablemesh.ringdetection.FurrowTransformer;
 import deformablemesh.util.Vector3DOps;
-import ij.ImagePlus;
 
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.EventQueue;
-import java.awt.GridLayout;
-import java.awt.Shape;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
 import java.awt.geom.Ellipse2D;
-import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

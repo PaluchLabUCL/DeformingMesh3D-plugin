@@ -1,15 +1,12 @@
 package deformablemesh.externalenergies;
 
-import deformablemesh.geometry.CurvatureCalculator;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.InterceptingMesh3D;
-import deformablemesh.geometry.Intersection;
 import deformablemesh.geometry.Triangle3D;
 import deformablemesh.util.Vector3DOps;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
