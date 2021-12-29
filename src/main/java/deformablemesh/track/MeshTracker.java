@@ -178,6 +178,27 @@ public class MeshTracker {
 
     }
 
+    public void selectPreviousTrack() {
+        if(tracks.size()==0){
+            if(selectedTrack!=null){
+                selectedTrack.setSelected(false);
+            }
+            selectedTrack = null; //just in  case.
+            return; //no tracks to be selected!
+        }
+
+        if(selectedTrack==null){
+            selectedTrack = tracks.get(0);
+        } else{
+            selectedTrack.setSelected(false);
+            int i = tracks.indexOf(selectedTrack);
+            i = (i-1);
+            i = i < 0? tracks.size() - 1 : i;
+            selectedTrack = tracks.get(i);
+        }
+        selectedTrack.setSelected(true);
+    }
+
     /**
      * changes the selected track to the track containing the mesh.
      *

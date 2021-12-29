@@ -105,23 +105,13 @@ public class SegmentationController {
     }
 
     /**
-     * Causes a 'steric' force that other meshes will prevent inclusion by causing a force directed from their center
-     * on any nodes that enter.
+     * Causes a 'steric' force from neighboring meshes to prevent mesh overlap.
      *
      *
      * @param d
      */
     public void setStericNeighborWeight(double d){
         model.setStericNeighborWeight(d);
-    }
-
-    /**
-     * @Depracated
-     *
-     * @param d
-     */
-    public void setCortexThickness(double d) {
-        model.setCortexThickness(d);
     }
 
     /**
@@ -162,6 +152,13 @@ public class SegmentationController {
     public double getMinConnectionLength(){
         return minConnectionLength;
     }
+
+    /**
+     * Gets the minimum connection length when doing a connection remesh. Connections shorter that
+     * this will be replaced if possible.
+     *
+     * @param mcl
+     */
     public void setMinConnectionLength(double mcl){
         minConnectionLength = mcl;
     }
@@ -170,14 +167,22 @@ public class SegmentationController {
         return maxConnectionLength;
     }
 
+    /**
+     * Set the maximum connection length that is used when doing a connection remesh. Connections
+     * longer than this length will be split.
+     *
+     * @param
+     */
+
     public void setMaxConnectionLength(double mcl){
         maxConnectionLength = mcl;
     }
 
     /**
-     * Adds a listener, that gets notified every time a track changes: when a mesh is added or removed, all of the meshes are set
-     * the track selection is changed. Also notified when 'clear transients' is used to remove transient objects added
-     * to meshframe.
+     * Adds a listener, that gets notified every time the displayed meshes should change.
+     *
+     * For example during track changes where a mesh is added or removed; When mesh tracks are set;
+     * When the selected track is changed; When clearTransientObjects is called.
      *
      * @param listener
      */
@@ -189,13 +194,6 @@ public class SegmentationController {
         model.removeMeshListener(listener);
     }
 
-
-
-    public double getCortexThickness() {
-
-        return model.getCortexThickness();
-    }
-
     public double getImageWeight() {
         return model.getImageWeight();
     }
@@ -205,7 +203,10 @@ public class SegmentationController {
     }
 
     /**
-     * Least efficient way to clear a mesh. Removes the mesh one time from a single track.
+     * Least efficient way to clear a mesh. Attempts to locate the provided mesh in within a track
+     * and remove it.
+     *
+     * @see SegmentationController#clearMeshFromTrack(Track, int, DeformableMesh3D)
      *
      * @param mesh
      */
@@ -220,6 +221,7 @@ public class SegmentationController {
     }
 
     /**
+     * @see SegmentationController#clearMeshFromTrack(Track, int, DeformableMesh3D)
      *
      * @param f
      * @param t
@@ -252,7 +254,6 @@ public class SegmentationController {
                 submit(()->{
                     model.addMeshToTrack(f, mesh, old);
                 });
-
             }
 
             @Override
@@ -283,6 +284,12 @@ public class SegmentationController {
 
         clearMeshFromTrack(old, f, mesh);
     }
+
+    /**
+     * Gets notified when the action stack updates the value.
+     *
+     * @param listener
+     */
     public void addUndoStateListener(StateListener listener){
         actionStack.addStateListener(listener);
     }
@@ -344,7 +351,7 @@ public class SegmentationController {
     }
 
     /**
-     * Changes image frame.
+     * Moves to the previous image frame.
      *
      */
     public void previousFrame() {
@@ -352,7 +359,7 @@ public class SegmentationController {
     }
 
     /**
-     * Changes image frame.
+     * Changes to the next image frame.
      */
     public void nextFrame() {
         submit(model::nextFrame);
@@ -366,7 +373,12 @@ public class SegmentationController {
     public void toFrame(int f){ submit(()->model.setFrame(f));}
 
     /**
-     * Creates a snapshot of the current 3d view and creates an image plus window.
+     * Creates a snapshot of the current 3d view and creates an image plus window. If this does not work
+     * It is possible to reset the offscreen canvas used for taking snapshots using
+     *
+     * This is also available by pressing 's' when the 3D canvas window is selected.
+     *
+     * @see MeshFrame3D
      */
     public void takeSnapShot() {
         submit(()-> {
@@ -380,7 +392,7 @@ public class SegmentationController {
     }
 
     /**
-     * Creates an imageplus with snapshots from each frame.
+     * Creates an ImagePlus with snapshots from each frame. This is also available as a menu item.
      *
      * @param start the first frame to be imaged, frame 1 is 0.
      * @param end last frame, inclusive.
@@ -418,6 +430,10 @@ public class SegmentationController {
         });
     }
 
+    /**
+     * Creates a distance transform with the currently selected image. It is expected that the image
+     * is a mask, 0 or non-zero values.
+     */
     public void maskToDistanceTransform(){
         MeshImageStack stack = getMeshImageStack();
         ImageStack result = new ImageStack(stack.getWidthPx(), stack.getHeightPx() );
@@ -444,11 +460,24 @@ public class SegmentationController {
         transformed.setOpenAsHyperStack(true);
         transformed.show();
     }
+
+    /**
+     * Gets the currently selected MeshImageStack.
+     *
+     * @return
+     */
     public MeshImageStack getMeshImageStack(){
         return model.stack;
     }
 
-
+    /**
+     * Remeshes the current track by using the remesh connection algorithm.
+     *
+     * @param track track to be remeshed.
+     * @param frame the frame # of the mesh to be remeshed.
+     * @param minConnectionLength connections shorter that the minimum length will be removed.
+     * @param maxConnectionLength connections long than the maximum length will be split in two.
+     */
     public void reMeshConnections(Track track, int frame, double minConnectionLength, double maxConnectionLength){
         if(minConnectionLength > maxConnectionLength){
             System.out.println("Minimum connection length should be less than max connection length");
@@ -532,13 +561,12 @@ public class SegmentationController {
         });
     }
     /**
-     * Sets the provided mesh to be the mesh for the provided track at the specified frame.
-     *
-     * undo-ably.
-     *
-     * @param track
-     * @param frame
-     * @param mesh
+     * Sets the provided mesh to be the mesh for the provided track at the specified frame. This will
+     * replace any existing meshes in the provided frame.
+     **
+     * @param track track that will acquire the new mesh.
+     * @param frame frame the mesh will be placed at.
+     * @param mesh the mesh that will be part of the track.
      */
     public void setMesh(Track track, int frame, DeformableMesh3D mesh){
 
@@ -584,14 +612,16 @@ public class SegmentationController {
 
     }
     /**
-     * Starts processing a single frame at a time.
+     * Training data consists of two images. The original image, and a labelled image which is an a bit image.
+     * The first bit represents the mesh, the second bit represents inside, or outside of the mesh and the last 6
+     * bits are the distance transform.
+     *
+     * This will populate two folders, images and labels, with the respective z-stacks for each time point.
      *
      * @param start 0 based time frame. First frame inclusive.
      * @param finish 0 based time frame. Last frame inclusive.
      */
     public void generateTrainingData(int start, int finish){
-        //frames
-        //output folder;
         ImagePlus original = getMeshImageStack().original;
         List<Track> tracks = getAllTracks();
         Path baseFolder = Paths.get(IJ.getDirectory("Select root folder"));
@@ -631,14 +661,15 @@ public class SegmentationController {
                 e.printStackTrace();
             }
         }
-
-
-
-
-
-
     }
 
+    /**
+     * Remesh the selected mesh to the provided min and max connection lengths.
+     *
+     * @see SegmentationController#reMeshConnections(Track, int, double, double)
+     * @param minConnectionLength
+     * @param maxConnectionLength
+     */
     public void reMeshConnections(double minConnectionLength, double maxConnectionLength){
         int f = model.getCurrentFrame();
         Track track = model.getSelectedTrack();
@@ -650,9 +681,19 @@ public class SegmentationController {
         reMeshConnections(track, f, minConnectionLength, maxConnectionLength);
     }
 
+    /**
+     * Get the number of channels of the currently selected image.
+     * @return
+     */
     public int getNChannels(){
         return model.getNChannels();
     }
+
+    /**
+     * Gets the currently selected channel.
+     *
+     * @return
+     */
     public int getCurrentChannel(){
         return getMeshImageStack().channel;
     }
@@ -660,13 +701,24 @@ public class SegmentationController {
         MeshAnalysis.plotMeshesOverTime(getAllTracks(), getMeshImageStack());
     }
 
+    /**
+     * Creates a plot with information about the frame to frame displacement of the current set of meshes.
+     */
     public void plotTrackingStatistics(){
         TrackAnalysis.plotNextFrameTrackingResults(getAllTracks(), getCurrentFrame());
     }
+
+    /**
+     * Plots the volumes of meshes over time for all of the meshes. Each track is a continuous set of data points.
+     *
+     */
     public void plotVolumes(){
         MeshAnalysis.plotVolumesOverTime(getAllTracks(), getMeshImageStack());
     }
 
+    /**
+     * Creates two plates. Displacements vs Time per tracks and a histogram of displacements.
+     */
     public void plotDisplacements(){
 
         MeshAnalysis.plotDisplacementsVsTime(getAllTracks(), getMeshImageStack());
@@ -674,10 +726,19 @@ public class SegmentationController {
 
     }
 
+    /**
+     * Finds the principle moments of Inertia and plots the anisotropy over time.
+     *
+     */
     public void plotElongationsVsTime(){
         MeshAnalysis.plotElongationsVsTime(getAllTracks());
     }
 
+    /**
+     * Shows a vector indicating the moment of inertia of the collective mesh rotation.
+     *
+     * @return
+     */
     public double[] showInertialVector(){
         List<Track> tracks = getAllTracks();
         int i = getCurrentFrame();
@@ -790,10 +851,21 @@ public class SegmentationController {
         }
     }
 
+    /**
+     * Causes no mesh track to be selected.
+     *
+     */
     public void selectNone(){
         submit(() ->model.selectMeshTrack(null));
     }
 
+    /**
+     * Thresholds the current image and places meshes over the individual regions. Checks for overlap with
+     * existing meshes and doesn't place meshes if there is too much overlap.
+     *
+     * @param level The value used for thresholding the image. Expected to work on integer images.
+     * @return an ImagePlus with the thresholded image.
+     */
     public ImagePlus guessMeshes(int level) {
         MeshDetector detector = new MeshDetector(getMeshImageStack());
 
@@ -815,7 +887,8 @@ public class SegmentationController {
     }
 
     /**
-     * Remeshes all meshes in the current frame.
+     * Remeshes all meshes in the current frame using connection remesh.
+     *
      * @param minConnectionLength
      * @param maxConnectionLength
      */
@@ -841,54 +914,12 @@ public class SegmentationController {
         });
     }
     /**
-     * Takes the currently selected mesh and looks for neighbors. Locates 'touching' faces and adds transient objects
-     * That show the touching surface. Also produces curvature histograms, for the whole cell, and the regions touch.
-     *
-     *
+     * Takes the currently selected mesh and looks for neighbors. Locates 'touching' faces and a
+     * dds transient objects that show the touching surface. Also produces curvature histograms,
+     * for the whole cell, and the regions touch.
      */
     public void curvatureSnapShot(){
 
-        main.submit(()->{
-            _curvatureSnapShot();
-        });
-
-    }
-
-    /**
-     * Creates a 3D plot frame for the currently selected mesh, and plots the curvature on the surface.
-     *
-     * TODO change this to return an object similar to IntensitySurfacePlot
-     *
-     */
-    public SurfacePlot curvatureSurfacePlot(){
-
-        DeformableMesh3D mesh = getSelectedMesh();
-        if(mesh==null){
-            return null;
-        }
-
-        CurvatureSurfacePlot plot = new CurvatureSurfacePlot(mesh);
-        return plot;
-
-
-    }
-
-    /**
-     * Creates an object that is used for producing an intensity plot based on the currently selected mesh and image.
-     *
-     * @return
-     */
-    public SurfacePlot intensitySurfacePlot(){
-        DeformableMesh3D mesh = getSelectedMesh();
-        if(mesh==null){
-            return null;
-        }
-
-        IntensitySurfacePlot plot = new IntensitySurfacePlot(mesh, model.stack);
-        return plot;
-    }
-
-    private void _curvatureSnapShot(){
         final Track track = model.getSelectedTrack();
         final int frame = model.getCurrentFrame();
         if(track==null || !track.containsKey(frame)) return;
@@ -896,16 +927,13 @@ public class SegmentationController {
 
         List<Track> neighbors = model.getAllTracks().stream().filter(
                 t->!track.equals(t)
-            ).filter(
+        ).filter(
                 t->t.containsKey(frame)
-            ).collect(Collectors.toList());
+        ).collect(Collectors.toList());
 
         Graph curvatures = new Graph();
 
         CurvatureCalculator cc = new CurvatureCalculator(mesh);
-
-        //cc.setMaxCurvature(5);
-        //cc.setMinCurvature(-5);
 
         List<double[]> xy = cc.createCurvatureHistogram();
 
@@ -937,6 +965,40 @@ public class SegmentationController {
         }
 
         curvatures.show(false, "Curvature Snapshot of " + getSelectedMeshName() + " frame: " + frame);
+
+    }
+
+    /**
+     * Creates a 3D plot frame for the currently selected mesh, and plots the curvature on the surface.
+     *
+     * @return an object for generating a surface plot.
+     */
+    public SurfacePlot curvatureSurfacePlot(){
+
+        DeformableMesh3D mesh = getSelectedMesh();
+        if(mesh==null){
+            return null;
+        }
+
+        CurvatureSurfacePlot plot = new CurvatureSurfacePlot(mesh);
+        return plot;
+
+
+    }
+
+    /**
+     * Creates an object that is used for producing an intensity plot based on the currently selected mesh and image.
+     *
+     * @return
+     */
+    public SurfacePlot intensitySurfacePlot(){
+        DeformableMesh3D mesh = getSelectedMesh();
+        if(mesh==null){
+            return null;
+        }
+
+        IntensitySurfacePlot plot = new IntensitySurfacePlot(mesh, model.stack);
+        return plot;
     }
 
     /**
@@ -1072,10 +1134,19 @@ public class SegmentationController {
         });
     }
 
+    /**
+     * Changes the currently selected track to be the next one.
+     */
     public void selectNextMeshTrack(){
         submit(model::selectNextTrack);
     }
 
+    /**
+     * Changes to the previously selected track.
+     */
+    public void selectPreviousMeshTrack(){
+        submit(model::selectPreviousTrack);
+    }
     /**
      * Overload for convenience.
      * @param track
@@ -1152,6 +1223,11 @@ public class SegmentationController {
         });
     }
 
+    /**
+     * Addes a line that follows the center of mass of the provided mesh track to the current frame.
+     *
+     * @param t
+     */
     public void addTracer(Track t){
         int s = t.getFirstFrame();
         int e = t.getLastFrame();
@@ -1182,6 +1258,10 @@ public class SegmentationController {
         addTransientObject(line.data_object);
     }
 
+    /**
+     * Starts a new Track for each of provided meshes. Used with guess meshes.
+     * @param meshes
+     */
     public void startNewMeshTracks(List<DeformableMesh3D> meshes){
 
         actionStack.postAction(new UndoableActions() {
@@ -1495,10 +1575,15 @@ public class SegmentationController {
 
     }
 
+    /**
+     * Adds a transient data object using a 3D volume texture and a surface with the currently
+     * selected mesh geometry.
+     */
     public void showTexturedMeshSurface(){
         submit(()->{
 
             DeformableMesh3D mesh = getSelectedMesh();
+            if(mesh == null) return;
             TexturedPlaneDataObject tpdo = new TexturedPlaneDataObject(mesh, model.stack);
             meshFrame3D.addTransientObject(tpdo);
 
@@ -1506,7 +1591,7 @@ public class SegmentationController {
     }
 
     /**
-     * Deforms all of the meshes in the current frame sequentially.
+     * Deforms all meshes in the current frame sequentially.
      *
      */
     public void deformAllMeshes(){
@@ -1681,10 +1766,10 @@ public class SegmentationController {
     }
 
     /**
-     * Extands the track to (frame + 1) provided by copying the deformable mesh at frame
-     * d
-     * @param track
-     * @param frame
+     * Extands the track to (frame + 1) provided by copying the deformable mesh at frame.
+     *
+     * @param track track to be extended.
+     * @param frame initial frame
      */
     public void trackMesh(final Track track, final int frame){
         final int next = frame + 1;
@@ -1813,8 +1898,8 @@ public class SegmentationController {
     }
 
     /**
-     * Causes the provided image to be the main backing image data. The image needs to be 1 channel, with xyz it can
-     * also have frames.
+     * Causes the provided image to be the main backing image data. Tries to stay on the current
+     * frame if possible.
      * @param plus
      */
     public void setOriginalPlus(ImagePlus plus, int channel) {
@@ -1837,23 +1922,6 @@ public class SegmentationController {
         setOriginalPlus(model.original_plus, c);
     }
 
-    /**
-     * Development. This is for isolating regions to see them better. Possibly will not be finished.
-     *
-     */
-    public void isolateMesh(){
-        submit( ()->{
-            DeformableMesh3D mesh = model.getSelectedMesh(model.getCurrentFrame());
-            if(mesh!=null){
-                Box3D box = mesh.getBoundingBox();
-                MeshImageStack stack = model.stack.createSubStack(box);
-                MeshFrame3D viewer = new MeshFrame3D();
-                viewer.showFrame(false);
-                viewer.setSegmentationController(this);
-                viewer.showVolume(stack);
-            }
-        });
-    }
 
     /**
      * Saves the current meshes
@@ -1867,12 +1935,17 @@ public class SegmentationController {
         });
     }
 
+    /**
+     * The action stack controls the undo/redo commands. Each time a new command is posted and
+     * performed it updates the id. This returns the current id of the action stack.
+     * @return id of current state, incremented by one each time a new action is posed.
+     */
     public long getCurrentState(){
         return actionStack.getCurrentState();
     }
 
     /**
-     * Loads meshes and replaces the current meshes. This is undo-able.
+     * Loads meshes and replaces the current meshes.
      *
      * @param f
      */
@@ -1916,7 +1989,18 @@ public class SegmentationController {
 
 
     /**
-     * Opens the meshfile and adds all of the meshes to the current meshes.
+     * Opens the meshfile and adds all of the meshes to the current meshes. They type
+     * determines how meshes are added.
+     *
+     * aligned: the frame of the imported meshes does not change.
+     *
+     * relative: The first frame of the meshes being imported are set to be the
+     * current frame. This can be good for working with selected frames of a movie.
+     * Eg. Segment by hand, frames 5-10, then move to frame 5 and import relative.
+     *
+     * lumped: All of the meshes in the importing file are imported into the current frame.
+     *
+     * select: Only meshes from the current frame of the selected meshfile are imported to the current frame.
      *
      * @param f
      * @param type
@@ -1928,6 +2012,8 @@ public class SegmentationController {
             int n = getNFrames();
 
             List<Track> imports = MeshWriter.loadMeshes(f);
+
+            //the imports is modified to meet the supplied criteria.
             switch(type){
                 case aligned:
                     //use them as they are.
@@ -1971,14 +2057,15 @@ public class SegmentationController {
 
                 @Override
                 public String getName(){
-                    return "import meshes";
+                    return "import meshes: " + type.name();
                 }
             });
         });
     }
 
     /**
-     * Groups all of the meshes into the current frame and creates new tracks as necessary.
+     * Groups all of the meshes into the current frame. New tracks are created for
+     * tracks with multiple meshes.
      *
      * @param imports
      */
@@ -2055,6 +2142,11 @@ public class SegmentationController {
         }
         imports.removeAll(toRemove);
     }
+
+    /**
+     * Opens a new window that renders the provided meshes in 2D.
+     *
+     */
     public void renderMeshesIn2D(){
         RenderFrame2D renderer =  RenderFrame2D.createRenderingMeshFrame();
 
@@ -2066,6 +2158,7 @@ public class SegmentationController {
             removeFrameListener(l);
         } );
     }
+
     /**
      * Replaces the current tracks with the provided. Used for the mesh track manager.
      *
@@ -2181,6 +2274,7 @@ public class SegmentationController {
     public Track getSelectedMeshTrack(){
         return model.getSelectedTrack();
     }
+
     /**
      * Returns the short image name based on the full image title with the image name extension removed.
      *
@@ -2203,7 +2297,7 @@ public class SegmentationController {
     }
 
     /**
-     * Turns on an image energy that tries to normalize triangles.
+     * Turns on an external energy that tries to normalize triangle sizes.
      *
      * @param d
      */
@@ -2216,7 +2310,7 @@ public class SegmentationController {
     }
 
     /**
-     * Creates an imageplus that is a binary image with pixes inside of a mesh 1 outside 0.
+     * Creates an imageplus that is a binary image with pixes values 1 inside a mesh and 0 outside.
      *
      * @see DeformableMesh3DTools#createBinaryRepresentation(MeshImageStack, DeformableMesh3D)
      * */
@@ -2227,8 +2321,8 @@ public class SegmentationController {
     }
 
     /**
-     * For creating a new mesh, if there is a currently selected mesh in the current frame, this starts a new mesh track.
-     * If there isn't then addMesh is used.
+     * For creating a new mesh, if there is a currently selected mesh in the current frame,
+     * this starts a new mesh track. If there isn't then addMesh is used.
      *
      * @see SegmentationController#addMesh(int, DeformableMesh3D)
      *
@@ -2251,19 +2345,18 @@ public class SegmentationController {
         return model.getAllTracks();
     }
 
+    /**
+     *
+     * @return The mesh from the currently selected mesh track in the current frame. Can be null.
+     */
     public DeformableMesh3D getSelectedMesh() {
         return model.getSelectedMesh(model.getCurrentFrame());
     }
 
     /**
-     * Used to notify the mesh tracks have changed.
+     *
+     * @return Color that is used to display the current image as a volume in the 3D canvas.
      */
-    public void notifyMeshListeners() {
-        submit(()->{
-            model.notifyMeshListeners();
-        });
-    }
-
     public Color getVolumeColor() {
         return model.volumeColor;
     }
@@ -2413,6 +2506,11 @@ public class SegmentationController {
 
     }
 
+    /**
+     * Gets the name of the currently selected mesh.
+     *
+     * @return
+     */
     public String getSelectedMeshName() {
         Track t = model.getSelectedTrack();
         if(t!=null)
@@ -2453,6 +2551,12 @@ public class SegmentationController {
     public int getDeformationSteps(){
         return model.deformations;
     }
+
+    /**
+     * Saves the current deformation parameters to a file.
+     *
+     * @param f
+     */
     public void saveParameters(File f) {
         submit(()->{
             PropertySaver.saveProperties(this, f);
@@ -2515,9 +2619,21 @@ public class SegmentationController {
         showForces(mesh);
     }
 
+    /**
+     * Creates an image that is generated by the current image energy.
+     */
     public void createEnergyImage(){
         model.createEnergyImage();
     }
+
+    /**
+     * Creates a set of vectors to show how the mesh will deform based on the image energy and
+     * external forces.
+     *
+     * The vectors are added as transient objects.
+     *
+     * @param mesh
+     */
     public void showForces(DeformableMesh3D mesh){
         boolean clear = true;
         if(mesh.getExternalEnergies().size()>0){
@@ -2537,15 +2653,10 @@ public class SegmentationController {
     }
 
     /**
-     * Opens the file f and adds the current meshes to the file. Assumes the current image is a
-     * viewbox *within* the image associated with the provided mesh file.
-     * @param meshFile destination.
-     * @param viewBox The current meshes will be scaled and translated to fit in the
+     * Checks for a MeshFrame3D.
+     * 
+     * @return
      */
-    public void exportTo(File meshFile, double[] viewBox) {
-
-    }
-
     public boolean has3DViewer() {
         return meshFrame3D != null;
     }

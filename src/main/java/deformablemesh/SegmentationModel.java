@@ -696,6 +696,11 @@ public class SegmentationModel {
         notifyMeshListeners();
     }
 
+    public void selectPreviousTrack(){
+        tracker.selectPreviousTrack();
+        notifyMeshListeners();
+    }
+
     /**
      *
      * @return an unmodifiable list of all the mesh tracks.

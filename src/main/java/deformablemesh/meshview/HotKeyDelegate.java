@@ -105,6 +105,14 @@ public class HotKeyDelegate {
                 "Selects next mesh",
                 ifEnabled(controller::selectNextMeshTrack)
         );
+
+        createActionMapKey(
+                KeyStroke.getKeyStroke(KeyEvent.VK_P, 0, true),
+                "NEXT_PREVIOUS",
+                "Selects previous mesh",
+                ifEnabled(controller::selectPreviousMeshTrack)
+        );
+
         createActionMapKey(
                 KeyStroke.getKeyStroke(KeyEvent.VK_O, 0, true),
                 "TOGGLE_SURFACE",
