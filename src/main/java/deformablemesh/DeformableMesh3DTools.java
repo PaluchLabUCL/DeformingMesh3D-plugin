@@ -1354,9 +1354,10 @@ public class DeformableMesh3DTools {
         for(Integer i = 0; i<stack.FRAMES; i++){
             for(Track t: allMeshTracks){
                 if(t.containsKey(i)){
+                    //if any tracks have the key add it to the frame list.
                     frames.add(i);
+                    break;
                 }
-                break;
             }
         }
 
