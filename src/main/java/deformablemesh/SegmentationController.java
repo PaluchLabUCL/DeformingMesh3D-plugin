@@ -2316,6 +2316,17 @@ public class SegmentationController {
     }
 
     /**
+     * Creates a labelled image of the provided tracks. The labels are not
+     * related frame to frame.
+     */
+    public void createLabelledImage(List<Track> tracks){
+        submit( ()->{
+            DeformableMesh3DTools.createUniqueLabelsRepresentation(
+                    getMeshImageStack(), model.original_plus, tracks
+            );
+        });
+    }
+    /**
      * For creating a new mesh, if there is a currently selected mesh in the current frame,
      * this starts a new mesh track. If there isn't then addMesh is used.
      *

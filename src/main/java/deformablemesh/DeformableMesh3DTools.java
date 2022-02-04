@@ -11,6 +11,7 @@ import ij.ImageStack;
 import ij.measure.Calibration;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
 
 import java.io.File;
 import java.io.IOException;
@@ -1376,6 +1377,50 @@ public class DeformableMesh3DTools {
             for(Track t: allMeshTracks){
                 if(t.containsKey(i)){
                     mosaicBinary(stack, out, t.getMesh(i), t.getColor().getRGB());
+                }
+            }
+
+            for(int j = 1; j<= n; j++){
+
+                timeStack.addSlice(out.getProcessor(j));
+            }
+        }
+        plus.setStack(timeStack, 1, n, frames.size());
+        return plus;
+    }
+
+    public static ImagePlus createUniqueLabelsRepresentation(MeshImageStack stack, ImagePlus original_plus, List<Track> allMeshTracks) {
+
+        ImagePlus plus = original_plus.createImagePlus();
+
+        Set<Integer> frames = new TreeSet<>();
+
+        for(Integer i = 0; i<stack.FRAMES; i++){
+            for(Track t: allMeshTracks){
+                if(t.containsKey(i)){
+                    //if any tracks have the key add it to the frame list.
+                    frames.add(i);
+                    break;
+                }
+            }
+        }
+
+
+        int w = original_plus.getWidth();
+        int h = original_plus.getHeight();
+        int n = original_plus.getNSlices();
+
+        ImageStack timeStack = new ImageStack(w, h);
+
+        for(Integer i: frames){
+            int id = 1;
+            ImageStack out = new ImageStack(w, h);
+            for(int j = 0; j<n; j++){
+                out.addSlice(new ShortProcessor(w, h));
+            }
+            for(Track t: allMeshTracks){
+                if(t.containsKey(i)){
+                    mosaicBinary(stack, out, t.getMesh(i), id++);
                 }
             }
 
