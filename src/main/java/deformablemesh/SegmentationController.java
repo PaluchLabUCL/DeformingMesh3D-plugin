@@ -2321,10 +2321,14 @@ public class SegmentationController {
      */
     public void createLabelledImage(List<Track> tracks){
         submit( ()->{
-            DeformableMesh3DTools.createUniqueLabelsRepresentation(
-                    getMeshImageStack(), model.original_plus, tracks
+            ImagePlus plus = DeformableMesh3DTools.createUniqueLabelsRepresentation(
+                    getMeshImageStack(), tracks
             );
+            plus.setOpenAsHyperStack(true);
+            plus.setTitle(model.original_plus.getShortTitle() + "-labelled_image");
+            plus.show();
         });
+
     }
     /**
      * For creating a new mesh, if there is a currently selected mesh in the current frame,

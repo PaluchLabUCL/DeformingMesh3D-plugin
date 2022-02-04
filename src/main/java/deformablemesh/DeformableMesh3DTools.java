@@ -1389,9 +1389,9 @@ public class DeformableMesh3DTools {
         return plus;
     }
 
-    public static ImagePlus createUniqueLabelsRepresentation(MeshImageStack stack, ImagePlus original_plus, List<Track> allMeshTracks) {
+    public static ImagePlus createUniqueLabelsRepresentation(MeshImageStack stack, List<Track> allMeshTracks) {
 
-        ImagePlus plus = original_plus.createImagePlus();
+        ImagePlus plus = stack.original.createImagePlus();
 
         Set<Integer> frames = new TreeSet<>();
 
@@ -1406,9 +1406,9 @@ public class DeformableMesh3DTools {
         }
 
 
-        int w = original_plus.getWidth();
-        int h = original_plus.getHeight();
-        int n = original_plus.getNSlices();
+        int w = stack.original.getWidth();
+        int h = stack.original.getHeight();
+        int n = stack.original.getNSlices();
 
         ImageStack timeStack = new ImageStack(w, h);
 
@@ -1416,7 +1416,7 @@ public class DeformableMesh3DTools {
             int id = 1;
             ImageStack out = new ImageStack(w, h);
             for(int j = 0; j<n; j++){
-                out.addSlice(new ShortProcessor(w, h));
+                out.addSlice(new ColorProcessor(w, h));
             }
             for(Track t: allMeshTracks){
                 if(t.containsKey(i)){
@@ -1424,9 +1424,15 @@ public class DeformableMesh3DTools {
                 }
             }
 
-            for(int j = 1; j<= n; j++){
 
-                timeStack.addSlice(out.getProcessor(j));
+            for(int j = 1; j<= n; j++){
+                int[] px = (int[])out.getProcessor(j).getPixels();
+                ImageProcessor proc = new ShortProcessor(out.getWidth(), out.getHeight());
+                short[] px2 = (short[])proc.getPixels();
+                for(int k = 0; k<px2.length; k++){
+                    px2[k] = (short)px[k];
+                }
+                timeStack.addSlice(proc);
             }
         }
         plus.setStack(timeStack, 1, n, frames.size());
