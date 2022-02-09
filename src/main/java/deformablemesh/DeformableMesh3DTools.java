@@ -1469,6 +1469,157 @@ public class DeformableMesh3DTools {
 
     }
 
+    /**
+     * Get pixels contained in the mesh. This has repeated code with "mosaicBinary" and should
+     * be combined.
+     *
+     * @param stack
+     * @param mesh
+     * @return
+     */
+    public static List<int[]> getContainedPixels(MeshImageStack stack, DeformableMesh3D mesh){
+        Box3D box = mesh.getBoundingBox();
+        double[] lowI = stack.getImageCoordinates(box.low);
+        double[] highI = stack.getImageCoordinates(box.high);
+
+        InterceptingMesh3D picker = new InterceptingMesh3D(mesh);
+        double[] xdirection = {1,0,0};
+
+        int slices = stack.getNSlices();
+        int w = stack.getWidthPx();
+        int h = stack.getHeightPx();
+        double center[] = new double[3];
+
+        int sliceLow = (int)lowI[2];
+        int sliceHigh = (int)highI[2];
+        //verify
+        sliceLow = sliceLow < 0 ? 0 : sliceLow;
+        sliceHigh = sliceHigh <= slices ? sliceHigh : slices;
+
+        int jlo = (int)lowI[1];
+        int jhi = (int)highI[1];
+        jlo = jlo < 0 ? 0 : jlo;
+        jhi = jhi <= h ? jhi : h;
+
+        int xlo = (int)lowI[0];
+        int xhi = (int)highI[0];
+        xlo = xlo < 0 ? 0: xlo;
+        xhi = xhi > w ? w : xhi;
+        List<int[]> contained = new ArrayList<>();
+        for(int slice = sliceLow; slice<sliceHigh; slice++){
+
+            center[2] = slice;
+
+
+            for(int j = jlo; j<jhi; j++){
+
+                int offset = j*w;
+                center[1] = j;
+
+                List<Intersection> sections = picker.getIntersections(stack.getNormalizedCoordinate(center), xdirection);
+                if(sections.size()==0){
+                    //No intersections. No points inside.
+                    continue;
+                }
+                scanDirty(sections);
+                sections.sort((a,b)->Double.compare(a.location[0], b.location[0]));
+
+                boolean startInside = false;
+                double count = 0;
+                double[] boundaries = new double[sections.size()+1];
+
+                //the number of boundaries that switch the state from inside to outside.
+                int valid = 0;
+                double lowestEntry = Double.MAX_VALUE;
+                double highestExit = -Double.MAX_VALUE;
+
+                for(int k = 0; k<sections.size(); k++){
+
+                    double bound = stack.getImageCoordinates(sections.get(k).location)[0];
+
+                    boolean facingLeft = sections.get(k).surfaceNormal[0]<0;
+                    boolean facingRight = !facingLeft;
+                    //going through all interfaces, and either going further in
+                    //or back out.
+                    if(facingLeft){
+                        count++;
+                        if(bound < lowestEntry){
+                            lowestEntry = bound;
+                        }
+                    } else{
+                        count--;
+                        if(bound > highestExit){
+                            highestExit = bound;
+                        }
+                    }
+                    if(bound>0) {
+                        //check if it is actually a boundary
+                        if ( count==1 && facingLeft ) {
+                            //boundary entering region.
+                            if( valid == 0){
+                                startInside = false;
+                            }
+                            boundaries[valid] = bound;
+                            valid++;
+                        } else if (count==0 && facingRight) {
+                            //stepped out.
+                            if( valid == 0){
+                                startInside = true;
+                            }
+                            boundaries[valid] = bound;
+                            valid++;
+                        }
+
+                    }
+                }
+
+                boolean inside = startInside;
+
+
+                if(lowestEntry < lowI[0]){
+                    System.out.println("Topo Error: lowest entry is less than bounding box!");
+                }
+                if( (int)highestExit > highI[0] ){
+                    System.out.println("Topo Error: highest exit is outside of bounding box!");
+                }
+
+                if(startInside && lowestEntry>0){
+                    System.out.println("Topo Error: Lower bound above zero but mesh starts inside.");
+                }
+
+                boundaries[valid] = w;
+
+                //This isn't necessarily true.
+                //lowestIntersection >= lowI[0] and highestIntersection <= highI[0]
+                boolean finishesOutsideImage = lowestEntry <= (w-1) && highestExit >= (w - 1) ;
+
+                int current = 0;
+
+
+                for(int p = 0; p<w; p++){
+                    if(p>boundaries[current]){
+                        //switch.
+                        current++;
+                        inside = !inside;
+                    }
+                    if(inside){
+                        contained.add(new int[]{p, j, slice});
+                    }
+                }
+                if(finishesOutsideImage && !inside){
+                    System.out.println("topography warning: bounds outside image, but not inside the shape at end");
+                }
+
+                if(!finishesOutsideImage && inside){
+                    System.out.println("Inconsistent bounding box: End of image is out of bounds, but state is inside the shape");
+                    System.out.println(Arrays.toString(lowI) + " [~] " + Arrays.toString(highI));
+                }
+
+            }
+
+        }
+        return contained;
+    }
 
     public static void mosaicBinary(MeshImageStack stack, ImageStack out, DeformableMesh3D mesh, int rgb){
         Box3D box = mesh.getBoundingBox();

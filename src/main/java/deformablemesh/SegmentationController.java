@@ -2477,6 +2477,37 @@ public class SegmentationController {
         }
     }
 
+    public void plotVolumeAveragedIntensityVsTime(){
+        List<Track> tracks = getAllTracks();
+        Graph plot = new Graph();
+        MeshImageStack stack = getMeshImageStack();
+        final int start = stack.CURRENT;
+        for(Track track: tracks){
+            double[] times = new double[track.size()];
+            double[] intensities = new double[track.size()];
+            int index = 0;
+            for(Integer i: track.getTrack().keySet()){
+                times[index] = i;
+                DeformableMesh3D mesh = track.getMesh(i);
+                stack.setFrame(i);
+                List<int[]> volumePixels = DeformableMesh3DTools.getContainedPixels(stack, mesh);
+                double intensity = 0;
+                for(int[] values : volumePixels){
+                    intensity += stack.getValue(values[0], values[1], values[2]);
+                }
+                intensity = intensity/volumePixels.size();
+                intensities[index] = intensity;
+                index++;
+            }
+            DataSet set = plot.addData(times, intensities);
+            set.setLabel(track.getName());
+            set.setColor(track.getColor());
+        }
+        stack.setFrame(start);
+        plot.show(false, "Intensity vs Time");
+
+    }
+
     /**
      * Measures the selected track through time and calculates:
      *
