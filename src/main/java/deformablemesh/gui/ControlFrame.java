@@ -1417,8 +1417,11 @@ public class ControlFrame implements ReadyObserver, FrameListener {
          * "relative" the first import mesh frame is the aligned to the current select frame.
          *
          */
+
+
         setReady(false);
         FileDialog fd = new FileDialog(frame,"File to load mesh from");
+        fd.setDirectory(OpenDialog.getDefaultDirectory());
         fd.setMode(FileDialog.LOAD);
         fd.setVisible(true);
         if(fd.getFile()==null || fd.getDirectory()==null){
