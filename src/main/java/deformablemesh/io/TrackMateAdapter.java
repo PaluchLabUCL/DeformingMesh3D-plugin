@@ -30,6 +30,10 @@ public class TrackMateAdapter {
         trackMateModel.beginUpdate();
         double quality = 1.0;
         double weight = 1.0;
+        
+        // Set the frame interval here (convert from frame to seconds).
+        double dt = 1.; // in timeUnits.
+        
         for(Track t: tracks){
             Spot last = null;
             for(Map.Entry<Integer, DeformableMesh3D> entry: t.getTrack().entrySet()){
@@ -44,6 +48,7 @@ public class TrackMateAdapter {
                 double radius = Math.cbrt(3*moments.volume()/4/Math.PI);
 
                 Spot s = new Spot(x, y, z, radius, quality);
+                s.putFeature( Spot.POSITION_T, Double.valueOf( dt * entry.getKey() ) );
                 trackMateModel.addSpotTo(s, entry.getKey());
                 if(last != null){
                     trackMateModel.addEdge(s, last, radius);
