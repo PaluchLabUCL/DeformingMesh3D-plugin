@@ -43,6 +43,7 @@ public class BinaryMomentsOfInertia {
      * @return {c_x, c_y, c_z}
      */
     public double[] getCenterOfMass(){
+        if(cm == null) calculateCenterOfMass();
         return cm;
     }
 

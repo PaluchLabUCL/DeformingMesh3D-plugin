@@ -10,6 +10,7 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 
 import java.awt.Image;
+import java.nio.file.Path;
 
 import static deformablemesh.geometry.DeformableMesh3D.ORIGIN;
 
@@ -108,6 +109,14 @@ public class MeshImageStack {
 
     public MeshImageStack(ImagePlus original){
         this(original, 0, 0);
+    }
+
+    /**
+     * Creates an ImagePlus from the provided path.
+     * @param path
+     */
+    public MeshImageStack(Path path) {
+        this( new ImagePlus( path.toAbsolutePath().toString()));
     }
 
     public int getNFrames(){
@@ -538,6 +547,10 @@ public class MeshImageStack {
             }
         }
         return n;
+    }
+
+    public ImagePlus getOriginalPlus() {
+        return original;
     }
 }
 
