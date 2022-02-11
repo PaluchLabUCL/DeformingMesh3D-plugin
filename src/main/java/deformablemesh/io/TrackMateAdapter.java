@@ -7,6 +7,7 @@ import deformablemesh.track.Track;
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.TrackModel;
 import fiji.plugin.trackmate.action.ExportTracksToXML;
 import fiji.plugin.trackmate.gui.displaysettings.DisplaySettings;
@@ -61,6 +62,15 @@ public class TrackMateAdapter {
         trackMateModel.endUpdate();
 
         Settings s = new Settings(stack.getOriginalPlus());
+        s.addAllAnalyzers();
+        
+        // Compute all features.
+        TrackMate trackmate = new TrackMate( trackMateModel, s );
+        trackmate.setNumThreads();
+        trackmate.computeSpotFeatures( false );
+        trackmate.computeEdgeFeatures( false );
+        trackmate.computeTrackFeatures( false );
+        
         TmXmlWriter writer = new TmXmlWriter(destination.toFile());
         writer.appendSettings(s);
         writer.appendModel(trackMateModel);
