@@ -23,6 +23,10 @@ public class TrackMateAdapter {
 
     public static void saveAsTrackMateFile(MeshImageStack stack, List<Track> tracks, Path destination) throws IOException {
         Model trackMateModel = new Model();
+        // Set you physical units here.
+        String spaceUnits = "spaceUnits";
+		String timeUnits = "timeUnits";
+		trackMateModel.setPhysicalUnits( spaceUnits, timeUnits );
         trackMateModel.beginUpdate();
         double quality = 1.0;
         double weight = 1.0;
