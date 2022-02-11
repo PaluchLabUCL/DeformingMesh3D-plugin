@@ -7,6 +7,7 @@ import deformablemesh.track.Track;
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.TrackModel;
 import fiji.plugin.trackmate.action.ExportTracksToXML;
 import fiji.plugin.trackmate.gui.displaysettings.DisplaySettings;
@@ -23,9 +24,17 @@ public class TrackMateAdapter {
 
     public static void saveAsTrackMateFile(MeshImageStack stack, List<Track> tracks, Path destination) throws IOException {
         Model trackMateModel = new Model();
+        // Set you physical units here.
+        String spaceUnits = "spaceUnits";
+		String timeUnits = "timeUnits";
+		trackMateModel.setPhysicalUnits( spaceUnits, timeUnits );
         trackMateModel.beginUpdate();
         double quality = 1.0;
         double weight = 1.0;
+        
+        // Set the frame interval here (convert from frame to seconds).
+        double dt = 1.; // in timeUnits.
+        
         for(Track t: tracks){
             Spot last = null;
             for(Map.Entry<Integer, DeformableMesh3D> entry: t.getTrack().entrySet()){
@@ -40,6 +49,7 @@ public class TrackMateAdapter {
                 double radius = Math.cbrt(3*moments.volume()/4/Math.PI);
 
                 Spot s = new Spot(x, y, z, radius, quality);
+                s.putFeature( Spot.POSITION_T, Double.valueOf( dt * entry.getKey() ) );
                 trackMateModel.addSpotTo(s, entry.getKey());
                 if(last != null){
                     trackMateModel.addEdge(s, last, radius);
@@ -52,6 +62,15 @@ public class TrackMateAdapter {
         trackMateModel.endUpdate();
 
         Settings s = new Settings(stack.getOriginalPlus());
+        s.addAllAnalyzers();
+        
+        // Compute all features.
+        TrackMate trackmate = new TrackMate( trackMateModel, s );
+        trackmate.setNumThreads();
+        trackmate.computeSpotFeatures( false );
+        trackmate.computeEdgeFeatures( false );
+        trackmate.computeTrackFeatures( false );
+        
         TmXmlWriter writer = new TmXmlWriter(destination.toFile());
         writer.appendSettings(s);
         writer.appendModel(trackMateModel);
