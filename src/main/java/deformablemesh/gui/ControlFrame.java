@@ -8,6 +8,7 @@ import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.gui.meshinitialization.CircularMeshInitializationDialog;
 import deformablemesh.gui.meshinitialization.FurrowInitializer;
 import deformablemesh.io.ImportType;
+import deformablemesh.io.TrackMateAdapter;
 import deformablemesh.meshview.HotKeyDelegate;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.track.MeshTrackManager;
@@ -924,7 +925,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         load.addActionListener(actionEvent -> {
             setReady(false);
 
-
             FileDialog fd = new FileDialog(frame,"File to load mesh from");
             fd.setDirectory(OpenDialog.getDefaultDirectory());
             fd.setMode(FileDialog.LOAD);
@@ -1068,6 +1068,9 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             segmentationController.exportAsPly(f);
             finished();
         });
+
+        JMenu trackMate = createTrackMateMenu();
+        mesh.add(trackMate);
 
         JMenuItem load_3d_furrows = new JMenuItem("load furrows");
         mesh.add(load_3d_furrows);
@@ -1253,6 +1256,56 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         return menu;
     }
 
+    JMenu createTrackMateMenu(){
+        JMenu trackMate = new JMenu("TrackMate");
+        JMenuItem export = new JMenuItem("export as TmXml");
+        export.addActionListener(evt ->{
+            setReady(false);
+            File f = getSaveFile(segmentationController.getShortImageName() + ".xml");
+            if(f != null){
+                try{
+                    TrackMateAdapter.saveAsTrackMateFile(segmentationController.getMeshImageStack(),
+                            segmentationController.getAllTracks(),
+                            f.toPath()
+                    );
+                }catch(Exception e){
+                    e.printStackTrace();
+                }
+            }
+            finished();
+        });
+        JMenuItem imp = new JMenuItem("import from TmXml");
+        imp.addActionListener(evt->{
+            setReady(false);
+            File f = getOpenFile("Select Trackmate .xml");
+            List<Track> tracks = TrackMateAdapter.importTrackMateFile(
+                    segmentationController.getMeshImageStack(),
+                    f.toPath()
+            );
+            System.out.println("finished loading");
+            segmentationController.setMeshTracks(tracks);
+            finished();
+        });
+        JMenuItem mapping = new JMenuItem("track from TmXml");
+        mapping.addActionListener(evt->{
+            setReady(false);
+            File f = getOpenFile("Select Trackmate .xml");
+            List<Track> tracks = TrackMateAdapter.applyTracking(
+                    segmentationController.getAllTracks(),
+                    segmentationController.getMeshImageStack(),
+                    f.toPath()
+            );
+            segmentationController.setMeshTracks(tracks);
+            finished();
+        });
+        mapping.setToolTipText("Use a trackmate file to track existing meshes.");
+
+        trackMate.add(export);
+        trackMate.add(imp);
+        trackMate.add(mapping);
+        return trackMate;
+    }
+
     public void selectOpenImage(){
         GuiTools.selectOpenImage(frame, segmentationController);
     }
@@ -1347,6 +1400,18 @@ public class ControlFrame implements ReadyObserver, FrameListener {
 
 
     }
+
+    File getSaveFile(String guess){
+        FileDialog fd = new FileDialog(frame,"File to save mesh too");
+        fd.setFile(guess);
+        fd.setDirectory(OpenDialog.getDefaultDirectory());
+        fd.setMode(FileDialog.SAVE);
+        fd.setVisible(true);
+        if(fd.getFile()==null || fd.getDirectory()==null){
+            return null;
+        }
+        return new File(fd.getDirectory(), fd.getFile());
+    }
     /*
     public void exportFor(){
 
@@ -1410,7 +1475,16 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         plus.show();
         finished();
     }
-
+    File getOpenFile(String title){
+        FileDialog fd = new FileDialog(frame, title);
+        fd.setDirectory(OpenDialog.getDefaultDirectory());
+        fd.setMode(FileDialog.LOAD);
+        fd.setVisible(true);
+        if(fd.getFile()==null || fd.getDirectory()==null){
+            return null;
+        }
+        return new File(fd.getDirectory(),fd.getFile());
+    }
     public void importMeshes(){
         /**
          * "matching" the same frame.
