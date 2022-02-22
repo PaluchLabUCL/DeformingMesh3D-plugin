@@ -4,6 +4,7 @@ import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.geometry.Connection3D;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Triangle3D;
+import deformablemesh.io.MeshReader;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;
@@ -342,7 +343,7 @@ public class RenderFrame2D {
     }
     public static void main(String[] args) throws IOException {
         RenderFrame2D render = createRenderingMeshFrame();
-        List<Track> tracks = MeshWriter.loadMeshes(new File(args[0]));
+        List<Track> tracks = MeshReader.loadMeshes(new File(args[0]));
         render.setTracks(tracks);
 
     }

@@ -1,6 +1,7 @@
 package deformablemesh.gui.render2d;
 
 import deformablemesh.geometry.*;
+import deformablemesh.io.MeshReader;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;
@@ -323,7 +324,7 @@ public class RaycastRender implements Runnable {
     }
     public static void main(String[] args) throws IOException {
         new ImageJ();
-        List<Track> tracks = MeshWriter.loadMeshes(new File(IJ.getFilePath("select mesh file")));
+        List<Track> tracks = MeshReader.loadMeshes(new File(IJ.getFilePath("select mesh file")));
         List<DeformableMesh3D> mesh = tracks.stream().filter(t->t.containsKey(0)).map(t-> t.getMesh(0)).collect(Collectors.toList());
         RaycastRender rr = new RaycastRender();
         JPanel panel = new JPanel(){

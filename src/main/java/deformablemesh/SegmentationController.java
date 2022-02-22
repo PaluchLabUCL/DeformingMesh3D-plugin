@@ -9,9 +9,11 @@ import deformablemesh.gui.PropertySaver;
 import deformablemesh.gui.RingController;
 import deformablemesh.gui.render2d.RenderFrame2D;
 import deformablemesh.io.ImportType;
+import deformablemesh.io.MeshReader;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.meshview.*;
 import deformablemesh.ringdetection.FurrowTransformer;
+import deformablemesh.track.FrameToFrameDisplacement;
 import deformablemesh.track.Track;
 import deformablemesh.util.*;
 import deformablemesh.util.actions.ActionStack;
@@ -67,7 +69,13 @@ public class SegmentationController {
      */
     public SegmentationController(SegmentationModel model){
         this.model = model;
-        model.setRingController(new RingController(this));
+        try {
+            model.setRingController(new RingController(this));
+        } catch(java.awt.AWTError err){
+            System.out.println("error initializing awt: " + err.getMessage());
+            System.out.println("This can be due to DISPLAY env being set incorrectly.");
+            err.printStackTrace();
+        }
     }
 
     /**
@@ -1946,7 +1954,7 @@ public class SegmentationController {
      */
     public void loadMeshes(File f) {
         submit(()->{
-            List<Track> replacements = MeshWriter.loadMeshes(f);
+            List<Track> replacements = MeshReader.loadMeshes(f);
             actionStack.postAction(new UndoableActions(){
                 final List<Track> old = new ArrayList<>(model.getAllTracks());
                 @Override
@@ -2006,7 +2014,7 @@ public class SegmentationController {
             int i = getCurrentFrame();
             int n = getNFrames();
 
-            List<Track> imports = MeshWriter.loadMeshes(f);
+            List<Track> imports = MeshReader.loadMeshes(f);
 
             //the imports is modified to meet the supplied criteria.
             switch(type){
@@ -2703,6 +2711,15 @@ public class SegmentationController {
     }
 
     /**
+     * This is being exposed to create undoable tasks it should not be used if it can be avoided.
+     *
+     * @return
+     */
+    public SegmentationModel getModel() {
+        return model;
+    }
+
+    /**
      * Tasks for the exception throwing service.
      */
     public interface Executable{
@@ -2773,6 +2790,13 @@ public class SegmentationController {
 
     public void removeFrameListener(FrameListener listener){
         model.removeFrameListener(listener);
+    }
+
+    public void autotrackCurrentFrame(){
+        submit( () -> {
+           FrameToFrameDisplacement ftf =  FrameToFrameDisplacement.trackFrameForward(getAllTracks(), getCurrentFrame());
+           actionStack.postAction(ftf.modifyTracksAction(this));
+        });
     }
 }
 

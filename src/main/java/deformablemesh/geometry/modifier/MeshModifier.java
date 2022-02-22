@@ -4,6 +4,7 @@ import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.*;
 import deformablemesh.gui.FurrowInput;
+import deformablemesh.io.MeshReader;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.meshview.CanvasView;
 import deformablemesh.meshview.DataObject;
@@ -213,7 +214,7 @@ public class MeshModifier {
             if(f!=null){
                 File file = new File(fd.getDirectory(), f);
                 try {
-                    List<Track> loaded = MeshWriter.loadMeshes(file);
+                    List<Track> loaded = MeshReader.loadMeshes(file);
                     final DeformableMesh3D replacement = loaded.get(0).getMesh(0);
                     post(()->{
                         setMesh(replacement);
@@ -374,7 +375,7 @@ public class MeshModifier {
             try {
                 ImagePlus plus = new ImagePlus(Paths.get(args[0]).toAbsolutePath().toString());
                 mod.setImage(plus);
-                List<Track> tracks = MeshWriter.loadMeshes(new File(args[1]));
+                List<Track> tracks = MeshReader.loadMeshes(new File(args[1]));
                 DeformableMesh3D mesh = tracks.get(0).getMesh(tracks.get(0).getFirstFrame());
                 mod.setMesh(mesh);
 

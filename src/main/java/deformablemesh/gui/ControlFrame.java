@@ -1263,14 +1263,16 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             setReady(false);
             File f = getSaveFile(segmentationController.getShortImageName() + ".xml");
             if(f != null){
-                try{
-                    TrackMateAdapter.saveAsTrackMateFile(segmentationController.getMeshImageStack(),
-                            segmentationController.getAllTracks(),
-                            f.toPath()
-                    );
-                }catch(Exception e){
-                    e.printStackTrace();
-                }
+                segmentationController.submit(()->{
+                    try{
+                        TrackMateAdapter.saveAsTrackMateFile(segmentationController.getMeshImageStack(),
+                                segmentationController.getAllTracks(),
+                                f.toPath()
+                        );
+                    }catch(Exception e){
+                        e.printStackTrace();
+                    }
+                });
             }
             finished();
         });
@@ -1278,24 +1280,32 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         imp.addActionListener(evt->{
             setReady(false);
             File f = getOpenFile("Select Trackmate .xml");
-            List<Track> tracks = TrackMateAdapter.importTrackMateFile(
-                    segmentationController.getMeshImageStack(),
-                    f.toPath()
-            );
-            System.out.println("finished loading");
-            segmentationController.setMeshTracks(tracks);
+            if(f!=null){
+                segmentationController.submit( ()->{
+                    List<Track> tracks = TrackMateAdapter.importTrackMateFile(
+                            segmentationController.getMeshImageStack(),
+                            f.toPath()
+                    );
+                    System.out.println("finished loading");
+                    segmentationController.setMeshTracks(tracks);
+                });
+            }
             finished();
         });
         JMenuItem mapping = new JMenuItem("track from TmXml");
         mapping.addActionListener(evt->{
             setReady(false);
             File f = getOpenFile("Select Trackmate .xml");
-            List<Track> tracks = TrackMateAdapter.applyTracking(
-                    segmentationController.getAllTracks(),
-                    segmentationController.getMeshImageStack(),
-                    f.toPath()
-            );
-            segmentationController.setMeshTracks(tracks);
+            if(f != null){
+                segmentationController.submit( () -> {
+                    List<Track> tracks = TrackMateAdapter.applyTracking(
+                            segmentationController.getAllTracks(),
+                            segmentationController.getMeshImageStack(),
+                            f.toPath()
+                    );
+                    segmentationController.setMeshTracks(tracks);
+                });
+            }
             finished();
         });
         mapping.setToolTipText("Use a trackmate file to track existing meshes.");
@@ -1544,13 +1554,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         MeshTrackManager manager = new MeshTrackManager();
         manager.buildGui(frame, content);
         manager.manageSegmentationControllerTracks(segmentationController);
-
-        accept.addActionListener(evt->{
-            //TODO remove this, but the action needs to be done at the end of each track change.
-            List<Track> tracks = manager.getTracks();
-            segmentationController.setMeshTracks(tracks);
-            finished();
-        });
 
         main.add(content, BorderLayout.CENTER);
 

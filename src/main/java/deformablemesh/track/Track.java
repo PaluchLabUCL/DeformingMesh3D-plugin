@@ -128,7 +128,7 @@ public class Track {
      * @param data
      */
     public void setData(Map<Integer, DeformableMesh3D> data){
-        track = data;
+        track = new TreeMap<>(data);
         for(DeformableMesh3D mesh: track.values()){
             mesh.setSelected(selected);
             mesh.setColor(color);
@@ -168,5 +168,9 @@ public class Track {
 
     public boolean getShowSurface() {
         return showSurface;
+    }
+
+    public void putAll(Map<Integer, DeformableMesh3D> newMeshes) {
+        track.putAll(newMeshes);
     }
 }

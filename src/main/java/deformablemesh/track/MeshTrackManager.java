@@ -6,6 +6,8 @@ import deformablemesh.SegmentationController;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Furrow3D;
 import deformablemesh.geometry.ProjectableMesh;
+import deformablemesh.gui.FrameListener;
+import deformablemesh.io.MeshReader;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.ringdetection.FurrowTransformer;
 import deformablemesh.util.ColorSuggestions;
@@ -43,7 +45,38 @@ public class MeshTrackManager implements StateListener{
     long lastUpdated = -1;
     static final int w = 32;
     static final int h = 32;
+
     SegmentationController controller;
+
+    FrameListener fl = buildSelectionListener();
+
+    private FrameListener buildSelectionListener(){
+        return i ->{
+            System.out.println("checking");
+
+            Track t = controller.getSelectedMeshTrack();
+            if(t == null) return;
+
+            Track cur = getSelectedColumnTrack();
+            System.out.println(" checking " + t + " with " + cur);
+            int ff = t.getFirstFrame();
+            DeformableMesh3D mesh = t.getMesh(ff);
+            if( cur != null && ff == cur.getFirstFrame()){
+                if(mesh == cur.getMesh(ff)){
+                    return;
+                }
+            }
+
+            for(int dex = 0; dex < tracks.size(); dex++){
+                Track ti = tracks.get(dex);
+                if( mesh == ti.getMesh(ff) ){
+                    System.out.println("found and selecting");
+                    trackTable.setColumnSelectionInterval(dex + 1, dex+1);
+                    break;
+                }
+            }
+        };
+    }
     private JLabel getNullLabel() {
         BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_4BYTE_ABGR);
         Graphics2D g2d = (Graphics2D)img.getGraphics();
@@ -51,6 +84,14 @@ public class MeshTrackManager implements StateListener{
         g2d.setColor(new Color(200, 200, 200, 40));
         g2d.fillRect(0, 0, w, h);
         return new JLabel(new ImageIcon(img));
+    }
+
+    Track getSelectedColumnTrack(){
+        int c = trackTable.getSelectedColumn();
+        if(c > 0){
+            return tracks.get(c - 1);
+        }
+        return null;
     }
 
     class MeshListModel extends AbstractTableModel {
@@ -341,7 +382,7 @@ public class MeshTrackManager implements StateListener{
                 t.addMesh(rows[i], moving.get(i));
             }
 
-            shapeTable();
+            controller.setMeshTracks(tracks);
         }
     }
 
@@ -391,7 +432,8 @@ public class MeshTrackManager implements StateListener{
             }
 
             tracks.add(n);
-            shapeTable();
+
+            controller.setMeshTracks(tracks);
         }
     }
     public Track getSelectedTrack(){
@@ -410,12 +452,12 @@ public class MeshTrackManager implements StateListener{
     /**
      * Unique names are required for the mesh track manager, maybe test when started.
      *
-     * @param example
+     * @param trackName
      */
-    private void moveToTrack(String example) {
+    private void moveToTrack(String trackName) {
         Track destination = null;
         for(Track t: tracks){
-            if(t.name.equals(example)){
+            if(t.name.equals(trackName)){
                 destination=t;
                 break;
             }
@@ -463,6 +505,7 @@ public class MeshTrackManager implements StateListener{
                 one.remove(mesh);
                 destination.addMesh(index, mesh);
             }
+            controller.setMeshTracks(tracks);
 
 
         } else{
@@ -542,6 +585,8 @@ public class MeshTrackManager implements StateListener{
     }
     public void manageSegmentationControllerTracks(SegmentationController controller ){
         this.controller = controller;
+
+        controller.addMeshListener( this.fl );
         controller.addUndoStateListener(this);
         trackTable.addMouseListener( createMouseAdapter( controller ) );
         stateUpdated(controller.getCurrentState());
@@ -611,12 +656,12 @@ public class MeshTrackManager implements StateListener{
             this.tracks.addAll(newTracks);
             labels.clear();
             labels.putAll(newLabels);
-            shapeTable();
+            shapeTableII();
         });
 
     }
 
-    public void shapeTable(){
+    private void shapeTableII(){
 
         model.fireTableStructureChanged();
         if(trackTable!=null) {
@@ -672,7 +717,7 @@ public class MeshTrackManager implements StateListener{
 
     public static void main(String[] args) throws IOException, InvocationTargetException, InterruptedException {
         MeshTrackManager manager = new MeshTrackManager();
-        List<Track> tracks = MeshWriter.loadMeshes(new File("sample.bmf"));
+        List<Track> tracks = MeshReader.loadMeshes(new File("sample.bmf"));
         manager.manageSegmentationControllerTracks(new SegmentationController(null));
         EventQueue.invokeAndWait(()->{
             manager.buildJFrameGui();

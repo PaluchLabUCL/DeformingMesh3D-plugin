@@ -2,6 +2,7 @@ package deformablemesh.util;
 
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
+import deformablemesh.io.MeshReader;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.track.Track;
 import deformablemesh.util.connectedcomponents.ConnectedComponents2D;
@@ -252,7 +253,7 @@ public class Create3DTrainingDataFromMeshes {
         if(meshFileName==null) return;
 
         File meshFile = new File(meshFileName);
-        List<Track> tracks = MeshWriter.loadMeshes(meshFile);
+        List<Track> tracks = MeshReader.loadMeshes(meshFile);
 
 
 

@@ -1,6 +1,7 @@
 package deformablemesh;
 
 import deformablemesh.geometry.*;
+import deformablemesh.io.MeshReader;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;
@@ -1844,10 +1845,10 @@ public class DeformableMesh3DTools {
 
     public static void main(String[] args) throws IOException {
         new ImageJ();
-        ImagePlus plus = new ImagePlus("/home/smithm3/Desktop/riya-working/fucci-sample.tif");
-        List<Track> tracks = MeshWriter.loadMeshes(
+        ImagePlus plus = new ImagePlus(new File(args[0]).getAbsolutePath());
+        List<Track> tracks = MeshReader.loadMeshes(
                 new File(
-                        "/home/smithm3/Desktop/riya-working/riya-corrected-tracked.bmf"
+                        args[1]
                 )
         );
 

@@ -2,6 +2,7 @@ package deformablemesh.util;
 
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.*;
+import deformablemesh.io.MeshReader;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.track.Track;
 import ij.ImagePlus;
@@ -120,7 +121,7 @@ public class IntensitySurfacePlot extends SurfacePlot{
     public static void main(String[] args) throws IOException {
 
         List<Track> tracks = new ArrayList<>();
-        tracks.addAll(MeshWriter.loadMeshes(new File(args[0])));
+        tracks.addAll(MeshReader.loadMeshes(new File(args[0])));
         ImagePlus plus = new ImagePlus(new File(args[1]).getAbsolutePath());
         for(Track track: tracks) {
             for (Integer key : track.getTrack().keySet()) {

@@ -1,6 +1,7 @@
 package deformablemesh.meshview;
 
 import deformablemesh.geometry.DeformableMesh3D;
+import deformablemesh.io.MeshReader;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.track.Track;
 import org.scijava.java3d.Appearance;
@@ -60,7 +61,7 @@ public class MeshViewer {
 
 
 
-        List<Track> tracks = MeshWriter.loadMeshes(Paths.get(args[0]).toFile());
+        List<Track> tracks = MeshReader.loadMeshes(Paths.get(args[0]).toFile());
         tracks.forEach(viewer::addMeshTrack);
         viewer.meshFrame.addKeyListener(new KeyListener() {
             @Override

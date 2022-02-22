@@ -26,7 +26,7 @@ public class TrackAnalysis {
         if(current.size() == 0 || next.size() == 0){
             System.out.println("no mappings");
         }
-        FrameToFrameDisplacement ffd = new FrameToFrameDisplacement();
+        FrameToFrameDisplacement ffd = new FrameToFrameDisplacement(-1, -1);
         List<double[]> jardardIndexMatrix = ffd.processJaccardIndexMatrix(current, next);
 
         Graph g = new Graph();

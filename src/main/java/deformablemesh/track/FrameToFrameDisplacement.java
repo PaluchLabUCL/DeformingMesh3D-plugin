@@ -2,12 +2,15 @@ package deformablemesh.track;
 
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
+import deformablemesh.SegmentationController;
 import deformablemesh.geometry.Box3D;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.InterceptingMesh3D;
+import deformablemesh.io.MeshReader;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.util.ColorSuggestions;
 import deformablemesh.util.Vector3DOps;
+import deformablemesh.util.actions.UndoableActions;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ColorProcessor;
@@ -23,14 +26,113 @@ import java.util.stream.Collectors;
 
 public class FrameToFrameDisplacement {
     List<Track> tracks;
-    final Integer first, last;
+
     Map<Integer, Track> lastAdded = new HashMap<>();
     Map<Track, List<Mapping>> results = new HashMap<>();
+    public double JI_CUTOFF = 0.001;
     boolean followCenterOfMass = true;
+    final int first, last;
+    public FrameToFrameDisplacement(int first, int last){
+        this.first = first;
+        this.last = last;
+    }
 
-    public FrameToFrameDisplacement(){
-        first = -1;
-        last = -1;
+    List<Track> toChange = new ArrayList<>();
+    List<Map<Integer, DeformableMesh3D>> changes = new ArrayList<>();
+    List<Track> toRemove = new ArrayList<>();
+    public static FrameToFrameDisplacement trackFrameForward(List<Track> tracks, int frame){
+        List<Track> entering = tracks.stream().filter(
+                track -> track.getLastFrame() == frame
+            ).collect(Collectors.toList());
+        List<Track> starting = tracks.stream().filter(
+                track->track.getFirstFrame()==(frame+1)
+            ).collect(Collectors.toList());
+        List<DeformableMesh3D> enteringMeshes = entering.stream().map(t->t.getMesh(frame)).collect(Collectors.toList());
+        List<DeformableMesh3D> startingMeshes = starting.stream().map(t->t.getMesh(frame + 1)).collect(Collectors.toList());
+        System.out.println(entering.size() + " can continue. " + starting.size() + " start.");
+
+        FrameToFrameDisplacement ftf = new FrameToFrameDisplacement(frame, frame + 1);
+        ftf.tracks = tracks;
+
+        List<Mapping> mappings = ftf.getAvailableMappings(enteringMeshes, startingMeshes);
+
+
+        for(Mapping map: mappings){
+            Track destination = entering.get(map.a);
+            Track origin = starting.get(map.b);
+            ftf.toChange.add(destination);
+            ftf.changes.add(origin.getTrack());
+            ftf.toRemove.add(origin);
+        }
+        return ftf;
+
+    }
+
+    public UndoableActions modifyTracksAction(SegmentationController controller){
+        List<Track> changing = new ArrayList<>(toChange);
+        List<Map<Integer, DeformableMesh3D>> history = new ArrayList<>();
+        List<Map<Integer, DeformableMesh3D>> futures = new ArrayList<>();
+        List<Track> originalTracks = controller.getAllTracks();
+        List<Track> updated = new ArrayList<>(tracks);
+        updated.removeIf( t -> toRemove.contains(t));
+
+        return new UndoableActions() {
+            @Override
+            public void perform() {
+                System.out.println("modifying " + changing.size() + " tracks");
+                System.out.println("leaving " + updated.size() + " from " + tracks.size() + " replacing " + originalTracks.size());
+                for(int i = 0; i<changing.size(); i++){
+                    Track t = changing.get(i);
+                    history.add(t.getTrack());
+                    t.putAll(changes.get(i));
+                    futures.add(t.getTrack());
+
+                }
+                controller.getModel().setMeshes(updated);
+            }
+
+            @Override
+            public void undo() {
+                for(int i = 0; i<changing.size(); i++){
+                    Track t = changing.get(i);
+                    t.setData(history.get(i));
+                }
+                controller.getModel().setMeshes(originalTracks);
+            }
+
+            @Override
+            public void redo() {
+                for(int i = 0; i<changing.size(); i++){
+                    Track t = changing.get(i);
+                    t.setData(futures.get(i));
+                }
+                controller.getModel().setMeshes(originalTracks);
+            }
+        };
+
+    }
+
+    private List<Mapping> getAvailableMappings(List<DeformableMesh3D> enteringMeshes, List<DeformableMesh3D> startingMeshes) {
+        List<Mapping> mappings = processJaccardIndexMap(enteringMeshes, startingMeshes);
+        mappings.sort(Comparator.comparingDouble(m->-m.ji));
+
+        boolean[] taken = new boolean[enteringMeshes.size()];
+        boolean[] consumed = new boolean[startingMeshes.size()];
+        List<Mapping> vetted = new ArrayList<>();
+        for(Mapping mapping: mappings){
+            if(mapping.ji < JI_CUTOFF){
+                break;
+            }
+            if( taken[mapping.a] || consumed[mapping.b]){
+                continue;
+            }
+
+            taken[mapping.a] = true;
+            consumed[mapping.b] = true;
+            vetted.add(mapping);
+
+        }
+        return vetted;
     }
 
     public FrameToFrameDisplacement(List<Track> tracks){
@@ -292,10 +394,10 @@ public class FrameToFrameDisplacement {
         String filename;
         if(args.length == 1) {
             filename = args[0];
-            meshes = MeshWriter.loadMeshes(new File(filename));
+            meshes = MeshReader.loadMeshes(new File(filename));
         } else{
             filename = ij.IJ.getFilePath("select mesh file");
-            meshes = MeshWriter.loadMeshes(new File(filename));
+            meshes = MeshReader.loadMeshes(new File(filename));
         }
         FrameToFrameDisplacement ftfd = new FrameToFrameDisplacement(meshes);
         for(int i = ftfd.first; i<=ftfd.last; i++){
@@ -316,6 +418,10 @@ public class FrameToFrameDisplacement {
         }
     }
 
+    /**
+     * Keeps track of two indexes and their associated connection weight.
+     * The weight is expected to be the jaccard index.
+     */
     static class Mapping implements Comparable<Mapping>{
         final int a,b;
         final double ji;

@@ -1,5 +1,6 @@
 package deformablemesh.geometry;
 
+import deformablemesh.io.MeshReader;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.meshview.PlotSurface;
@@ -504,7 +505,7 @@ public class CurvatureCalculator {
 
     public static void main(String[] args) throws IOException {
         List<Track> tracks = new ArrayList<>();
-        tracks.addAll(MeshWriter.loadMeshes(new File(args[0])));
+        tracks.addAll(MeshReader.loadMeshes(new File(args[0])));
         Track t = new Track(new ArrayList<>());
         DeformableMesh3D ex = RayCastMesh.sphereRayCastMesh(4);
 

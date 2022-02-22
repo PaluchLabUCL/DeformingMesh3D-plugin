@@ -1,6 +1,7 @@
 package deformablemesh.geometry;
 
 import deformablemesh.DeformableMesh3DTools;
+import deformablemesh.io.MeshReader;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.meshview.CanvasView;
 import deformablemesh.meshview.LineDataObject;
@@ -53,7 +54,7 @@ public class SpherePathTesting {
             if(f!=null){
                 File file = new File(fd.getDirectory(), f);
                 try {
-                    List<Track> loaded = MeshWriter.loadMeshes(file);
+                    List<Track> loaded = MeshReader.loadMeshes(file);
                     final DeformableMesh3D replacement = loaded.get(0).getMesh(0);
                     post(()->{
                         setMesh(replacement);

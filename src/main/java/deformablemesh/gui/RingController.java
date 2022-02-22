@@ -58,7 +58,7 @@ public class RingController implements FrameListener, ListDataListener {
     double thresh = 128;
     JLabel frame;
     int currentFrame;
-    Slice3DView sliceView;
+    private Slice3DView sliceView;
 
     HistogramInput histControls;
     JPanel contentPane;

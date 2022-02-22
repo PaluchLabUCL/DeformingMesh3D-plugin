@@ -3,6 +3,7 @@ package deformablemesh.util;
 import deformablemesh.geometry.Box3D;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.InterceptingMesh3D;
+import deformablemesh.io.MeshReader;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.track.Track;
 import lightgraph.Graph;
@@ -65,7 +66,7 @@ public class MeshComparisons {
     }
     public static void main(String[] args) throws IOException {
 
-        List<Track>  tracks = MeshWriter.loadMeshes(new File(args[0]));
+        List<Track>  tracks = MeshReader.loadMeshes(new File(args[0]));
         int low = Integer.MAX_VALUE;
         int high = 0;
         for(int i = 0; i<tracks.size(); i++){

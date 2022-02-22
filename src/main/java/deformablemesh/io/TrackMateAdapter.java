@@ -2,11 +2,13 @@ package deformablemesh.io;
 
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.BinaryMomentsOfInertia;
+import deformablemesh.geometry.Box3D;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.RayCastMesh;
 import deformablemesh.geometry.Sphere;
 import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;
+import edu.mines.jtk.sgl.BoundingBox;
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
@@ -27,7 +29,46 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * A utility class for using TrackMate files.
+ *
+ * @Author
+ */
 public class TrackMateAdapter {
+    /**
+     * For mapping a mesh from normalized coordinates to "real unit" coordinates.
+     *
+     */
+    static class ProxySpot{
+
+        final double cx, cy, cz;
+        final double radius;
+
+        ProxySpot(DeformableMesh3D mesh, MeshImageStack mis){
+            Box3D box = mesh.getBoundingBox();
+            double[] center = mis.getImageCoordinates(box.getCenter());
+            //gets the image in pixels needs to be scaled to real units.
+
+            cx = center[0] * mis.pixel_dimensions[0];
+            cy = center[1] * mis.pixel_dimensions[1];
+            cz = center[2] * mis.pixel_dimensions[2];
+            //volume is going to be a normalized weight.
+            radius = Math.cbrt(3* box.getVolume()/2/4/Math.PI)*mis.SCALE;
+        }
+
+        static double[] getNormalizedCoordinates(Spot spot, MeshImageStack mis) {
+            double f = 1. / mis.SCALE;
+            return new double[] {
+                    spot.getDoublePosition(0) * f - mis.offsets[0],
+                    spot.getDoublePosition(1) * f - mis.offsets[1],
+                    spot.getDoublePosition(2) * f - mis.offsets[2]
+            };
+        }
+
+        public static double getNormalizedRadius(Spot spot, MeshImageStack mis) {
+            return spot.getFeature("RADIUS")/mis.SCALE;
+        }
+    }
 
     /**
      * Takes the provided Tracks for the provided image file and attempts to link them based on associated positions.
@@ -46,7 +87,6 @@ public class TrackMateAdapter {
     public static List<Track> applyTracking(List<Track> tracks, MeshImageStack mis, Path trackMateFile){
 
         double CUTOFF = 1.0;
-        double normalToUnits = mis.SCALE;
         TmXmlReader reader = new TmXmlReader(trackMateFile.toFile());
         Model model = reader.getModel();
         TrackModel trackModel = model.getTrackModel();
@@ -66,12 +106,11 @@ public class TrackMateAdapter {
                 //do the same conversion used to create the trackmate file. If the mesh
                 //shape hasn't been changed, and trackmate isnt' changing the CM this should be
                 //result in 0's.
-                BinaryMomentsOfInertia bmi = new BinaryMomentsOfInertia(meshes.get(j), mis);
-                double[] center = bmi.getCenterOfMass();
-                double x = center[0]*normalToUnits;
-                double y = center[1]*normalToUnits;
-                double z = center[2]*normalToUnits;
-                centers.add( new double[] { x, y, z});
+                //BinaryMomentsOfInertia bmi = new BinaryMomentsOfInertia(meshes.get(j), mis);
+                //double[] center = bmi.getCenterOfMass();
+                ProxySpot ps = new ProxySpot(meshes.get(j), mis);
+
+                centers.add( new double[] { ps.cx, ps.cy, ps.cz});
             }
 
             Iterable<Spot> si = spots.iterable(frame, false);
@@ -95,9 +134,6 @@ public class TrackMateAdapter {
                             if( d == 0 ) break;
                         }
                     }
-                    if(min < Double.MAX_VALUE ){
-                        System.out.println(min);
-                    }
                     if( min < CUTOFF ){
                         Track track = mapper.computeIfAbsent(trackModel.trackIDOf(spot), j -> new Track("" + j));
                         if (track.containsKey(i)) {
@@ -108,7 +144,7 @@ public class TrackMateAdapter {
                             meshes.remove(closest);
                         }
                     } else{
-                        System.out.println("coudn't map spot");
+                        System.out.println("coudn't map spot: " + min + " more than " + CUTOFF);
                     }
 
 
@@ -139,34 +175,38 @@ public class TrackMateAdapter {
         TmXmlReader reader = new TmXmlReader(trackMateFile.toFile());
         Model model = reader.getModel();
         TrackModel trackModel = model.getTrackModel();
-        double f = 1 / mis.SCALE;
-        Map<Integer, Track> mapper = new HashMap<>();
+        Map<String, Track> mapper = new HashMap<>();
         trackModel.nTracks(false);
         SpotCollection spots = model.getSpots();
+        long start = System.currentTimeMillis();
         for (int i = 0; i < mis.getNFrames(); i++) {
             int count = 0;
             Iterable<Spot> si = spots.iterable(i, false);
             if(si != null) {
                 for (Spot spot : spots.iterable(i, false)) {
-                    double x = spot.getDoublePosition(0) * f - mis.offsets[0];
-                    double y = spot.getDoublePosition(1) * f - mis.offsets[1];
-                    double z = spot.getDoublePosition(2) * f - mis.offsets[2];
-                    Integer id = trackModel.trackIDOf(spot);
+                    double [] xyz = ProxySpot.getNormalizedCoordinates( spot, mis);
 
-                    Track track = mapper.computeIfAbsent(trackModel.trackIDOf(spot), j -> new Track("" + j));
+                    Object id = trackModel.trackIDOf(spot);
+                    if(id == null){
+                        id = "N" + mapper.size();
+                    }
+                    Track track = mapper.computeIfAbsent(id.toString(), j -> new Track(j));
                     if (track.containsKey(i)) {
-                        System.out.println("Track has multiple spots: skipping");
+                        System.out.println("Track " + id + " has multiple spots same frame.");
+
                     } else {
-                        double[] center = new double[]{x, y, z};
+                        double[] center = xyz;
                         double radius = spot.getFeature("RADIUS");
-                        Sphere s = new Sphere(center, radius * f);
-                        DeformableMesh3D mesh = RayCastMesh.rayCastMesh(s, s.getCenter(), 2);
+                        Sphere s = new Sphere(center, ProxySpot.getNormalizedRadius(spot, mis) );
+                        DeformableMesh3D mesh = RayCastMesh.rayCastMesh(s, s.getCenter(), 1);
                         track.addMesh(i, mesh);
 
                     }
                     count++;
                 }
             }
+            System.out.println( "finished: " + i + " after " + ( System.currentTimeMillis() - start ) / 1000 );
+            start = System.currentTimeMillis();
         }
         tracks.addAll(mapper.values());
         return tracks;
@@ -185,23 +225,22 @@ public class TrackMateAdapter {
         
         // Set the frame interval here (convert from frame to seconds).
         double dt = plus.getFileInfo().frameInterval; // in timeUnits.
-        double normalToUnits = stack.SCALE;
+        double imgToUnit = stack.scale_values[0];
+        double imgZToUnit = stack.scale_values[2];
+
+        long start = System.currentTimeMillis();
+        int tenPercent = tracks.size()/100;
+        tenPercent = tenPercent == 0 ? 1: tenPercent;
+        int count = 0;
         for(Track t: tracks){
             Spot last = null;
             for(Map.Entry<Integer, DeformableMesh3D> entry: t.getTrack().entrySet()){
                 DeformableMesh3D mesh = entry.getValue();
-                BinaryMomentsOfInertia moments = new BinaryMomentsOfInertia(mesh, stack);
-                double[] center = moments.getCenterOfMass();
+                ProxySpot ps = new ProxySpot(mesh, stack);
 
-                //normalized coordinates 0, 0, 0 is the 0, 0, 0 in image space.
-                double x = center[0]*normalToUnits;
-                double y = center[1]*normalToUnits;
-                double z = center[2]*normalToUnits;
-
-                double radius = Math.cbrt(3*moments.volume()/4/Math.PI)*stack.SCALE;
-
-                Spot s = new Spot(x, y, z, radius, quality);
+                Spot s = new Spot(ps.cx, ps.cy, ps.cz, ps.radius, quality);
                 s.putFeature( Spot.POSITION_T, Double.valueOf( dt * entry.getKey() ) );
+
                 trackMateModel.addSpotTo(s, entry.getKey());
 
                 if(last != null){
@@ -209,8 +248,14 @@ public class TrackMateAdapter {
                 }
                 last = s;
             }
+            count ++;
+            if(count%tenPercent == 0){
+                System.out.println( "finished: " + count + " after " + ( System.currentTimeMillis() - start ) / 1000 );
+                start = System.currentTimeMillis();
+            }
 
         }
+        TrackModel tm = trackMateModel.getTrackModel();
 
         trackMateModel.endUpdate();
 
@@ -218,31 +263,30 @@ public class TrackMateAdapter {
         s.addAllAnalyzers();
         
         // Compute all features.
-        TrackMate trackmate = new TrackMate( trackMateModel, s );
-        trackmate.setNumThreads();
-        trackmate.computeSpotFeatures( false );
-        trackmate.computeEdgeFeatures( false );
-        trackmate.computeTrackFeatures( false );
-        
+
         TmXmlWriter writer = new TmXmlWriter(destination.toFile());
         writer.appendSettings(s);
         writer.appendModel(trackMateModel);
+        writer.appendGUIState( "ChooseTracker" );
         writer.writeToFile();
 
-        //ExportTracksToXML.export(trackMateModel, s, destination.toFile());
     }
 
     public static void main(String[] args) throws IOException {
         Path img = Paths.get("sample.tif");
         Path mesh = Paths.get("sample.bmf");
-        Path xml = Paths.get("texting.xml");
+        Path xml = Paths.get("exported.xml");
+        Path imported = Paths.get("sample-imported.bmf");
+        Path applied = Paths.get("sample-applied.bmf");
 
         MeshImageStack mis = new MeshImageStack( img );
-        List<Track> tracks = MeshWriter.loadMeshes(mesh.toFile());
+        List<Track> tracks = MeshReader.loadMeshes(mesh.toFile());
         saveAsTrackMateFile(mis, tracks, xml);
 
         List<Track> tracks2 = importTrackMateFile(img, xml);
-        MeshWriter.saveMeshes(new File("texting.bmf"), tracks2);
+        MeshWriter.saveMeshes(imported.toFile(), tracks2);
 
+        applyTracking(tracks, mis, xml);
+        MeshWriter.saveMeshes(applied.toFile(), tracks);
     }
 }

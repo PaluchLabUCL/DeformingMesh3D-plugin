@@ -3,6 +3,7 @@ package deformablemesh.util;
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.*;
+import deformablemesh.io.MeshReader;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.track.Track;
 import lightgraph.DataSet;
@@ -218,7 +219,7 @@ public class MeshFaceObscuring {
 
     }
     public static void analyzeTimeCourses(File meshFile) throws IOException {
-        List<Track> tracks =  MeshWriter.loadMeshes(meshFile);
+        List<Track> tracks =  MeshReader.loadMeshes(meshFile);
         analyzeTimeCourses(tracks, meshFile.getName());
     }
 

@@ -4,6 +4,7 @@ import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.BinaryInterceptible;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.RayCastMesh;
+import deformablemesh.io.MeshReader;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.track.Track;
@@ -59,7 +60,7 @@ public class FillingBinaryImage {
         p2.show();*/
         ImagePlus plus = new ImagePlus(Paths.get(args[0]).toAbsolutePath().toString());
         MeshImageStack mis = new MeshImageStack(plus);
-        List<Track> tracks = MeshWriter.loadMeshes(Paths.get(args[1]).toFile());
+        List<Track> tracks = MeshReader.loadMeshes(Paths.get(args[1]).toFile());
         for(int i = 0; i<mis.getNFrames(); i++){
             final int fi = i;
             List<DeformableMesh3D> meshes = tracks.stream().filter(

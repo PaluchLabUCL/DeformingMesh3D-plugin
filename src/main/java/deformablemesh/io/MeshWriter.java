@@ -24,6 +24,7 @@ import java.util.*;
  */
 public class MeshWriter {
     File output;
+
     public MeshWriter(File output){
         this.output = output;
     }
@@ -224,81 +225,14 @@ public class MeshWriter {
         }
     }
 
-    static public Track readMeshLegacy(int frames, DataInputStream dis) throws IOException{
-        Track track = new Track("legacy");
 
-        Map<Integer, DeformableMesh3D> map = new HashMap<>();
 
-        for(int i = 0; i<frames; i++) {
-            readMesh(dis, map);
-        }
 
-        track.setData(map);
-        return track;
-    }
 
-    static public void readMesh(DataInputStream dis, Map<Integer, DeformableMesh3D> map) throws IOException {
 
-        int current = dis.readInt();
-        int pos_count = dis.readInt();
-        double[] positions = new double[pos_count];
 
-        for (int j = 0; j < pos_count; j++) {
-            positions[j] = dis.readDouble();
-        }
 
-        int con_count = dis.readInt();
-        int[] connection_indices = new int[con_count];
 
-        for (int j = 0; j < con_count; j++) {
-            connection_indices[j] = dis.readInt();
-        }
-
-        int tri_count = dis.readInt();
-        int[] triangle_indices = new int[tri_count];
-
-        for (int j = 0; j < tri_count; j++) {
-            triangle_indices[j] = dis.readInt();
-        }
-        DeformableMesh3D mesh = DeformableMesh3D.loadMesh(positions, connection_indices, triangle_indices);
-        map.put(current, mesh);
-    }
-
-    static public List<Track> loadMeshes(File input) throws IOException {
-        List<Track> tracks = new ArrayList<Track>();
-        DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(input.toPath(), StandardOpenOption.READ)));
-
-        int version = dis.readInt();
-        if(version>0){
-            tracks.add(readMeshLegacy(version, dis));
-        } else if(version==-1){
-            int trackCount = dis.readInt();
-            for(int i = 0; i<trackCount; i++){
-                Track t = loadTrack(dis);
-                tracks.add(t);
-            }
-        } else{
-            throw new IOException("Unsupported Version");
-        }
-
-        return tracks;
-    }
-
-    private static Track loadTrack(DataInputStream dis) throws IOException {
-
-        String name = dis.readUTF();
-        int timePoints = dis.readInt();
-        Map<Integer, DeformableMesh3D> map = new HashMap<>();
-
-        for(int i = 0; i<timePoints; i++){
-            readMesh(dis, map);
-        }
-
-        Track t = new Track(name);
-        t.setData(map);
-        return t;
-
-    }
 
     /**
      * Save all of the tracks contained in the current frame.

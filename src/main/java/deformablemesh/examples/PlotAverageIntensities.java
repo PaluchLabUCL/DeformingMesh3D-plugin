@@ -3,6 +3,7 @@ package deformablemesh.examples;
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.DeformableMesh3D;
+import deformablemesh.io.MeshReader;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.track.Track;
 import ij.ImagePlus;
@@ -17,7 +18,7 @@ public class PlotAverageIntensities {
 
     public static void main(String[] args) throws IOException {
         ImagePlus plus = new ImagePlus(new File(args[0]).getAbsolutePath());
-        List<Track> tracks = MeshWriter.loadMeshes(new File(args[1]));
+        List<Track> tracks = MeshReader.loadMeshes(new File(args[1]));
         MeshImageStack stack = new MeshImageStack(plus, 20, 1);
 
         final int start = stack.CURRENT;
