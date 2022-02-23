@@ -2490,27 +2490,48 @@ public class SegmentationController {
         Graph plot = new Graph();
         MeshImageStack stack = getMeshImageStack();
         final int start = stack.CURRENT;
+
+        List<List<Integer>> allTimes = new ArrayList<>(tracks.size());
+        List<double[]> allIntensities = new ArrayList<>(tracks.size());
+        int min = stack.getNFrames();
+        int max = 0;
         for(Track track: tracks){
-            double[] times = new double[track.size()];
-            double[] intensities = new double[track.size()];
-            int index = 0;
-            for(Integer i: track.getTrack().keySet()){
-                times[index] = i;
-                DeformableMesh3D mesh = track.getMesh(i);
-                stack.setFrame(i);
-                List<int[]> volumePixels = DeformableMesh3DTools.getContainedPixels(stack, mesh);
-                double intensity = 0;
-                for(int[] values : volumePixels){
-                    intensity += stack.getValue(values[0], values[1], values[2]);
+            allTimes.add(new ArrayList<>(track.size()));
+            allIntensities.add(new double[track.size()]);
+            min = Math.min(track.getFirstFrame(), min);
+            max = Math.max(track.getLastFrame(), max);
+        }
+
+        for(int i = min; i<=max; i++){
+            System.out.println("frame: " + i);
+            stack.setFrame(i);
+            for(int j = 0; j<tracks.size(); j++){
+                Track t = tracks.get(j);
+                if(t.containsKey(i)) {
+                    DeformableMesh3D mesh = t.getMesh(i);
+                    List<int[]> volumePixels = DeformableMesh3DTools.getContainedPixels(stack, mesh);
+                    double intensity = 0;
+                    for(int[] values : volumePixels){
+                        intensity += stack.getValue(values[0], values[1], values[2]);
+                    }
+                    intensity = intensity/volumePixels.size();
+                    List<Integer> times = allTimes.get(j);
+                    allIntensities.get(j)[times.size()] = intensity;
+                    times.add(i);
                 }
-                intensity = intensity/volumePixels.size();
-                intensities[index] = intensity;
-                index++;
             }
-            DataSet set = plot.addData(times, intensities);
+        }
+        for(int j = 0; j<tracks.size(); j++){
+            List<Integer> keys = allTimes.get(j);
+            Track track = tracks.get(j);
+            double[] times = keys.stream().mapToDouble(Double::valueOf).toArray();
+
+            DataSet set = plot.addData(times, allIntensities.get(j));
             set.setLabel(track.getName());
             set.setColor(track.getColor());
+
         }
+
         stack.setFrame(start);
         plot.show(false, "Intensity vs Time");
 

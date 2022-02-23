@@ -8,7 +8,6 @@ import deformablemesh.geometry.RayCastMesh;
 import deformablemesh.geometry.Sphere;
 import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;
-import edu.mines.jtk.sgl.BoundingBox;
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
@@ -92,7 +91,7 @@ public class TrackMateAdapter {
         TrackModel trackModel = model.getTrackModel();
         trackModel.nTracks(false);
         SpotCollection spots = model.getSpots();
-        Map<Integer, Track> mapper = new HashMap<>();
+        Map<String, Track> mapper = new HashMap<>();
         for (int i = 0; i < mis.getNFrames(); i++) {
             final int frame = i;
             List<DeformableMesh3D> meshes = tracks.stream().filter(
@@ -135,7 +134,12 @@ public class TrackMateAdapter {
                         }
                     }
                     if( min < CUTOFF ){
-                        Track track = mapper.computeIfAbsent(trackModel.trackIDOf(spot), j -> new Track("" + j));
+                        Object id = trackModel.trackIDOf(spot);
+                        if(id == null){
+                            id = "N" + mapper.size();
+                        }
+
+                        Track track = mapper.computeIfAbsent(id.toString(), j -> new Track("" + j));
                         if (track.containsKey(i)) {
                             System.out.println("Track has multiple spots");
                         } else {
@@ -144,7 +148,7 @@ public class TrackMateAdapter {
                             meshes.remove(closest);
                         }
                     } else{
-                        System.out.println("coudn't map spot: " + min + " more than " + CUTOFF);
+                        System.out.println("couldn't map spot: " + min + " more than " + CUTOFF);
                     }
 
 
