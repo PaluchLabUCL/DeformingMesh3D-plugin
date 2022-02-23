@@ -39,6 +39,12 @@ which can be found in "plugins"->"PL_Mesh3D"->"Deforming Mesh 3D", and JFilament
 
 # Changes
 
+0.9.0
+- Selected mesh is now updated in track manager.
+- Exposing averaged intensity vs time plot
+- exposed frame to frame displacement simple auto tracker.
+- Updated mesh file reading to include progress and range checking.
+
 0.8.0
 - Select channel from main display.
 - Added 3D sculpting - feature preview version.
