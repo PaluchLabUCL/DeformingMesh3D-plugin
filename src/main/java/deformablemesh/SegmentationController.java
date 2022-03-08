@@ -2511,10 +2511,16 @@ public class SegmentationController {
                     DeformableMesh3D mesh = t.getMesh(i);
                     List<int[]> volumePixels = DeformableMesh3DTools.getContainedPixels(stack, mesh);
                     double intensity = 0;
-                    for(int[] values : volumePixels){
-                        intensity += stack.getValue(values[0], values[1], values[2]);
+                    if( volumePixels.size() > 0) {
+                        for (int[] values : volumePixels) {
+                            intensity += stack.getValue(values[0], values[1], values[2]);
+                        }
+                        intensity = intensity/volumePixels.size();
+                    } else{
+                        double[] c = mesh.getBoundingBox().getCenter();
+                        intensity = stack.getInterpolatedValue(c);
                     }
-                    intensity = intensity/volumePixels.size();
+
                     List<Integer> times = allTimes.get(j);
                     allIntensities.get(j)[times.size()] = intensity;
                     times.add(i);
