@@ -52,6 +52,7 @@ if __name__ == "__main__":
 	
 	plotter = vedo.Plotter(interactive=False)
 	plotter.show()
+	save = False
 	while True:
 		for frame in frames:
 			to_see = []
@@ -62,6 +63,9 @@ if __name__ == "__main__":
 					colors.append( getColor(track.name) )
 			added = showMeshes(plotter, to_see, colors)
 			plotter.show()
+			if save:
+				plotter.screenshot("snapshot-%04d.png"%frame)
+			
 			for item in added:
 				plotter.remove(item)
-				time.sleep(0.010)
+		break;

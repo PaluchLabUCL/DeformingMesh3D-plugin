@@ -16,6 +16,8 @@ import deformablemesh.track.Track;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.io.OpenDialog;
+import loci.plugins.BF;
+import loci.plugins.in.ImporterOptions;
 
 import javax.swing.*;
 import java.awt.*;
@@ -901,7 +903,34 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             selectOpenImage();
 
         });
+        JMenuItem importH5Xml = new JMenuItem("import h5/xml");
+        file.add(importH5Xml);
+        importH5Xml.addActionListener( evt->{
+            String id = IJ.getFilePath("select h5/xml file");
+            if(id==null) return;
+            setReady(false);
 
+            segmentationController.submit( ()->{
+                try {
+                    ImporterOptions options = new ImporterOptions();
+                    options.setVirtual(true);
+                    options.setOpenAllSeries(true);
+
+                    if(id == null) return;
+                    options.setId(id);
+                    long start = System.currentTimeMillis();
+                    ImagePlus[] pluses = BF.openImagePlus(options);
+                    for (ImagePlus plus : pluses) {
+                        plus.show();
+                    }
+                    segmentationController.setOriginalPlus(pluses[0]);
+                } catch( Exception e){
+                    //oh well!
+                } finally{
+                    finished();
+                }
+            });
+        });
         JMenuItem saveAs = new JMenuItem("save meshes as...");
         file.add(saveAs);
         saveAs.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_MASK));

@@ -25,68 +25,101 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class FrameToFrameDisplacement {
-    List<Track> tracks;
-
-    Map<Integer, Track> lastAdded = new HashMap<>();
-    Map<Track, List<Mapping>> results = new HashMap<>();
     public double JI_CUTOFF = 0.001;
-    boolean followCenterOfMass = true;
+    boolean followCenterOfMass = false;
     final int first, last;
-    public FrameToFrameDisplacement(int first, int last){
-        this.first = first;
-        this.last = last;
+
+    double[] c1 = new double[3];
+    double[] c2 = new double[3];
+
+
+    UndoableActions perform;
+    /**
+     * Creates a frame to frame displacement with the starting frame provided.
+     * @param frame
+     */
+    public FrameToFrameDisplacement(int frame){
+        this.first = frame;
+        this.last = first + 1;
     }
 
-    List<Track> toChange = new ArrayList<>();
-    List<Map<Integer, DeformableMesh3D>> changes = new ArrayList<>();
-    List<Track> toRemove = new ArrayList<>();
-    public static FrameToFrameDisplacement trackFrameForward(List<Track> tracks, int frame){
-        List<Track> entering = tracks.stream().filter(
-                track -> track.getLastFrame() == frame
-            ).collect(Collectors.toList());
-        List<Track> starting = tracks.stream().filter(
-                track->track.getFirstFrame()==(frame+1)
-            ).collect(Collectors.toList());
+    /**
+     * Takes the current set tracks, find tracks that are available in the current frame, and the set of tracks that
+     * are available in the next frame, then attempts to link them.
+     *
+     * @param tracks full collection of tracks that will be filtered and linked
+     * @param frame starting frame for tracking.
+     * @return A frame to frame displacement with tracking prepared.
+     */
+    public static FrameToFrameDisplacement trackAvailableFrameForward(SegmentationController controller){
+
+        List<Track> tracks = controller.getAllTracks();
+        int frame = controller.getCurrentFrame();
+
+        List<Track> entering = new ArrayList<>();
+        List<Track> starting = new ArrayList<>();
+        List<Track> ignoring = new ArrayList<>();
+
+        for(Track track: tracks){
+            if(track.getLastFrame() == frame){
+                entering.add(track);
+            } else if( track.getFirstFrame() == frame + 1){
+                starting.add(track);
+            } else{
+                ignoring.add(track);
+            }
+        }
+
+
         List<DeformableMesh3D> enteringMeshes = entering.stream().map(t->t.getMesh(frame)).collect(Collectors.toList());
         List<DeformableMesh3D> startingMeshes = starting.stream().map(t->t.getMesh(frame + 1)).collect(Collectors.toList());
+
         System.out.println(entering.size() + " can continue. " + starting.size() + " start.");
 
-        FrameToFrameDisplacement ftf = new FrameToFrameDisplacement(frame, frame + 1);
-        ftf.tracks = tracks;
+        FrameToFrameDisplacement ftf = new FrameToFrameDisplacement(frame);
+
+        ftf.calculateCenterOfMass(tracks);
 
         List<Mapping> mappings = ftf.getAvailableMappings(enteringMeshes, startingMeshes);
 
+        List<Map<Integer, DeformableMesh3D>> changes = new ArrayList<>();
+        List<Track> removing = new ArrayList<>();
+        List<Track> changing = new ArrayList<>();
+
+        List<Map<Integer, DeformableMesh3D>> history = new ArrayList<>();
+        List<Map<Integer, DeformableMesh3D>> future = new ArrayList<>();
 
         for(Mapping map: mappings){
             Track destination = entering.get(map.a);
             Track origin = starting.get(map.b);
-            ftf.toChange.add(destination);
-            ftf.changes.add(origin.getTrack());
-            ftf.toRemove.add(origin);
+            history.add(destination.getTrack());
+            Map<Integer, DeformableMesh3D> modified = destination.getTrack();
+            modified.putAll(origin.getTrack());
+            future.add(modified);
+            changing.add(destination);
+            removing.add(origin);
         }
-        return ftf;
 
-    }
-
-    public UndoableActions modifyTracksAction(SegmentationController controller){
-        List<Track> changing = new ArrayList<>(toChange);
-        List<Map<Integer, DeformableMesh3D>> history = new ArrayList<>();
-        List<Map<Integer, DeformableMesh3D>> futures = new ArrayList<>();
         List<Track> originalTracks = controller.getAllTracks();
-        List<Track> updated = new ArrayList<>(tracks);
-        updated.removeIf( t -> toRemove.contains(t));
 
-        return new UndoableActions() {
+        System.out.println("#total\tentering\tstarting\tremoving\tresulting");
+        System.out.print(
+                originalTracks.size() + "\t" + entering.size() + "\t"
+                + starting.size() + "\t"+removing.size()
+        );
+
+        starting.removeIf(removing::contains);
+        List<Track> updated = new ArrayList<>(ignoring.size() + entering.size() + starting.size());
+        updated.addAll(ignoring); //ignored tracks remain
+        updated.addAll(entering); //entering tracks remain
+        updated.addAll(starting); //starting tracks that didn't get linked remain.
+        System.out.println( "\t" + updated.size());
+        ftf.perform = new UndoableActions() {
             @Override
             public void perform() {
-                System.out.println("modifying " + changing.size() + " tracks");
-                System.out.println("leaving " + updated.size() + " from " + tracks.size() + " replacing " + originalTracks.size());
                 for(int i = 0; i<changing.size(); i++){
                     Track t = changing.get(i);
-                    history.add(t.getTrack());
-                    t.putAll(changes.get(i));
-                    futures.add(t.getTrack());
-
+                    t.setData(future.get(i));
                 }
                 controller.getModel().setMeshes(updated);
             }
@@ -104,14 +137,27 @@ public class FrameToFrameDisplacement {
             public void redo() {
                 for(int i = 0; i<changing.size(); i++){
                     Track t = changing.get(i);
-                    t.setData(futures.get(i));
+                    t.setData(future.get(i));
                 }
-                controller.getModel().setMeshes(originalTracks);
+                controller.getModel().setMeshes(updated);
+            }
+            @Override
+            public String getName(){
+                return "trkd::" + frame + "//" + removing.size();
             }
         };
 
+        return ftf;
     }
 
+
+    /**
+     * Reduces the number of mappings. This is the tracking algorithm! A list of mappings is created
+     *
+     * @param enteringMeshes
+     * @param startingMeshes
+     * @return
+     */
     private List<Mapping> getAvailableMappings(List<DeformableMesh3D> enteringMeshes, List<DeformableMesh3D> startingMeshes) {
         List<Mapping> mappings = processJaccardIndexMap(enteringMeshes, startingMeshes);
         mappings.sort(Comparator.comparingDouble(m->-m.ji));
@@ -135,30 +181,43 @@ public class FrameToFrameDisplacement {
         return vetted;
     }
 
-    public FrameToFrameDisplacement(List<Track> tracks){
-        this.tracks = tracks;
-        int min = Integer.MAX_VALUE;
-        int max = -min;
-        for(Track track: tracks){
-            int f = track.getFirstFrame();
-            int l = track.getLastFrame();
-            if(f<min){
-                min = f;
-            }
-            if(l > max){
-                max = l;
-            }
-        }
-        first = min;
-        last = max;
-
+    /**
+     * Creates an undoable action based on the tracking result.
+     *
+     * @return perform will create two track lists, one that represents the current state
+     *         and one that represents the previous list. It will also create a list of
+     *         track data for each track that gets modified. A before list and an after list.
+     *
+     *         undo sets the controller to have the previous track list and all of the modified tracks
+     *         will have their original track data set.
+     *
+     *         redo sets the controller to have the updated track list and all of the modified tracks
+     *         will have their updated track data set.
+     *
+     */
+    public UndoableActions getPerform() {
+        return perform;
     }
+
+    /**
+     * Calculates the center of mass based on the provided tracks.
+     *
+     * @param tracks
+     */
+    public void calculateCenterOfMass(List<Track> tracks){
+
+        c1 = centerOfMass(tracks.stream().filter(t->t.containsKey(first)).map(t->t.getMesh(first)).collect(Collectors.toList()));
+        c2 = centerOfMass(tracks.stream().filter(t->t.containsKey(last)).map(t->t.getMesh(last)).collect(Collectors.toList()));
+        followCenterOfMass = true;
+    }
+
     public static double[] centerOfMass(List<DeformableMesh3D> meshes){
         double[] c = new double[3];
         double m = 0;
         for(DeformableMesh3D mesh: meshes){
             double v = mesh.calculateVolume();
             double[] ci = new InterceptingMesh3D(mesh).getCenter();
+
             m += v;
             c[0] += ci[0]*v;
             c[1] += ci[1]*v;
@@ -169,6 +228,7 @@ public class FrameToFrameDisplacement {
         c[2] = c[2]/m;
         return c;
     }
+
     static class Delta implements Comparable<Delta>{
         final public double distance;
         final public int index;
@@ -227,12 +287,12 @@ public class FrameToFrameDisplacement {
 
         return results;
     }
+
     public List<Mapping> processJaccardIndexMap(List<DeformableMesh3D> m1, List<DeformableMesh3D> m2){
         System.out.println(m1.size() + " meshes tracking to " + m2.size());
         List<Mapping> maps;
         if(followCenterOfMass) {
-            double[] c1 = centerOfMass(m1);
-            double[] c2 = centerOfMass(m2);
+
             //displacement from c1 to c2.
             double[] delta = {c2[0] - c1[0], c2[1] - c1[1], c2[2] - c1[2]};
             displacements(m1, m2, delta);
@@ -259,136 +319,6 @@ public class FrameToFrameDisplacement {
         return maps;
     }
 
-    /**
-     *
-     * @param starting first frame to be tracked.
-     */
-    public void processFrame(int starting){
-        int nextFrame = starting+1;
-        List<DeformableMesh3D> m1 = tracks.stream().filter(t -> t.containsKey(starting)).map(t->t.getMesh(starting)).collect(Collectors.toList());
-        List<DeformableMesh3D> m2 = tracks.stream().filter(t -> t.containsKey(nextFrame)).map(t->t.getMesh( starting+1 )).collect(Collectors.toList());
-        List<Mapping> maps = processJaccardIndexMap(m1, m2);
-        if(m1.size() != maps.size()){
-            throw new RuntimeException("Missing mesh!");
-        }
-
-
-
-        for(Mapping map: maps){
-            if(!lastAdded.containsKey(map.a)){
-                //the mesh in 'a' started on starting frame.
-                Track t = createNewTrack();
-                t.addMesh(starting, m1.get(map.a));
-                results.put(t, new ArrayList<>());
-                lastAdded.put(map.a, t);
-            }
-        }
-
-        Map<Integer, Double> bs = new HashMap<>();
-        Map<Integer, Track> currentlyAdding = new HashMap<>();
-        //lastAdded has all of the meshes from starting in working tracks.
-        for(Mapping m: maps){
-            if(m.b == -1){
-                //this track ends, nobody overlapped it.
-                continue;
-            }
-
-            if( bs.containsKey(m.b) ){
-                //multiple tracks map to the same m.b.
-                double v = bs.get(m.b);
-                if(v > m.ji){
-                    //old mapping is better.
-                    continue;
-                } else{
-                    //find the old track that contained m.b
-                    for(Track t: results.keySet()){
-                        if(t.containsMesh(m2.get(m.b))){
-                            //remove the mesh from other track.
-                            t.remove(m2.get(m.b));
-                            //remove the mapping from the results.
-                            results.get(t).remove(m);
-                        }
-                    }
-                    //overwrite old
-                    bs.put(m.b, m.ji);
-                    Track t = lastAdded.get(m.a);
-                    t.addMesh(nextFrame, m2.get(m.b));
-                    //overwrite old.
-                    currentlyAdding.put(m.b, t);
-
-                    results.get(t).add(m);
-                }
-            } else{
-                Track t = lastAdded.get(m.a);
-                t.addMesh(nextFrame, m2.get(m.b));
-
-                currentlyAdding.put(m.b, t);
-                results.get(t).add(m);
-                bs.put(m.b, m.ji);
-
-            }
-
-        }
-
-
-        lastAdded = currentlyAdding;
-        if( bs.size() == maps.size() ){
-            System.out.println("1:1");
-        } else{
-            System.out.println("difference b-a = " + (bs.size() - maps.size()));
-        }
-    }
-    List<Color> global = new ArrayList<>();
-    public Track createNewTrack(){
-        Color c = ColorSuggestions.getSuggestion(global);
-        global.add(c);
-
-        String name = ColorSuggestions.getColorName(c);
-        return new Track(name);
-    }
-
-    public void plot(){
-        Graph g = new Graph();
-
-        for(Track t: results.keySet()){
-            List<Mapping> chained = results.get(t);
-            double[] x = new double[chained.size()];
-            double[] y = new double[chained.size()];
-            for(int i = 0; i< chained.size(); i++){
-                x[i] = i;
-                y[i] = chained.get(i).ji;
-            }
-            g.addData(x, y).setLabel(t.getName());
-        }
-
-        g.show(false);
-
-    }
-    public String toString(){
-        StringBuilder builder = new StringBuilder("#frame");
-        int n = 0;
-        for(Track t: results.keySet()){
-            builder.append("\t" + t.name);
-            int len = results.get(t).size();
-            n = len>n ? len : n;
-        }
-
-        builder.append("\n");
-
-        for(int i = 0; i<n; i++){
-            builder.append(i + "");
-            for(Track t: results.keySet()){
-                List<Mapping> mpd = results.get(t);
-                if(mpd.size()>i){
-                    builder.append("\t" + mpd.get(i).ji);
-                } else{
-                    builder.append("\t");
-                }
-            }
-            builder.append("\n");
-        }
-        return builder.toString();
-    }
     public static void main(String[] args) throws IOException {
         List<Track> meshes;
         String filename;
@@ -399,23 +329,14 @@ public class FrameToFrameDisplacement {
             filename = ij.IJ.getFilePath("select mesh file");
             meshes = MeshReader.loadMeshes(new File(filename));
         }
-        FrameToFrameDisplacement ftfd = new FrameToFrameDisplacement(meshes);
+        /*FrameToFrameDisplacement ftfd = new FrameToFrameDisplacement(meshes);
         for(int i = ftfd.first; i<=ftfd.last; i++){
             ftfd.processFrame(i);
         }
         ftfd.saveTrack(Paths.get(filename.replace(".bmf", "-tracked.bmf")));
         System.out.print(ftfd.toString());
         ftfd.plot();
-    }
-    public void saveTrack(Path file){
-        MeshTracker tracker = new MeshTracker();
-        List<Track> tracks = new ArrayList<>(results.keySet());
-        tracker.addMeshTracks(tracks);
-        try {
-            MeshWriter.saveMeshes(file.toFile(), tracker);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        */
     }
 
     /**

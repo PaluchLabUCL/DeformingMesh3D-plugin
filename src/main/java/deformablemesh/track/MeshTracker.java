@@ -1,9 +1,13 @@
 package deformablemesh.track;
 
 import deformablemesh.geometry.DeformableMesh3D;
+import deformablemesh.util.ColorSuggestions;
 
+import java.awt.Color;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -77,11 +81,41 @@ public class MeshTracker {
 
     }
 
-    public Track createTrack(){
-        Track track = new Track(tracks.stream().map(Track::getColor).collect(Collectors.toList()));
-        tracks.add(track);
-        return track;
+
+    /**
+     * Returns n tracks with a name that is not contained in the current set of tracks names.
+     * Probably the same color.
+     *
+     * int n number of tracks to be created.
+     *
+     * @return list with n tracks.
+     */
+    public List<Track> prepareEmptyTracks(int n){
+
+        Set<String> names = tracks.stream().map(Track::getName).collect(Collectors.toCollection(HashSet::new));
+        List<Color> colors = tracks.stream().map(Track::getColor).collect(Collectors.toCollection(ArrayList::new));
+        List<Track> fresh = new ArrayList<>();
+        while(fresh.size() < n){
+            Track track = new Track(colors);
+            String name = track.name;
+            int id = 0;
+
+            while(names.contains(name)){
+                id++;
+                name = track.name + "-" + id;
+            }
+            track.setName(name);
+            colors.add(track.color);
+            names.add(track.name);
+            fresh.add(track);
+        }
+        return fresh;
     }
+
+    public Track prepareEmptyTrack(){
+        return prepareEmptyTracks(1).get(0);
+    }
+
 
     /**
      * Creates a new track, adds the provided mesh, adds it to the tracked tracks,
@@ -94,7 +128,8 @@ public class MeshTracker {
         if(selectedTrack!=null){
             selectedTrack.setSelected(false);
         }
-        selectedTrack = new Track(tracks.stream().map(Track::getColor).collect(Collectors.toList()));
+        selectedTrack = prepareEmptyTrack();
+
         selectedTrack.setSelected(true);
         tracks.add(selectedTrack);
         selectedTrack.addMesh(frame, freshMesh);

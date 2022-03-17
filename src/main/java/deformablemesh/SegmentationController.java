@@ -1468,6 +1468,81 @@ public class SegmentationController {
         }
     }
 
+    /**
+     * Splits this track into two with all meshes from, and up to the current frame in one
+     * track and all of the subsequent meshes in a new track.
+     *
+     */
+    public void splitMeshTrack(){
+
+        Track t = getSelectedMeshTrack();
+        int frame = getCurrentFrame();
+        if(t != null && t.containsKey(frame) && t.getLastFrame() > frame){
+            String actionName = "split " + t.getName();
+            UndoableActions action = new UndoableActions() {
+                Map<Integer, DeformableMesh3D> original = t.getTrack();
+                Map<Integer, DeformableMesh3D> result =new TreeMap<>();
+                Map<Integer, DeformableMesh3D> remainder = new TreeMap<>();
+                Track t1 = model.startEmptyTrack();
+                @Override
+                public void perform() {
+                    for(Integer i: original.keySet()){
+                        if(i > frame){
+                            remainder.put(i, original.get(i));
+                        } else{
+                            result.put(i, original.get(i));
+                        }
+                    }
+                    t1.setData(remainder);
+                    t.setData(result);
+                    model.addMeshTrack(t1);
+                }
+
+                @Override
+                public void undo() {
+                    t.setData(original);
+                    model.removeMeshTrack(t1);
+                }
+
+                @Override
+                public void redo() {
+                    t.setData(result);
+                    model.addMeshTrack(t1);
+                }
+                @Override
+                public String getName(){
+                    return actionName;
+                }
+            };
+            actionStack.postAction(action);
+        }
+
+
+    }
+
+    public void validateMeshes(){
+        List<Track> tracks = getAllTracks();
+        int removed = 0;
+        for(Track t: tracks){
+            Set<Integer> old = new HashSet<>(t.getTrack().keySet());
+            for(Integer i: old){
+                DeformableMesh3D mesh = t.getMesh(i);
+                boolean remove = false;
+                for(double d: mesh.positions){
+                    if(Double.isNaN(d)){
+                        remove = true;
+                        break;
+                    }
+                }
+                if(remove){
+                    clearMeshFromTrack(t, i);
+                    removed++;
+                }
+            }
+        }
+        System.out.println("removed: " + removed);
+    }
+
     public void splitMesh(){
         Track track = getSelectedMeshTrack();
         int frame = getCurrentFrame();
@@ -2815,14 +2890,83 @@ public class SegmentationController {
         model.addFrameListener(listener);
     }
 
+    /**
+     * If the currently selected mesh is available, this well look in the same
+     * area in the next frame and link the best possibility.
+     */
+    public void linkPossibleTrack(){
+
+        if(getSelectedMesh()!=null && getCurrentFrame() < getNFrames() - 1 ){
+            Track destination = getSelectedMeshTrack();
+            nextFrame();
+            int frame = getCurrentFrame();
+            if(destination.containsKey(frame)){
+                //only a track that does not have a mesh on the next frame.
+               return;
+            }
+            DeformableMesh3D mesh = destination.getMesh(frame - 1 );
+            Box3D bb = mesh.getBoundingBox();
+            List<Track> possible = getAllTracks().stream().filter(
+                                        t -> t.getFirstFrame() == frame
+                                    ).collect(Collectors.toList());
+            double maxJi = 0;
+            int dex = -1;
+            for(int i = 0; i<possible.size(); i++){
+                DeformableMesh3D candidate = possible.get(i).getMesh(frame);
+                Box3D cb = candidate.getBoundingBox();
+                Box3D union = cb.getIntersectingBox(bb);
+                double uv = union.getVolume();
+                if(uv == 0){
+                    continue;
+                }
+                double ji = uv/(cb.getVolume() + bb.getVolume() - uv);
+                if(ji > maxJi){
+                    maxJi = ji;
+                    dex = i;
+                }
+            }
+
+            if (dex >= 0) {
+                Track consumed = possible.get(dex);
+                Map<Integer, DeformableMesh3D> data = destination.getTrack();
+                Map<Integer, DeformableMesh3D> moving = consumed.getTrack();
+                Map<Integer, DeformableMesh3D> combined = new TreeMap<>();
+                combined.putAll(data);
+                combined.putAll(moving);
+
+                UndoableActions joinMeshes = new UndoableActions() {
+                    @Override
+                    public void perform() {
+                        destination.setData(combined);
+                        model.removeMeshTrack(consumed);
+                    }
+
+                    @Override
+                    public void undo() {
+                        destination.setData(data);
+                        model.addMeshTrack(consumed);
+
+                    }
+
+                    @Override
+                    public void redo() {
+                        destination.setData(combined);
+                        model.removeMeshTrack(consumed);
+                    }
+                };
+
+                actionStack.postAction(joinMeshes);
+            }
+        }
+    }
     public void removeFrameListener(FrameListener listener){
         model.removeFrameListener(listener);
     }
 
-    public void autotrackCurrentFrame(){
+    public void autotrackAvailableTracks(){
         submit( () -> {
-           FrameToFrameDisplacement ftf =  FrameToFrameDisplacement.trackFrameForward(getAllTracks(), getCurrentFrame());
-           actionStack.postAction(ftf.modifyTracksAction(this));
+           FrameToFrameDisplacement ftf =  FrameToFrameDisplacement.trackAvailableFrameForward(this);
+           actionStack.postAction(ftf.getPerform());
         });
     }
 }

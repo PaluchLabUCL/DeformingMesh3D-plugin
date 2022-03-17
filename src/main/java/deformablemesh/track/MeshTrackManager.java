@@ -52,26 +52,33 @@ public class MeshTrackManager implements StateListener{
 
     private FrameListener buildSelectionListener(){
         return i ->{
-            System.out.println("checking");
-
             Track t = controller.getSelectedMeshTrack();
+            int frame = i;
             if(t == null) return;
+            DeformableMesh3D mesh = t.getMesh(frame);
+            if(mesh==null) return;
 
             Track cur = getSelectedColumnTrack();
-            System.out.println(" checking " + t + " with " + cur);
-            int ff = t.getFirstFrame();
-            DeformableMesh3D mesh = t.getMesh(ff);
-            if( cur != null && ff == cur.getFirstFrame()){
-                if(mesh == cur.getMesh(ff)){
+
+            if(cur != null && cur.getFirstFrame() == t.getFirstFrame()){
+                if(cur.getMesh(frame) == mesh){
+                    //the current track is selected.
+                    int[] rows = trackTable.getSelectedRows();
+                    for(int j: rows){
+                        if(j == frame){
+                            //the currently selected rows contains the track.
+                            return;
+                        }
+                    }
+                    trackTable.setRowSelectionInterval(frame, frame);
                     return;
                 }
             }
-
             for(int dex = 0; dex < tracks.size(); dex++){
                 Track ti = tracks.get(dex);
-                if( mesh == ti.getMesh(ff) ){
-                    System.out.println("found and selecting");
-                    trackTable.setColumnSelectionInterval(dex + 1, dex+1);
+                if( mesh == ti.getMesh(frame) ){
+                    trackTable.setColumnSelectionInterval(dex+1, dex+1);
+                    trackTable.setRowSelectionInterval(frame, frame);
                     break;
                 }
             }

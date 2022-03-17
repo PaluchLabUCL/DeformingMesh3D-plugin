@@ -28,7 +28,7 @@ public class InterceptingMesh3D implements Interceptable{
         for(Triangle3D triangle: mesh.triangles){
             double area = triangle.area;
             if(area<=0){
-                //this sucks.
+                System.out.println("broken triangle!");
             }
             a = triangle.A.getCoordinates();
             center[0] += a[0]*area;
@@ -44,10 +44,19 @@ public class InterceptingMesh3D implements Interceptable{
             center[2] += a[2]*area;
             sum += 3*area;
         }
+
         double f = 1.0/(sum);
-        center[0] *=f;
-        center[1] *=f;
-        center[2] *=f;
+        if(Double.isNaN(f)){
+            System.out.println("broken mesh!");
+            double[] bb = bounds.getCenter();
+            center[0] = bb[0];
+            center[1] = bb[1];
+            center[2] = bb[2];
+        } else {
+            center[0] *= f;
+            center[1] *= f;
+            center[2] *= f;
+        }
     }
 
     /**

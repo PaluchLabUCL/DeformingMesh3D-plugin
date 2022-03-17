@@ -404,6 +404,16 @@ public class SegmentationModel {
         }
     }
 
+    /**
+     * Starts a track that is not used but has a name unique to the existing tracks.
+     *
+     * @return
+     */
+    public Track startEmptyTrack(){
+        return tracker.prepareEmptyTrack();
+    }
+
+
     public Track startMeshTrack(int frame, DeformableMesh3D freshMesh){
         Track track = tracker.createNewMeshTrack(frame, freshMesh);
         notifyMeshListeners();
