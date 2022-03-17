@@ -84,16 +84,6 @@ public class Furrow3D implements Interceptable{
         return null;
     }
 
-    public double[] getPickLocation(double[] r){
-
-        if(!texturedPlane){
-            if(furrowPlaneDataObject != null){
-                return furrowPlaneDataObject.getPickLocation(r);
-            }
-        }
-        return r;
-    }
-
     public List<List<Triangle3D>> splitMesh(List<Triangle3D> triangles){
         ArrayList<List<Triangle3D>> split = new ArrayList<List<Triangle3D>>();
         ArrayList<Triangle3D> forwared = new ArrayList<Triangle3D>();

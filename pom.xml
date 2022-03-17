@@ -9,7 +9,60 @@
 	<artifactId>Deformable_Mesh</artifactId>
 	<version>0.9.0</version>
     <name>Deforming Mesh</name>
+	<url>https://franciscrickinstitute.github.io/dm3d-pages/</url>
 	<description>Triangulated surface for deforming in 3D.</description>
+	<inceptionYear>2013</inceptionYear>
+	<organization>
+		<name>Francis Crick Institute</name>
+		<url>https://crick.ac.uk</url>
+	</organization>
+	<developers>
+		<developer>
+			<id>odinsbane</id>
+			<name>Matthew Smith</name>
+			<email>MattTheBruce@gmail.com</email>
+			<url>https://orangepalantir.org</url>
+			<organization>UCL LMCB</organization>
+			<organizationUrl>http://ucl.ac.uk/lmcb</organizationUrl>
+			<roles>
+				<role>lead</role>
+				<role>developer</role>
+				<role>debugger</role>
+				<role>reviewer</role>
+				<role>support</role>
+				<role>maintainer</role>
+			</roles>
+			<timezone>+1</timezone>
+		</developer>
+	</developers>
+	<contributors>
+		<contributor>
+			<name>Curtis Rueden</name>
+			<url>https://imagej.net/User:Rueden</url>
+			<properties><id>ctrueden</id></properties>
+		</contributor>
+	</contributors>
+	<mailingLists>
+		<mailingList>
+			<name>Image.sc Forum</name>
+			<archive>https://forum.image.sc/tags/dm3d</archive>
+		</mailingList>
+	</mailingLists>
+	<issueManagement>
+		<system>GitHub Issues</system>
+		<url>https://github.com/PaluchLabUCL/DeformingMesh3D-plugin/issues</url>
+	</issueManagement>
+	<ciManagement>
+		<system>None</system>
+	</ciManagement>
+
+
+	<properties>
+		<license.licenseName>MIT</license.licenseName>
+		<license.copyrightOwners>University College London</license.copyrightOwners>
+	</properties>
+
+
 	<licenses>
 		<license>
 			<name>MIT License</name>
@@ -23,11 +76,12 @@
 		<tag>HEAD</tag>
 		<url>https://github.com/PaluchLabUCL/DeformingMesh3D</url>
 	</scm>
+
 	<parent>
-		<groupId>sc.fiji</groupId>
-		<artifactId>pom-fiji</artifactId>
+		<groupId>org.scijava</groupId>
+		<artifactId>pom-scijava</artifactId>
+		<version>31.1.0</version>
 		<relativePath />
-		<version>21.4.0</version>
 	</parent>
     <repositories>
         <!-- NB: for project parent -->

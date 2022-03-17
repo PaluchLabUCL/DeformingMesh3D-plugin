@@ -14,14 +14,6 @@ This is the start of a draft for a 1.0 release version. Right now I have quite a
 components that are nearly ready but need to be added. The two major features that I
 want included in a 1.0 release.
 
-- Manual Mesh editing.
-- Exposing Remesh algorithm.
-
-Further I will create a github.io page for the instructions. Please contact me or
-create an issue for any features that should be included in the 1.0 release, or
-any documentation that should be included.
-
-
 ## installation
 
 The easiest way to install this plugin is through the [Fiji](https://fiji.sc/) update site.
@@ -33,9 +25,12 @@ https://sites.imagej.net/Odinsbane
 Once the site has been added, updating fiji should cause it to download and install the deforming mesh plugin
 which can be found in "plugins"->"PL_Mesh3D"->"Deforming Mesh 3D", and JFilament will also be installed.
 
+
 ## Documentation
 
 [DM3D Github pages](https://franciscrickinstitute.github.io/dm3d-pages/)
+
+This includes guides for using the plugin, and javadoc for using the plugin via scripting.
 
 # Changes
 

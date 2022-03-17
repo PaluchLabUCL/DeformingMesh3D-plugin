@@ -528,7 +528,7 @@ public class MeshModifier {
 
             if( plane.equals( result.getObject() ) ){
                 Point3d p = pick.getPointCoordinates();
-                double[] r = furrow.getPickLocation( new double[]{p.x, p.y, p.z} );
+                double[] r = new double[]{p.x, p.y, p.z};
                 return r;
             }
 
