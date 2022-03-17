@@ -236,12 +236,100 @@ public class ProjectableMesh implements Projectable{
         ret.addAll(nodes);
 
 
-        ContractileRing.sortPointsByAngle(ret, center, furrow.normal);
+        sortPointsByAngle(ret, center, furrow.normal);
 
 
 
 
         return ret;
+    }
+
+    static public void sortPointsByAngle(List<double[]> list, double[] center, double[] normal){
+        double[] p = null;
+        Iterator<double[]> iter = list.iterator();
+        double[] r0 = new double[3];
+        while(p==null&&iter.hasNext()){
+            double[] pt = iter.next();
+            //r0 is the original vector that will be used for the x-axis.
+            r0[0] = pt[0] - center[0];
+            r0[1] = pt[1] - center[1];
+            r0[2] = pt[2] - center[2];
+            double mag = Vector3DOps.normalize(r0);
+
+            if(mag==0){
+                //skip, at the center.
+                continue;
+            }
+
+            double[] cross = Vector3DOps.cross(normal, r0);
+
+            mag = Vector3DOps.normalize(cross);
+            if(mag==0){
+                //skip, parallel to the normal
+                continue;
+            }
+
+            //x-axis is the
+            r0 = Vector3DOps.cross(cross, normal);
+            p = cross;
+        }
+        final double[] r = r0;
+        final double[] r2 = p;
+        //none of the points could form an angle.
+        if(p==null) return;
+
+        Collections.sort(list, (d1, d2)->{
+            //get the coordinates in plane.
+            double[] p1 = Vector3DOps.difference(d1, center);
+            double[] p2 = Vector3DOps.difference(d2, center);
+
+            double c1 = Vector3DOps.dot(r, p1);
+            double s1 = Vector3DOps.dot(r2, p1);
+            double norm = Math.sqrt(c1*c1 + s1*s1);
+            c1 = c1/norm;
+            s1 = s1/norm;
+
+            double c2 = Vector3DOps.dot(r, p2);
+            double s2 = Vector3DOps.dot(r2, p2);
+            norm = Math.sqrt(c2*c2 + s2*s2);
+            c2 = c2/norm;
+            s2 = s2/norm;
+
+            int q1 = getQuadrant(c1, s1);
+            int q2 = getQuadrant(c2, s2);
+            if(q1==q2){
+                switch(q1){
+                    case 0:
+                    case 1:
+                        return Double.compare(-c1, -c2);
+                    case 2:
+                    case 3:
+                        return Double.compare(c1, c2);
+                }
+            }
+            return Integer.compare(q1,q2);
+
+
+        });
+
+    }
+
+    static int getQuadrant(double c, double s){
+
+        if(c>=0){
+            if(s>=0){
+                return 0;
+            } else{
+                return 3;
+            }
+        } else{
+            if(s>=0){
+                return 1;
+            } else{
+                return 2;
+            }
+        }
+
     }
 
 

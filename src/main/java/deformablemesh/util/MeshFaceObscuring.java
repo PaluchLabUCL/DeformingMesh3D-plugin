@@ -3,13 +3,13 @@ package deformablemesh.util;
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.*;
+import deformablemesh.gui.GuiTools;
 import deformablemesh.io.MeshReader;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.track.Track;
 import lightgraph.DataSet;
 import lightgraph.Graph;
 import lightgraph.GraphPoints;
-import snakeprogram.util.TextWindow;
 
 import java.awt.Color;
 import java.io.File;
@@ -102,9 +102,7 @@ public class MeshFaceObscuring {
 
 
         }
-
-        TextWindow window = new TextWindow("covered meshes", build.toString());
-        window.display();
+        GuiTools.createTextOuputPane(build.toString());
     }
 
     /**

@@ -10,7 +10,7 @@ public class ActionStackTests {
     String current =  "none";
 
     @Test
-    public void orderTesting(String[] args){
+    public void orderTesting(){
 
         ActionStack stack = new ActionStack();
 

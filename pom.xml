@@ -1,21 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-		http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-    
-    <groupId>paluchlab</groupId>
+
+	<parent>
+		<groupId>org.scijava</groupId>
+		<artifactId>pom-scijava</artifactId>
+		<version>31.1.0</version>
+		<relativePath />
+	</parent>
+
+	<groupId>paluchlab</groupId>
 	<artifactId>Deformable_Mesh</artifactId>
-	<version>0.9.0</version>
-    <name>Deforming Mesh</name>
-	<url>https://franciscrickinstitute.github.io/dm3d-pages/</url>
+	<version>0.9.1</version>
+
+	<name>Deforming Mesh</name>
 	<description>Triangulated surface for deforming in 3D.</description>
+	<url>https://franciscrickinstitute.github.io/dm3d-pages/</url>
 	<inceptionYear>2013</inceptionYear>
 	<organization>
 		<name>Francis Crick Institute</name>
 		<url>https://crick.ac.uk</url>
 	</organization>
+	<licenses>
+		<license>
+			<name>MIT License</name>
+			<url>https://opensource.org/licenses/MIT</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
 	<developers>
 		<developer>
 			<id>odinsbane</id>
@@ -42,12 +55,20 @@
 			<properties><id>ctrueden</id></properties>
 		</contributor>
 	</contributors>
+
 	<mailingLists>
 		<mailingList>
 			<name>Image.sc Forum</name>
 			<archive>https://forum.image.sc/tags/dm3d</archive>
 		</mailingList>
 	</mailingLists>
+
+	<scm>
+		<connection>scm:git:git://github.com/PaluchLabUCL/DeformingMesh3D</connection>
+		<developerConnection>scm:git:git@github.com:PaluchLabUCL/DeformingMesh3D</developerConnection>
+		<tag>HEAD</tag>
+		<url>https://github.com/PaluchLabUCL/DeformingMesh3D</url>
+	</scm>
 	<issueManagement>
 		<system>GitHub Issues</system>
 		<url>https://github.com/PaluchLabUCL/DeformingMesh3D-plugin/issues</url>
@@ -56,40 +77,10 @@
 		<system>None</system>
 	</ciManagement>
 
-
 	<properties>
 		<license.licenseName>MIT</license.licenseName>
 		<license.copyrightOwners>University College London</license.copyrightOwners>
 	</properties>
-
-
-	<licenses>
-		<license>
-			<name>MIT License</name>
-			<url>https://opensource.org/licenses/MIT</url>
-			<distribution>repo</distribution>
-		</license>
-	</licenses>
-    <scm>
-		<connection>scm:git:git://github.com/PaluchLabUCL/DeformingMesh3D</connection>
-		<developerConnection>scm:git:git@github.com:PaluchLabUCL/DeformingMesh3D</developerConnection>
-		<tag>HEAD</tag>
-		<url>https://github.com/PaluchLabUCL/DeformingMesh3D</url>
-	</scm>
-
-	<parent>
-		<groupId>org.scijava</groupId>
-		<artifactId>pom-scijava</artifactId>
-		<version>31.1.0</version>
-		<relativePath />
-	</parent>
-    <repositories>
-        <!-- NB: for project parent -->
-        <repository>
-            <id>imagej.public</id>
-            <url>http://maven.imagej.net/content/groups/public</url>
-        </repository>
-    </repositories>
 
 	<dependencies>
 		<dependency>
@@ -132,17 +123,21 @@
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.orangepalantir</groupId>
-			<artifactId>leastsquares</artifactId>
-			<version>1.0.0</version>
-		</dependency>
-		<dependency>
-			<groupId>edu.lehigh</groupId>
-			<artifactId>JFilament_</artifactId>
-			<version>1.1.8</version>
+			<groupId>ome</groupId>
+			<artifactId>bio-formats_plugins</artifactId>
+			<version>6.9.0</version>
 		</dependency>
 	</dependencies>
-    <build>
+
+	<repositories>
+        <!-- NB: for project parent -->
+        <repository>
+            <id>imagej.public</id>
+            <url>http://maven.imagej.net/content/groups/public</url>
+        </repository>
+    </repositories>
+
+	<build>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -189,6 +184,3 @@
 		</plugins>
 	</build>
 </project>
-
-
-
