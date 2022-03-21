@@ -72,20 +72,27 @@ public class GuiTools {
 
     }
 
-    public static ParameterCombo createComboControl(String name, final SetValue action){
+    public static ParameterCombo createComboControl(String name, final SetValue action, int initial){
         JLabel label = new JLabel(name);
 
+        Integer[] values = {0, 1, 2, 3, 4, 5};
+        int dex = -1;
+        for(int i = 0; i< values.length; i++){
+            if(values[i] == initial){
+                dex = i;
+            }
+        }
+        final JComboBox<Integer> box = new JComboBox<>(new Integer[]{0, 1, 2, 3, 4, 5});
 
-        final JComboBox<Integer> values = new JComboBox<>(new Integer[]{0, 1, 2, 3, 4, 5});
-        values.setSelectedIndex(3);
+        box.setSelectedIndex(dex);
 
-        values.addActionListener(evt->{
-            action.setValue(values.getItemAt(values.getSelectedIndex()));
+        box.addActionListener(evt->{
+            action.setValue(box.getItemAt(box.getSelectedIndex()));
         });
 
 
         ParameterCombo control = new ParameterCombo();
-        control.prepareValue(label, values);
+        control.prepareValue(label, box);
         return control;
     }
     public static ParameterControl createInputField(String name, final SetValue action, double initial, ReadyObserver observer){

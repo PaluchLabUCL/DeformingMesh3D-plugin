@@ -435,7 +435,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         inputs.add(GuiTools.createInputField("image weight", createSavingValue(set_image_weight), segmentationController.getImageWeight(), this));
 
         SetValue set_divisions = d -> segmentationController.setDivisions((int)d);
-        inputs.add(GuiTools.createComboControl("divisions", createSavingValue(set_divisions)));
+        inputs.add(GuiTools.createComboControl("divisions", createSavingValue(set_divisions), segmentationController.getDivisions()));
 
         SetValue setBeta = d -> segmentationController.setBeta(d);
         inputs.add(GuiTools.createInputField("beta", createSavingValue(setBeta), segmentationController.getBeta(), this));
@@ -1570,12 +1570,10 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         JPanel main = new JPanel();
         JPanel content = new JPanel();
         main.setLayout(new BorderLayout());
-        JButton accept = new JButton("accept");
         JButton cancel = new JButton("close");
         JPanel row = new JPanel();
         row.setLayout(new GridLayout(1, 3));
         row.add(Box.createRigidArea(new Dimension(100,30)));
-        row.add(accept);
 
         row.add(cancel);
 
