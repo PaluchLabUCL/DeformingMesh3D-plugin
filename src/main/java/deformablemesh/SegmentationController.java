@@ -420,6 +420,12 @@ public class SegmentationController {
         });
     }
 
+    public void centerSelectedMesh(){
+        DeformableMesh3D mesh = getSelectedMesh();
+        if(mesh != null){
+            meshFrame3D.centerView( mesh.getBoundingBox().getCenter() );
+        }
+    }
     /**
      * Remeshes the currently selected mesh by raycasting a sphere. The number of triangles is determined by the
      * divisions parameter.

@@ -212,6 +212,10 @@ public class    MeshFrame3D {
         syncDirectionalLight();
     }
 
+    public void centerView(double[] center){
+        canvas.centerCamera(center);
+    }
+
     /**
      * All of the values necessary to have the same view.
      *

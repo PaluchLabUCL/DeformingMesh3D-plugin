@@ -5,6 +5,8 @@ import org.scijava.java3d.utils.picking.PickCanvas;
 import org.scijava.java3d.utils.picking.PickResult;
 import org.scijava.java3d.utils.picking.PickTool;
 import org.scijava.java3d.utils.universe.SimpleUniverse;
+import org.scijava.java3d.utils.universe.Viewer;
+import org.scijava.java3d.utils.universe.ViewingPlatform;
 import org.scijava.vecmath.*;
 
 import java.awt.*;
@@ -22,6 +24,18 @@ import java.util.List;
  * Shows the 3d scenes
  */
 public class DataCanvas extends Canvas3D {
+    static class Camera{
+        double ox, oy, oz;
+        double radius = 1;
+        AxisAngle4d aa;
+        public void zoomIn(){
+            radius = radius*0.9875;
+        }
+        public void zoomOut(){
+            radius = radius*1.0125;
+        }
+    }
+    Camera camera = new Camera();
     public static interface ViewListener{
         public void viewUpdated();
     }
@@ -34,11 +48,11 @@ public class DataCanvas extends Canvas3D {
 
     private PickCanvas pickCanvas;
     
-    double ZOOM = 1;
-    AxisAngle4d aa = new AxisAngle4d(0, 0, 1, 0);
+    //double ZOOM = 1;
+    //AxisAngle4d aa = new AxisAngle4d(0, 0, 1, 0);
 
-    double DX = 0;
-    double DY = 0;
+    //double DX = 0;
+    //double DY = 0;
 
     List<CanvasView> viewers = new ArrayList<>();
     
@@ -105,20 +119,36 @@ public class DataCanvas extends Canvas3D {
     
     
     public void zoomIn(){
-        ZOOM = ZOOM*0.9;
+        double before = camera.radius;
+        camera.zoomIn();
+
+        if(before >= 0.5 && camera.radius < 0.5){
+            Viewer viewer = universe.getViewer();
+            View view = viewer.getView();
+            view.setFrontClipDistance(0.01);
+            view.setBackClipDistance(1.0);
+        }
+
         updateView();
     }
     
     public void zoomOut(){
-        ZOOM = ZOOM*1.1;
+        double before = camera.radius;
+        camera.zoomOut();
+        if(before <= 1.0 && camera.radius > 1.0){
+            Viewer viewer = universe.getViewer();
+            View view = viewer.getView();
+            view.setFrontClipDistance(0.1);
+            view.setBackClipDistance(10.0);
+        }
         updateView();
     }
 
     public void twistView(int dz){
         double rate = 0.005;
-        Vector4d q1 = axisAngleToQuarternion(aa);
+        Vector4d q1 = axisAngleToQuarternion(camera.aa);
         Vector4d q2 = axisAngleToQuarternion(new AxisAngle4d(0, 0, 1, -rate*dz));
-        aa = new AxisAngle4d(quarternionToAxisAngle(multiplyQuarternions(q1,q2)));
+        camera.aa = new AxisAngle4d(quarternionToAxisAngle(multiplyQuarternions(q1,q2)));
 
         updateView();
     }
@@ -135,7 +165,7 @@ public class DataCanvas extends Canvas3D {
             dx = 0;
         }
 
-        Vector4d q1 = axisAngleToQuarternion(aa);
+        Vector4d q1 = axisAngleToQuarternion(camera.aa);
         double rate = 0.005;
         Vector4d q2;
         if(dx!=0 && dy!=0){
@@ -147,15 +177,32 @@ public class DataCanvas extends Canvas3D {
             q2 = axisAngleToQuarternion(new AxisAngle4d(0, 1, 0, -rate*dx));
         }
 
-        aa = new AxisAngle4d(quarternionToAxisAngle(multiplyQuarternions(q1,q2)));
+        camera.aa = new AxisAngle4d(quarternionToAxisAngle(multiplyQuarternions(q1,q2)));
+
 
         updateView();
 
     }
-    
+
+    public void centerCamera( double[] pt){
+        camera.ox = pt[0];
+        camera.oy = pt[1];
+        camera.oz = pt[2];
+        updateView();
+    }
+
     public void translateView(int dx, int dy){
-        DX += -dx*0.01;
-        DY += dy*0.01;
+        Transform3D rot = new Transform3D();
+        rot.setRotation(camera.aa);
+        double rate = 1.0/64.0;
+        Vector3d v3d = new Vector3d(-dx*rate, dy*rate, 0);
+
+        rot.transform(v3d);
+
+        camera.ox += v3d.x;
+        camera.oy += v3d.y;
+        camera.oz += v3d.z;
+
         updateView();
 
     }
@@ -182,10 +229,14 @@ public class DataCanvas extends Canvas3D {
 
     private void updateView(){
         TransformGroup ctg = universe.getViewingPlatform().getViewPlatformTransform();
-        Vector3d displace = new Vector3d(DX,DY,ZOOM);
+
+
+
+        Vector3d displace = new Vector3d(0,0,camera.radius);
         Transform3D rot = new Transform3D();
-        rot.setRotation(aa);
+        rot.setRotation(camera.aa);
         rot.transform(displace);
+        displace.add(new Vector3d(camera.ox, camera.oy, camera.oz));
         rot.setTranslation(displace);
         ctg.setTransform(rot);
         viewListeners.forEach(ViewListener::viewUpdated);
@@ -368,23 +419,24 @@ public class DataCanvas extends Canvas3D {
     public void setView(StationaryViews view){
         switch(view){
             case XY:
-                aa = new AxisAngle4d(0, 0, 1, 0);
+                camera.aa = new AxisAngle4d(0, 0, 1, 0);
                 break;
             case XZ:
-                aa = new AxisAngle4d(1, 0, 0, Math.PI/2);
+                camera.aa = new AxisAngle4d(1, 0, 0, Math.PI/2);
                 break;
             case YZ:
                 double l = Math.sqrt(3)/3;
-                aa = new AxisAngle4d(l, l, l, 2*Math.PI/3);
+                camera.aa = new AxisAngle4d(l, l, l, 2*Math.PI/3);
                 break;
             case THREEQUARTER:
-                aa = new AxisAngle4d(0.20032220429878106, 0.5947418035684883, 0.7785584124219587, 2.6296664043138676);
+                camera.aa = new AxisAngle4d(0.20032220429878106, 0.5947418035684883, 0.7785584124219587, 2.6296664043138676);
                 break;
         }
 
-        ZOOM = 3;
-        DX = 0;
-        DY = 0;
+        camera.radius = 3;
+        camera.ox = 0;
+        camera.oy = 0;
+        camera.oz = 0;
 
         updateView();
     }
@@ -416,7 +468,10 @@ public class DataCanvas extends Canvas3D {
      *
      */
     public double[] getViewParameters(){
-        return new double[] {DX, DY, ZOOM, aa.x, aa.y, aa.z, aa.angle};
+        return new double[] {
+                camera.ox, camera.oy, camera.oz, camera.radius,
+                camera.aa.x, camera.aa.y, camera.aa.z, camera.aa.angle
+        };
     }
 
     /**
@@ -425,10 +480,11 @@ public class DataCanvas extends Canvas3D {
      * @param view DX, DY, ZOOM, aa.x, aa.y, aa.z, aa.angle
      */
     public void setViewParameters(double[] view){
-        DX  = view[0];
-        DY  = view[1];
-        ZOOM = view[2];
-        aa = new AxisAngle4d( view[3], view[4], view[5], view[6]);
+        camera.ox  = view[0];
+        camera.oy  = view[1];
+        camera.oz = view[2];
+        camera.radius = view[3];
+        camera.aa = new AxisAngle4d( view[4], view[5], view[6], view[7]);
         updateView();
     }
 
@@ -482,14 +538,21 @@ public class DataCanvas extends Canvas3D {
 
 
         //we want to rotate our view such that the normal is back towards us.
-        aa = new AxisAngle4d();
-        aa.set(matrix);
-
-        Transform3D transform = new Transform3D();
-        transform.setRotation(aa);
+        camera.aa = new AxisAngle4d();
+        camera.aa.set(matrix);
 
         updateView();
 
+
+    }
+
+    /**
+     * Use the original rotation and change the view
+     *
+     * @param dx
+     * @param dy
+     */
+    public void pivotAboutCenterOfView(int dx,int dy){
 
     }
 
