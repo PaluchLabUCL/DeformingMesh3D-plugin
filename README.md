@@ -33,7 +33,11 @@ which can be found in "plugins"->"PL_Mesh3D"->"Deforming Mesh 3D", and JFilament
 This includes guides for using the plugin, and javadoc for using the plugin via scripting.
 
 # Changes
-
+0.9.2
+- 3D viewer has been improved to handle viewing small sections of large images.
+- 
+0.9.1
+- BUG FIX track manager selects correct mesh.
 0.9.0
 - Selected mesh is now updated in track manager.
 - Exposing averaged intensity vs time plot

@@ -54,7 +54,18 @@ public class PerpendicularGradientEnergy implements ExternalEnergy {
 
         }
     }
-
+    public double getChangeSquared(double x, double y, double z, double[] direction){
+        double width = kernel.length/2;
+        double m = 0;
+        double[] pos = new double[3];
+        for(int i = 0; i<kernel.length; i++){
+            pos[0] = (i - width)*ds*direction[0] + x;
+            pos[1] = (i - width)*ds*direction[1] + y;
+            pos[2] = (i - width)*ds*direction[2] + z;
+            m += stack.getInterpolatedValue(pos)*kernel[i];
+        }
+        return m*m;
+    }
     public double getChangeMagnitude(double x, double y, double z, double[] direction){
         double width = kernel.length/2;
         double m = 0;
@@ -65,12 +76,12 @@ public class PerpendicularGradientEnergy implements ExternalEnergy {
             pos[2] = (i - width)*ds*direction[2] + z;
             m += stack.getInterpolatedValue(pos)*kernel[i];
         }
-        return m>0? m:-m;
+        return m < 0 ? -m : m;
     }
     public double getForce(double x, double y, double z, double[] direction){
-        return getChangeMagnitude(x + direction[0]*ds, y + direction[1]*ds, z+direction[2]*ds, direction)
+        return getChangeSquared(x + direction[0]*ds, y + direction[1]*ds, z+direction[2]*ds, direction)
                 -
-               getChangeMagnitude(x - direction[0]*ds, y - direction[1]*ds, z-direction[2]*ds, direction);
+               getChangeSquared(x - direction[0]*ds, y - direction[1]*ds, z-direction[2]*ds, direction);
     }
 
 

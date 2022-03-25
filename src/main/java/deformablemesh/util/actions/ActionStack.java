@@ -76,6 +76,10 @@ public class ActionStack {
         setCurrentState(state.nextState);
     }
 
+    public void clearHistory(){
+        history.clear();
+    }
+
     public void postAction(UndoableActions action){
         ActionState state = new ActionState(action);
         history.add(state);

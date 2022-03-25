@@ -873,6 +873,13 @@ public class SegmentationController {
     }
 
     /**
+     * The history can take up a lot of memory, especially for actions like deformlAllMeshes.
+     *
+     */
+    public void clearHistory(){
+        actionStack.clearHistory();
+    }
+    /**
      * Thresholds the current image and places meshes over the individual regions. Checks for overlap with
      * existing meshes and doesn't place meshes if there is too much overlap.
      *

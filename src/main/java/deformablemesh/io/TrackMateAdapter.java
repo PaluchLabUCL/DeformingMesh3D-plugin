@@ -271,7 +271,7 @@ public class TrackMateAdapter {
         TmXmlWriter writer = new TmXmlWriter(destination.toFile());
         writer.appendSettings(s);
         writer.appendModel(trackMateModel);
-        writer.appendGUIState( "ChooseTracker" );
+        writer.appendGUIState( "SpotFilter" );
         writer.writeToFile();
 
     }
