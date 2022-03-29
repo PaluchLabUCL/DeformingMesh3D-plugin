@@ -102,24 +102,24 @@ if __name__ == "__main__":
 		
 	if not save:
 		plotter.addCallback("KeyPress", changeFrame)
-	while plotter.running:
-		while plotter.index < nFrames:
-			frame = frames[plotter.index]
-			print("frame: %s index: %s %s"%(frame, plotter.index, plotter) )
-			to_see = []
-			colors = []
-			for track in tracks: 
-				if frame in track.meshes.keys():
-					to_see.append( track.meshes[frame] )
-					colors.append( getColor(track.name) )
-			plotter.meshes += showMeshes(plotter, to_see, colors)
-			plotter.show()
-			
-			if save:
-				plotter.screenshot("snapshot-%04d.png"%frame)
-				plotter.index+=1
+	while plotter.index < nFrames:
+		frame = frames[plotter.index]
+		print("frame: %s index: %s %s"%(frame, plotter.index, plotter) )
+		to_see = []
+		colors = []
+		for track in tracks: 
+			if frame in track.meshes.keys():
+				to_see.append( track.meshes[frame] )
+				colors.append( getColor(track.name) )
+		plotter.meshes += showMeshes(plotter, to_see, colors)
+		plotter.show()
 		
-		
-			plotter.remove(plotter.meshes)
-			plotter.meshes.clear()
-		break
+		if save:
+			plotter.screenshot("snapshot-%04d.png"%frame)
+			plotter.index+=1
+		else:
+			break
+	
+		plotter.remove(plotter.meshes)
+		plotter.meshes.clear()
+	
