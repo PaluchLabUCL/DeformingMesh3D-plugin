@@ -7,6 +7,7 @@ import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.RayCastMesh;
 import deformablemesh.geometry.Sphere;
 import deformablemesh.track.Track;
+import deformablemesh.util.ColorSuggestions;
 import deformablemesh.util.Vector3DOps;
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.Settings;
@@ -14,18 +15,22 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.TrackModel;
+import fiji.plugin.trackmate.graph.ConvexBranchesDecomposition;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.io.TmXmlWriter;
 import ij.ImagePlus;
 
+import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -173,6 +178,56 @@ public class TrackMateAdapter {
         return importTrackMateFile(new MeshImageStack(image), trackMateFile);
     }
 
+    /**
+     * Uses the same algorithm that is used to get the real coordinates for spot/track generation.
+     *
+     * the values are [0, width*px_width), [0, height*px_height), [0, depth*px_depth)
+     *
+     * @param mesh
+     * @param stack
+     * @return
+     */
+    public static double[] getCenterRealCoordinates( DeformableMesh3D mesh, MeshImageStack stack){
+        ProxySpot spot = new ProxySpot(mesh, stack);
+        return new double[] {spot.cx, spot.cy, spot.cz};
+    }
+
+    static public List<Track> createSpotList(Model model, MeshImageStack geometry){
+        TrackModel trackModel = model.getTrackModel();
+        Set<Integer> tracks = trackModel.trackIDs(true);
+        List<Color> colors = new ArrayList<>();
+        List<Track> deformableMeshTracks = new ArrayList<>();
+        for(Integer id: tracks){
+
+            Collection<List<Spot>> tracked = ConvexBranchesDecomposition.processTrack(
+                    id,
+                    trackModel,
+                    trackModel.getDirectedNeighborIndex(),
+                    true, false
+            ).branches;
+            Color color = ColorSuggestions.getSuggestion(colors);
+            colors.add(color);
+
+            int decendants = 0;
+            for(List<Spot> track: tracked){
+                String name = ColorSuggestions.getColorName(color) + "-" + id + "-" + decendants;
+                Track t = new Track(name, color);
+                decendants++;
+
+                for(Spot spot: track){
+                    double [] xyz = ProxySpot.getNormalizedCoordinates( spot, geometry);
+                    Sphere s = new Sphere(xyz, ProxySpot.getNormalizedRadius(spot, geometry) );
+                    DeformableMesh3D mesh = RayCastMesh.rayCastMesh(s, s.getCenter(), 1);
+                    t.addMesh(spot.getFeature("FRAME").intValue(), mesh);
+                }
+                if(t.size() != track.size()){
+                    System.out.println("Overlap!");
+                }
+                deformableMeshTracks.add(t);
+            }
+        }
+        return deformableMeshTracks;
+    }
     public static List<Track> importTrackMateFile(MeshImageStack mis, Path trackMateFile){
 
         List<Track> tracks = new ArrayList<>();
@@ -181,38 +236,32 @@ public class TrackMateAdapter {
         TrackModel trackModel = model.getTrackModel();
         Map<String, Track> mapper = new HashMap<>();
         trackModel.nTracks(false);
+
         SpotCollection spots = model.getSpots();
-        long start = System.currentTimeMillis();
+        List<Track> spotTracks = createSpotList(model, mis);
+
+        List<Track> nullSpots = new ArrayList<>();
+
         for (int i = 0; i < mis.getNFrames(); i++) {
-            int count = 0;
             Iterable<Spot> si = spots.iterable(i, false);
             if(si != null) {
-                for (Spot spot : spots.iterable(i, false)) {
-                    double [] xyz = ProxySpot.getNormalizedCoordinates( spot, mis);
-
+                for (Spot spot : si) {
                     Object id = trackModel.trackIDOf(spot);
                     if(id == null){
-                        id = "N" + mapper.size();
-                    }
-                    Track track = mapper.computeIfAbsent(id.toString(), j -> new Track(j));
-                    if (track.containsKey(i)) {
-                        System.out.println("Track " + id + " has multiple spots same frame.");
-
-                    } else {
-                        double[] center = xyz;
+                        double [] xyz = ProxySpot.getNormalizedCoordinates( spot, mis);
+                        String name = "black-n" + nullSpots.size();
                         double radius = spot.getFeature("RADIUS");
-                        Sphere s = new Sphere(center, ProxySpot.getNormalizedRadius(spot, mis) );
+                        Sphere s = new Sphere(xyz, ProxySpot.getNormalizedRadius(spot, mis) );
                         DeformableMesh3D mesh = RayCastMesh.rayCastMesh(s, s.getCenter(), 1);
-                        track.addMesh(i, mesh);
-
+                        Track t = new Track(name);
+                        nullSpots.add(t);
+                        t.addMesh(i, mesh);
                     }
-                    count++;
                 }
             }
-            System.out.println( "finished: " + i + " after " + ( System.currentTimeMillis() - start ) / 1000 );
-            start = System.currentTimeMillis();
         }
-        tracks.addAll(mapper.values());
+        tracks.addAll(spotTracks);
+        tracks.addAll(nullSpots);
         return tracks;
     }
     public static void saveAsTrackMateFile(MeshImageStack stack, List<Track> tracks, Path destination) throws IOException {

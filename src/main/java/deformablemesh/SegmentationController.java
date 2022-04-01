@@ -5,12 +5,14 @@ import Jama.Matrix;
 import deformablemesh.externalenergies.ImageEnergyType;
 import deformablemesh.geometry.*;
 import deformablemesh.gui.FrameListener;
+import deformablemesh.gui.GuiTools;
 import deformablemesh.gui.PropertySaver;
 import deformablemesh.gui.RingController;
 import deformablemesh.gui.render2d.RenderFrame2D;
 import deformablemesh.io.ImportType;
 import deformablemesh.io.MeshReader;
 import deformablemesh.io.MeshWriter;
+import deformablemesh.io.TrackMateAdapter;
 import deformablemesh.meshview.*;
 import deformablemesh.ringdetection.FurrowTransformer;
 import deformablemesh.track.FrameToFrameDisplacement;
@@ -2572,7 +2574,42 @@ public class SegmentationController {
             track.setShowSurface(!track.getShowSurface());
         }
     }
+    public void createDataTable(){
+        String heading = "#Trackmate-export coodinates.\n"
+                       + "#x\ty\tz\t<I>\tV\tV2\n";
+        List<Track> tracks = getAllTracks();
+        StringBuilder builder = new StringBuilder(heading);
+        MeshImageStack mis = getMeshImageStack();
+        int f = getCurrentFrame();
+        for(int z = 0; z<getNFrames(); z++){
+            final int i = z;
+            mis.setFrame(z);
+            List<DeformableMesh3D> meshes = tracks.stream().filter(t->t.containsKey(i)).map(t->t.getMesh(i)).collect(Collectors.toList());
+            for(DeformableMesh3D mesh: meshes){
+                double[] center = TrackMateAdapter.getCenterRealCoordinates(mesh, mis);
+                List<int[]> volumePixels = DeformableMesh3DTools.getContainedPixels(mis, mesh);
+                double intensity = 0;
+                if( volumePixels.size() > 0) {
+                    for (int[] values : volumePixels) {
+                        intensity += mis.getValue(values[0], values[1], values[2]);
+                    }
+                    intensity = intensity/volumePixels.size();
+                } else{
+                    double[] c = mesh.getBoundingBox().getCenter();
+                    intensity = mis.getInterpolatedValue(c);
+                }
 
+                double volume = volumePixels.size() * mis.pixel_dimensions[0]*mis.pixel_dimensions[1]*mis.pixel_dimensions[2];
+                double volume2 = mesh.calculateVolume()*mis.SCALE*mis.SCALE*mis.SCALE;
+                builder.append( String.format(Locale.US,
+                        "%d\t%f\t%f\t%f\t%f\t%f\t%f\n",
+                        i,  center[0], center[1], center[2], intensity, volume, volume2));
+            }
+
+        }
+        mis.setFrame(f);
+        GuiTools.createTextOuputPane(builder.toString());
+    }
     public void plotVolumeAveragedIntensityVsTime(){
         List<Track> tracks = getAllTracks();
         Graph plot = new Graph();
