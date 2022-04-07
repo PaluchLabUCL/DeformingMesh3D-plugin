@@ -1,5 +1,6 @@
 package deformablemesh.meshview;
 
+import deformablemesh.util.Vector3DOps;
 import org.scijava.java3d.*;
 import org.scijava.java3d.utils.picking.PickCanvas;
 import org.scijava.java3d.utils.picking.PickResult;
@@ -150,6 +151,44 @@ public class DataCanvas extends Canvas3D {
         Vector4d q2 = axisAngleToQuarternion(new AxisAngle4d(0, 0, 1, -rate*dz));
         camera.aa = new AxisAngle4d(quarternionToAxisAngle(multiplyQuarternions(q1,q2)));
 
+        updateView();
+    }
+
+    /**
+     *  Rotates the view using an axis angle. The rotation is in the camera cooridnates. Eg. {0, 0, 1, 0.01} would be
+     *  about the axis forward.
+     *
+     * @param axisAngle
+     */
+    public void rotateView(double[] axisAngle){
+        double[] four = new double[4];
+        if(axisAngle.length == 3){
+            double m = Vector3DOps.normalize(axisAngle);
+            four[0] = axisAngle[0];
+            four[1] = axisAngle[1];
+            four[2] = axisAngle[2];
+            four[3] = m;
+        } else{
+            four[0] = axisAngle[0];
+            four[1] = axisAngle[1];
+            four[2] = axisAngle[2];
+            four[3] = axisAngle[3];
+        }
+        //view coordinates left x up = forward.
+
+        double[] n = new double[]{four[0], four[1], four[2]};
+        double[] up = getUp();
+        double[] forward = getForward();
+        double[] left = Vector3DOps.cross(up, forward);
+
+        four[0] = Vector3DOps.dot(left, n);
+        four[1] = Vector3DOps.dot(up, n);
+        four[2] = Vector3DOps.dot(forward, n);
+
+        Vector4d q1 = axisAngleToQuarternion(camera.aa);
+        AxisAngle4d rotation = new AxisAngle4d(four);
+        Vector4d q2 = axisAngleToQuarternion(rotation);
+        camera.aa = new AxisAngle4d(quarternionToAxisAngle(multiplyQuarternions(q1,q2)));
         updateView();
     }
 
@@ -502,8 +541,6 @@ public class DataCanvas extends Canvas3D {
         double qz = q1.w*q2.z + q1.x*q2.y - q1.y*q2.x + q1.z*q2.w;
 
         return new Vector4d(qx, qy, qz, qw);
-
-
     }
     /**
      * Rotates the view such that the new view will be facing towards the normal.
@@ -514,7 +551,6 @@ public class DataCanvas extends Canvas3D {
         TransformGroup ctg = universe.getViewingPlatform().getViewPlatformTransform();
         //ctg.getTransform(transform);
 
-        Vector3d z = new Vector3d(0,0,1); //towards the viewer.
         Vector3d n = new Vector3d(normal);
         Vector3d vup = new Vector3d(up);
         vup.normalize();

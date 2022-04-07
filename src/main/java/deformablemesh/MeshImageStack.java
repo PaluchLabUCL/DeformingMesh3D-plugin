@@ -10,6 +10,7 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 
 import java.awt.Image;
+import java.awt.image.BufferedImage;
 import java.nio.file.Path;
 
 import static deformablemesh.geometry.DeformableMesh3D.ORIGIN;
@@ -355,7 +356,7 @@ public class MeshImageStack {
 
     }
 
-    public Image createSlice(FurrowTransformer transformer) {
+    public BufferedImage createSlice(FurrowTransformer transformer) {
 
         int xcounts = transformer.getXCounts();
         int ycounts = transformer.getYCounts();

@@ -16,6 +16,7 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Caret;
 import javax.swing.text.Document;
 import javax.swing.text.Utilities;
+import java.awt.BorderLayout;
 import java.awt.EventQueue;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
@@ -90,9 +91,7 @@ public class SwingJSTerm {
         previous = new JButton("previous");
         next = new JButton("next");
 
-        JPanel root = new JPanel();
-        root.setLayout(new BoxLayout(root, BoxLayout.PAGE_AXIS));
-        //root.setLayout(new BorderLayout());
+        JSplitPane root = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 
         display = new JTextArea("**shift+enter will execute command immediately.**\n");
         display.setEditable(false);
@@ -103,7 +102,7 @@ public class SwingJSTerm {
                 BorderFactory.createEmptyBorder(15, 15, 15, 15)));
 
         JScrollPane display_pane = new JScrollPane(display);
-        root.add(display_pane);
+        root.add(display_pane, JSplitPane.TOP);
 
 
 
@@ -180,19 +179,22 @@ public class SwingJSTerm {
         buttons.add(eval);
         buttons.add(previous);
         buttons.add(next);
-        root.add(house);
-        root.add(buttons);
+        root.add(house, JSplitPane.BOTTOM);
         Border b = BorderFactory.createCompoundBorder(
             BorderFactory.createBevelBorder(BevelBorder.RAISED),
             BorderFactory.createEmptyBorder(5, 5, 5, 5)
         );
         root.setBorder(b);
         frame = new JFrame();
-        frame.setContentPane(root);
+        JPanel content = new JPanel(new BorderLayout());
+        content.add(root, BorderLayout.CENTER);
+        content.add(buttons, BorderLayout.SOUTH);
+
+        frame.setContentPane(content);
         frame.pack();
         frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 
-        return root;
+        return content;
     }
 
     public void echo(Object o){

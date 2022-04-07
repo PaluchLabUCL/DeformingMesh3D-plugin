@@ -143,7 +143,7 @@ public class ConnectionRemesher {
 
         int originalSize = original.connections.size();
         double minResult = Math.pow(2, ave/maxLength)*original.connections.size();
-        System.out.println( "before: " + ave + "// " + mn + "//" + ml + " ... " + originalSize);
+        //System.out.println( "before: " + ave + "// " + mn + "//" + ml + " ... " + originalSize);
         if(minResult > originalSize && minResult > 20000){
             throw new RuntimeException("Too many edges are predicted to be created: " + minResult);
         }
@@ -234,7 +234,7 @@ public class ConnectionRemesher {
         }
 
 
-        System.out.println( "after: " + connections.size());
+        //System.out.println( "after: " + connections.size());
 
         return new DeformableMesh3D(positions, connection_indexes, triangle_indexes);
 

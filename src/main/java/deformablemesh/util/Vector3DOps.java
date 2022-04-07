@@ -1,5 +1,7 @@
 package deformablemesh.util;
 
+import java.util.Arrays;
+
 /**
  * Created by msmith on 5/21/14.
  */
@@ -156,5 +158,22 @@ public class Vector3DOps {
         f[2] = f[2]/l;
 
         return f;
+    }
+    static public double[] rotatePoint( double[] p, double[] axisAngle, double[] center){
+
+        double[] p0 = difference(p, center);
+        double[] axis = Arrays.copyOf(axisAngle, 3);
+        double angle = normalize(axis);
+
+        double[] e1 = getPerpendicularNormalizedVector(axis);
+        double[] e2 = Vector3DOps.cross(axis, e1);
+        double parallel = Vector3DOps.dot(axis, p0);
+        double p1 = dot(e1, p0);
+        double p2 = dot(e2, p0);
+        double sin = Math.sin(angle);
+        double cos = Math.cos(angle);
+        double p1p = p1*cos - p2*sin;
+        double p2p = p1*sin + p2*cos;
+        return add( add( add(center, axis, parallel), e1, p1p), e2, p2p);
     }
 }

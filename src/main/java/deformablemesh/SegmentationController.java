@@ -732,7 +732,7 @@ public class SegmentationController {
     }
 
     /**
-     * Creates two plates. Displacements vs Time per tracks and a histogram of displacements.
+     * Creates two plots. Displacements vs Time per tracks and a histogram of displacements.
      */
     public void plotDisplacements(){
 

@@ -16,6 +16,7 @@ var ImageStack = Java.type("ij.ImageStack");
 var ColorProcessor = Java.type("ij.process.ColorProcessor");
 var ImageStack = Java.type("ij.ImageStack");
 var MeshAnalysis = Java.type("deformablemesh.util.MeshAnalysis");
+var GroupDynamics = Java.type("deformablemesh.util.GroupDynamics");
 
 function echo(obj){
     terminal.echo(obj);
