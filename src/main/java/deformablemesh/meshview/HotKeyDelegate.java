@@ -198,6 +198,13 @@ public class HotKeyDelegate {
         );
 
         createActionMapKey(
+                KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, KeyEvent.CTRL_MASK, true),
+                "REMOVE_TRACK",
+                "Remove selected track.",
+                ifEnabled(controller::removeSelectedTrack)
+        );
+
+        createActionMapKey(
                 KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0, true),
                 "CLEAR_MESH2",
                 "Clear selected mesh from frame. (delete)",

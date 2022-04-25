@@ -155,7 +155,7 @@ public class CreateCrossSectionMovies {
     }
     static ImagePlus createProjectionStack(List<Track> solid, List<Track> outlines, MeshImageStack stack, double[] direction){
         ImageStack out = null;
-        int zoom = 4;
+        int zoom = 2;
         for(int i = 0; i<stack.getNFrames(); i++) {
             int frame = i;
             stack.setFrame(frame);

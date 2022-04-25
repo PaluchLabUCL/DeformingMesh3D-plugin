@@ -214,6 +214,10 @@ public class SegmentationModel {
         stop = true;
     }
 
+    public boolean getStopped(){
+        return stop;
+    }
+
     public void setGamma(final double gamma){
         if(GAMMA!=gamma){
             reshape=true;

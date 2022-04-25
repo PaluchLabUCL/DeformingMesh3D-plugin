@@ -6,10 +6,8 @@ import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.RayCastMesh;
 import deformablemesh.geometry.Sphere;
-import deformablemesh.io.MeshReader;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.track.Track;
-import ij.ImagePlus;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,43 +16,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class GroupDynamics {
-    static class MeshGroup{
-        public double volume;
-        public double[] cm;
-        private List<DeformableMesh3D> meshes;
-
-        public MeshGroup(List<DeformableMesh3D> meshes){
-            cm = new double[3];
-            for(DeformableMesh3D mesh: meshes){
-                double v0 = mesh.calculateVolume();
-                double[] c = DeformableMesh3DTools.centerAndRadius(mesh.nodes);
-                cm[0] += c[0]*v0;
-                cm[1] += c[1]*v0;
-                cm[2] += c[2]*v0;
-                volume += v0;
-            }
-            cm[0] = cm[0]/volume;
-            cm[1] = cm[1]/volume;
-            cm[2] = cm[2]/volume;
-            this.meshes = meshes;
-        }
-
-
-        public void translate(double[] dx){
-            meshes.forEach(m -> translate(dx));
-        }
-
-        public void rotateMeshes(double[] axisAngle, double[] center){
-            double[] axis = new double[3];
-            axis[0] = axisAngle[0];
-            axis[1] = axisAngle[1];
-            axis[2] = axisAngle[2];
-            double angle = axisAngle[3];
-            double mag = Vector3DOps.normalize(axis);
-            meshes.forEach(m -> m.rotate(axis, center, angle));
-        }
-
-    }
     public static List<Track> steppingMeshes(List<Track> tracks, int i){
         return tracks.stream().filter(
                 t -> t.containsKey(i) && t.containsKey(i+1)
@@ -74,7 +35,12 @@ public class GroupDynamics {
     static public double[] getCenterOfMass(List<DeformableMesh3D> meshes){
         return new MeshGroup(meshes).cm;
     }
-
+    static public double getMass(List<DeformableMesh3D> meshes){
+            return new MeshGroup(meshes).volume;
+    }
+    static public  MeshGroup createMeshGroup( List<DeformableMesh3D> meshes){
+        return new MeshGroup(meshes);
+    }
     /**
      * Consider that a rigid body rotates the group of meshes. This is found by calculating the inertial matrix
      * about the center of mass, and the change in first moment about the center of mass.

@@ -312,6 +312,36 @@ public class SegmentationController {
         }
     }
 
+    public void removeSelectedTrack(){
+        Track track = getSelectedMeshTrack();
+        if(track != null){
+            removeTrack(track);
+        }
+    }
+
+    public void removeTrack(Track t){
+        actionStack.postAction(new UndoableActions() {
+            @Override
+            public void perform() {
+                model.removeMeshTrack(t);
+            }
+
+            @Override
+            public void undo() {
+                model.addMeshTrack(t);
+            }
+
+            @Override
+            public void redo() {
+                model.removeMeshTrack(t);
+            }
+            @Override
+            public String getName(){
+                return "remove track: " + t.getName();
+            }
+        });
+    }
+
     /**
      * moves the action stack forward.
      */
