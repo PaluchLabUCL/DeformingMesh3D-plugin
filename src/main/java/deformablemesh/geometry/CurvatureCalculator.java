@@ -436,10 +436,12 @@ public class CurvatureCalculator {
 
             double[] curvature = getNormalAndCurvature(node, t_angles);
             double[] pt = node.getCoordinates();
+            double mixedArea = calculateMixedArea(node);
             values.add(new double[]{
                     pt[0], pt[1], pt[2],
                     curvature[3],
-                    curvature[0], curvature[1], curvature[2]
+                    curvature[0], curvature[1], curvature[2],
+                    mixedArea
             });
 
 

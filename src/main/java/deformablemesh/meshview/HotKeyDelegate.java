@@ -146,7 +146,12 @@ public class HotKeyDelegate {
                 "Track selected mesh backwards.",
                 ifEnabled(accessControl::trackMeshBackwardsAction)
         );
-
+        createActionMapKey(
+                KeyStroke.getKeyStroke(KeyEvent.VK_L, 0, true),
+                "LINK_POSSIBLE",
+                "If possible, links the current mesh to a mesh in next frame.",
+                ifEnabled(controller::linkPossibleTrack)
+        );
         createActionMapKey(
                 KeyStroke.getKeyStroke(KeyEvent.VK_I, 0, true),
                 "INITIALIZE_MESHES",

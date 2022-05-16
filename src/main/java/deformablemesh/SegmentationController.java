@@ -474,7 +474,7 @@ public class SegmentationController {
 
     /**
      * Creates a distance transform with the currently selected image. It is expected that the image
-     * is a mask, 0 or non-zero values.
+     * is a mask with, 0 or non-zero values.
      */
     public void maskToDistanceTransform(){
         MeshImageStack stack = getMeshImageStack();
@@ -946,6 +946,10 @@ public class SegmentationController {
      * @param maxConnectionLength normalized length for max connection lengths.
      */
     public void reMeshConnectionsAllMeshes(double minConnectionLength, double maxConnectionLength){
+        if(minConnectionLength > maxConnectionLength){
+            System.out.println("cannot remesh with a min length longer than a short length!");
+            return;
+        }
         int f = model.getCurrentFrame();
         List<Track> tracks = model.getAllTracks().stream().filter(t -> t.containsKey(f)).collect(Collectors.toList());
         submit( ()->{
@@ -3049,6 +3053,9 @@ public class SegmentationController {
            actionStack.postAction(ftf.getPerform());
         });
     }
+    public void shutdown(){
+        main.submit(main::shutdown);
+    }
 }
 
 /**
@@ -3106,6 +3113,10 @@ class ExceptionThrowingService{
             exceptions.clear();
             return excs;
         }
+    }
+
+    public void shutdown(){
+        main.shutdown();
     }
 
 

@@ -13,9 +13,13 @@ import ij.measure.Calibration;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+import lightgraph.Graph;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -1094,6 +1098,26 @@ public class DeformableMesh3DTools {
 
     }
 
+
+    /**
+     *
+     * @param triangles
+     * @return
+     */
+    public static double calculateExactVolume(List<Triangle3D> triangles){
+        double sum = 0;
+        for(Triangle3D triangle: triangles){
+            double[] r1 = triangle.getCoordinates(0);
+            double[] r2 = triangle.getCoordinates(1);
+            double[] r3 = triangle.getCoordinates(2);
+            sum += (
+                    - r3[0]*r2[1]*r1[2] + r2[0]*r3[1]*r1[2] + r3[0]*r1[1]*r2[2]
+                    - r1[0]*r3[1]*r2[2] - r2[0]*r1[1]*r3[2] + r1[0]*r2[1]*r3[2]
+            )/6.0;
+        }
+        return sum;
+    }
+
     /**
      * normal *dot* direction + |position|*direction
      *
@@ -1470,6 +1494,22 @@ public class DeformableMesh3DTools {
 
     }
 
+
+    static public double getVolumeAverageIntensity(MeshImageStack stack, DeformableMesh3D mesh){
+        List<int[]> volumePixels = DeformableMesh3DTools.getContainedPixels(stack, mesh);
+        double intensity = 0;
+        if( volumePixels.size() > 0) {
+            for (int[] values : volumePixels) {
+                intensity += stack.getValue(values[0], values[1], values[2]);
+            }
+            intensity = intensity/volumePixels.size();
+        } else{
+            double[] c = mesh.getBoundingBox().getCenter();
+            intensity = stack.getInterpolatedValue(c);
+        }
+        return intensity;
+    }
+
     /**
      * Get pixels contained in the mesh. This has repeated code with "mosaicBinary" and should
      * be combined.
@@ -1843,7 +1883,7 @@ public class DeformableMesh3DTools {
         return new DeformableMesh3D(points, connections, triangles);
     }
 
-    public static void main(String[] args) throws IOException {
+    static void mosaicImageRepresentation(String[] args) throws IOException {
         new ImageJ();
         ImagePlus plus = new ImagePlus(new File(args[0]).getAbsolutePath());
         List<Track> tracks = MeshReader.loadMeshes(
@@ -1862,7 +1902,44 @@ public class DeformableMesh3DTools {
         //p2.setTitle("second");
         //p2.show();
     }
+    public static void main(String[] args) throws IOException {
+        Path folder = Paths.get(args[0]);
+        List<Path> paths = Files.list(folder).filter(
+                p -> p.getFileName().toString().endsWith(".bmf")
+        ).collect(Collectors.toList());
+        Graph g = new Graph();
+        long t1 = 0;
+        long t2 = 0;
 
+        for(Path p: paths){
+            System.out.println(p);
+            List<double[]> volumes = new ArrayList<>();
+            List<Track> tracks = MeshReader.loadMeshes(p.toFile());
+            for(Track t: tracks) {
+                for(Integer key : t.getTrack().keySet()) {
+                    DeformableMesh3D mesh = t.getMesh(key);
+                    long start = System.nanoTime();
+                    double v1 = calculateExactVolume(mesh.triangles);
+                    long f1 = System.nanoTime();
+                    double v2 = mesh.calculateVolume();
+                    long f2 = System.nanoTime();
+                    t1 += (f1 - start);
+                    t2 += (f2 - f1);
+                    volumes.add( new double[] { (v2 + v2), (v1 - v2)/(v1 + v2) });
+                }
+            }
+            double[] x = new double[volumes.size()];
+            double[] y = new double[volumes.size()];
+            for(int i = 0; i<volumes.size(); i++){
+                x[i] = volumes.get(i)[0];
+                y[i] = volumes.get(i)[1];
+            }
+            g.addData(x, y);
+        }
+        System.out.println(t1 + " // " + t2);
+        g.show(true);
+
+    }
 }
 
 class Node3DPath implements PossiblePath<Node3D>{
