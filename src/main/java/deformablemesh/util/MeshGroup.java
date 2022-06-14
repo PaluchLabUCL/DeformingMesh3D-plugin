@@ -20,6 +20,7 @@ public class MeshGroup {
             cm[2] += c[2] * v0;
             volume += v0;
         }
+
         cm[0] = cm[0] / volume;
         cm[1] = cm[1] / volume;
         cm[2] = cm[2] / volume;

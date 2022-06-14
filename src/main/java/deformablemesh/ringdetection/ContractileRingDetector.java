@@ -26,17 +26,11 @@ public class ContractileRingDetector implements Iterable<Integer>{
     int height;
     int width;
 
-    public double ALPHA = 1.0;
-    public double BETA = 1.0;
-    public double GAMMA = 1000;
-    public double WEIGHT = 2.0;
-    public double SIGMA = 3.0;
-
-    //Stage stage;
+    int frame;
 
     double threshold;
     Map<Integer, Furrow3D> furrows;
-    Furrow3D furrow;
+    private Furrow3D furrow;
 
     public ContractileRingDetector(){
 
@@ -59,8 +53,13 @@ public class ContractileRingDetector implements Iterable<Integer>{
     }
 
     public void createFurrowSlice(int frame){
-        if(!furrows.containsKey(frame)) return;
-        Furrow3D f = furrows.get(frame);
+        Furrow3D f;
+        if(furrows.containsKey(frame)){
+            f = furrows.get(frame);
+        } else {
+            f = furrow;
+        }
+        if(f == null) return;
         FurrowTransformer transformer = new FurrowTransformer(f, stack);
 
         int xcounts = transformer.getXCounts();
@@ -166,17 +165,17 @@ public class ContractileRingDetector implements Iterable<Integer>{
     }
 
     public Furrow3D getFurrow(){
-        return furrow;
+        return furrows.get(frame);
     }
 
     public void setFrame(int frame){
+        this.frame = frame;
         if(furrows.containsKey(frame)){
             furrow = furrows.get(frame);
             createFurrowSlice(frame);
-        } else{
-            furrow = null;
+        } else if(furrow != null) {
+            createFurrowSlice(frame);
         }
-
     }
 
     public void putFurrow(int frame, Furrow3D furrow){

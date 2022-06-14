@@ -412,6 +412,14 @@ public class Furrow3D implements Interceptable{
             updateTexturedSliceGeometry();
         }
     }
+
+    public void flip(){
+        normal[0] = -normal[0];
+        normal[1] = -normal[1];
+        normal[2] = -normal[2];
+        updateGeometry();
+    }
+
     public void setDirection(double[] dir) {
         normal[0]=dir[0];
         normal[1]=dir[1];

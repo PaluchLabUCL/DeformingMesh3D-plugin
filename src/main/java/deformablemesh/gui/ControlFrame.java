@@ -1,5 +1,6 @@
 package deformablemesh.gui;
 
+import deformablemesh.BoundingBoxTransformer;
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
 import deformablemesh.SegmentationController;
@@ -8,6 +9,7 @@ import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.gui.meshinitialization.CircularMeshInitializationDialog;
 import deformablemesh.gui.meshinitialization.FurrowInitializer;
 import deformablemesh.io.ImportType;
+import deformablemesh.io.MeshReader;
 import deformablemesh.io.TrackMateAdapter;
 import deformablemesh.meshview.HotKeyDelegate;
 import deformablemesh.meshview.MeshFrame3D;
@@ -16,6 +18,8 @@ import deformablemesh.track.Track;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.io.OpenDialog;
+import ij.measure.Calibration;
+import ij.plugin.FileInfoVirtualStack;
 import loci.plugins.BF;
 import loci.plugins.in.ImporterOptions;
 
@@ -460,7 +464,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         rightSide.add(createButtonPanel());
 
         JPanel parameterPane = buildParameterPane();
-        rightSide.add(parameterPane);
+        rightSide.add(new JScrollPane(parameterPane));
 
 
 
@@ -903,27 +907,59 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             selectOpenImage();
 
         });
-        JMenuItem importH5Xml = new JMenuItem("import h5/xml");
+        JMenuItem importH5Xml = new JMenuItem("import virtual");
         file.add(importH5Xml);
         importH5Xml.addActionListener( evt->{
-            String id = IJ.getFilePath("select h5/xml file");
+            String id = IJ.getFilePath("select h5/xml or tiff file");
             if(id==null) return;
             setReady(false);
 
             segmentationController.submit( ()->{
                 try {
-                    ImporterOptions options = new ImporterOptions();
-                    options.setVirtual(true);
-                    options.setOpenAllSeries(true);
-
-                    if(id == null) return;
-                    options.setId(id);
-                    long start = System.currentTimeMillis();
-                    ImagePlus[] pluses = BF.openImagePlus(options);
-                    for (ImagePlus plus : pluses) {
+                    if (id.endsWith(".tif") ) {
+                        ImagePlus plus = FileInfoVirtualStack.openVirtual(id);
                         plus.show();
+                        segmentationController.setOriginalPlus(plus);
+                    } else{
+                        ImporterOptions options = new ImporterOptions();
+                        options.setVirtual(true);
+                        options.setOpenAllSeries(true);
+
+                        if(id == null) return;
+                        options.setId(id);
+                        ImagePlus[] pluses = BF.openImagePlus(options);
+                        int w = -1;
+                        int h = -1;
+                        int z = -1;
+                        for (ImagePlus plus : pluses) {
+                            int nz = plus.getNSlices();
+                            int ny = plus.getHeight();
+                            int nx = plus.getWidth();
+                            w = nx > w ? nx : w;
+                            h = ny > h ? ny : h;
+                            z = nz > z ? nz : z;
+
+                            plus.show();
+                        }
+                        for (ImagePlus plus : pluses) {
+                            int nz = plus.getNSlices();
+                            int ny = plus.getHeight();
+                            int nx = plus.getWidth();
+                            Calibration cal = plus.getCalibration();
+                            if(cal.scaled()){
+                                if(nz < z){
+                                    cal.pixelDepth = cal.pixelDepth*z / nz;
+                                }
+                                if(ny < h){
+                                    cal.pixelHeight = cal.pixelHeight*h / ny;
+                                }
+                                if(nx < w){
+                                    cal.pixelWidth = cal.pixelWidth*w / nx;
+                                }
+                            }
+                        }
+                        segmentationController.setOriginalPlus(pluses[0]);
                     }
-                    segmentationController.setOriginalPlus(pluses[0]);
                 } catch( Exception e){
                     //oh well!
                 } finally{
@@ -1211,6 +1247,12 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         tools.add(imprt);
         imprt.addActionListener(actionEvent -> {
             importMeshes();
+        });
+
+        JMenuItem imprtFrom = new JMenuItem("import from open image");
+        tools.add(imprtFrom);
+        imprtFrom.addActionListener(actionEvent -> {
+            importFrom();
         });
 
         JMenuItem trackManager = new JMenuItem("Manage Tracks");
@@ -1556,6 +1598,48 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             segmentationController.importMeshes(f, (ImportType)channelChoice);
         }
         finished();
+    }
+
+    public void importFrom(){
+        setReady(false);
+        ImagePlus plus = GuiTools.selectOpenImage(frame);
+        if(plus == null) return;
+        FileDialog fd = new FileDialog(frame,"File to load mesh from");
+        fd.setDirectory(OpenDialog.getDefaultDirectory());
+        fd.setMode(FileDialog.LOAD);
+        fd.setVisible(true);
+        if(fd.getFile()==null || fd.getDirectory()==null){
+            finished();
+            return;
+        }
+        File f = new File(fd.getDirectory(),fd.getFile());
+        Object[] types = ImportType.values();
+        Object channelChoice = JOptionPane.showInputDialog(
+                frame,
+                "Select import type:",
+                "Choose import type",
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                types,
+                types[0]
+        );
+        if(channelChoice != null){
+            MeshImageStack origin = new MeshImageStack(plus);
+            BoundingBoxTransformer bbt = new BoundingBoxTransformer(origin, segmentationController.getMeshImageStack());
+            List<Track> tracks = null;
+            try {
+                tracks = MeshReader.loadMeshes(f);
+                tracks.forEach(bbt::transformTrack);
+                segmentationController.importMeshes( tracks, (ImportType)channelChoice);
+
+            } catch (IOException e) {
+                return;
+            }
+
+
+        }
+        finished();
+
     }
     private void buildTrackManager() {
         final String managerTitle = "manage tracks";

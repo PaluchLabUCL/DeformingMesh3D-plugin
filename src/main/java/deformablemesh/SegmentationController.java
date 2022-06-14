@@ -488,7 +488,8 @@ public class SegmentationController {
             ImagePlus frame = getMeshImageStack().getCurrentFrame();
             DistanceTransformMosaicImage dtmi = new DistanceTransformMosaicImage(frame);
             dtmi.findBlobs();
-            dtmi.createGrowingCascades();
+            //dtmi.createGrowingCascades();
+            dtmi.createCascades();
             ImageStack frames = dtmi.createLabeledImage().getStack();
             for(int j = 1; j<=frames.getSize(); j++){
                 result.addSlice(frames.getSliceLabel(j), frames.getProcessor(j));
@@ -701,6 +702,16 @@ public class SegmentationController {
                 e.printStackTrace();
             }
         }
+    }
+
+    /**
+     * Requests a labelled image that will be used with the currently opened image for generating a pair of image/labels
+     * training data.
+     * @param first
+     * @param last
+     */
+    public void generateTrainingDataFromLabelledImage(int first, int last){
+
     }
 
     /**
@@ -1360,6 +1371,10 @@ public class SegmentationController {
         return getMeshImageStack().createFurrowTransform(pos, normal);
     }
 
+
+    public void flipFurrow(){
+        model.flipFurrow();
+    }
     /**
      * Creates an image based on a furrow transformer built using the provided position and normal.
      *
@@ -1633,6 +1648,11 @@ public class SegmentationController {
     }
 
     public void deformPartialMesh(){
+        deformPartialMesh(-1);
+    }
+
+
+    public void deformPartialMesh(int n){
         Track track = getSelectedMeshTrack();
         int frame = getCurrentFrame();
 
@@ -1660,7 +1680,7 @@ public class SegmentationController {
                     subMesh.create3DObject();
                     subMesh.setShowSurface(true);
                     meshFrame3D.addDataObject(subMesh.data_object);
-                    model.deformMesh(subMesh);
+                    model.deformMesh(subMesh, n);
 
                     for(int i = 0; i<nodes.size(); i++){
                         int n = nodes.get(i).index;
@@ -2132,13 +2152,16 @@ public class SegmentationController {
      * @param f
      * @param type
      */
-    public void importMeshes(File f, ImportType type){
-        boolean relative = true;
+    public void importMeshes(File f, ImportType type) {
+        submit(()->{
+            List<Track> imports = MeshReader.loadMeshes(f);
+            importMeshes(imports, type);
+        });
+    }
+    public void importMeshes(List<Track> imports, ImportType type){
         submit(()->{
             int i = getCurrentFrame();
             int n = getNFrames();
-
-            List<Track> imports = MeshReader.loadMeshes(f);
 
             //the imports is modified to meet the supplied criteria.
             switch(type){

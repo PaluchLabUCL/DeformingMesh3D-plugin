@@ -34,8 +34,11 @@ import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -78,7 +81,7 @@ public class CreateCrossSectionMovies {
         mf3d.hideAxis();
         mf3d.setBackgroundColor(Color.WHITE);
         double[] vp = mf3d.getViewParameters();
-        vp[3] = 80/mis.SCALE;
+        vp[3] = 250/mis.SCALE;
         mf3d.setViewParameters(vp);
         JFrame jframe = mf3d.getJFrame();
         Component canvas = mf3d.getCanvas();
@@ -91,10 +94,15 @@ public class CreateCrossSectionMovies {
 
         jframe.setSize(cw + dw - pw, ch + dh - ph);
         ImageStack out = null;
-
-        int min = solid.stream().mapToInt(Track::getFirstFrame).min().getAsInt();
-        int max = solid.stream().mapToInt(Track::getLastFrame).min().getAsInt();
-
+        int min, max;
+        if (solid.size() > 0) {
+            min = solid.stream().mapToInt(Track::getFirstFrame).min().getAsInt();
+            max = solid.stream().mapToInt(Track::getLastFrame).max().getAsInt();
+        } else{
+            min = outlines.stream().mapToInt(Track::getFirstFrame).min().getAsInt();
+            max = outlines.stream().mapToInt(Track::getLastFrame).max().getAsInt();
+        }
+        System.out.println(min + ", " + max);
         for(int i = min; i<=max; i++){
             int cf = i;
             List<DeformableMesh3D> solidMeshes = solid.stream().filter(
@@ -112,11 +120,18 @@ public class CreateCrossSectionMovies {
                     Collectors.toList()
             );
 
-            double[] cm = GroupDynamics.getCenterOfMass(solidMeshes);
+            double[] cm;
+            if(solidMeshes.size() > 0) {
+                cm = GroupDynamics.getCenterOfMass(solidMeshes);
+            } else if(outlinedMeshes.size() > 0){
+                cm = GroupDynamics.getCenterOfMass(outlinedMeshes);
+            } else{
+                cm = new double[] {0, 0, 0};
+            }
+
             vp[0] = cm[0];
             vp[1] = cm[1];
             vp[2] = cm[2];
-
             mf3d.setViewParameters(vp);
             solidMeshes.forEach(sm ->{
                 sm.setShowSurface(true);
@@ -161,7 +176,9 @@ public class CreateCrossSectionMovies {
             stack.setFrame(frame);
             List<DeformableMesh3D> meshes = solid.stream().filter(t -> t.containsKey(frame)).map(t -> t.getMesh(frame)).collect(Collectors.toList());
             List<DeformableMesh3D> outlined = outlines.stream().filter(t -> t.containsKey(frame)).map(t -> t.getMesh(frame)).collect(Collectors.toList());
-            double[] center = GroupDynamics.getCenterOfMass(meshes);
+            double[] center = meshes.size() > 0 ?
+                    GroupDynamics.getCenterOfMass(meshes) :
+                    GroupDynamics.getCenterOfMass(outlined);
 
             FurrowTransformer t = stack.createFurrowTransform(center, direction);
             stack.setChannel(0);

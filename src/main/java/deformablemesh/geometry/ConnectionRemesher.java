@@ -144,7 +144,7 @@ public class ConnectionRemesher {
         int originalSize = original.connections.size();
         double minResult = Math.pow(2, ave/maxLength)*original.connections.size();
         //System.out.println( "before: " + ave + "// " + mn + "//" + ml + " ... " + originalSize);
-        if(minResult > originalSize && minResult > 20000){
+        if(minResult > originalSize && minResult > 200000){
             throw new RuntimeException("Too many edges are predicted to be created: " + minResult);
         }
         if (Double.isNaN(mn) || Double.isNaN(ml) || Double.isInfinite(mn) || Double.isInfinite(ml)){
@@ -513,6 +513,9 @@ public class ConnectionRemesher {
             addTriangle(remapped);
 
             List<Connection3D> edges = triangleEdges.get(t3d);
+            if(edges == null){
+                System.out.println("borked!");
+            }
             for(Connection3D edge: edges){
                 List<Triangle3D> adj = adjacentTriangles.get(edge);
                 adj.add(remapped);

@@ -178,12 +178,15 @@ public class SegmentationModel {
 
     }
 
+    public void deformMesh(DeformableMesh3D mesh){
+        deformMesh(mesh, -1);
+    }
     /**
      * Deforms the provided mesh using the prepared energies and values. Will reshape each iteration.
      *
      * @param mesh
      */
-    public void deformMesh(DeformableMesh3D mesh){
+    public void deformMesh(DeformableMesh3D mesh, int maxDeformations){
         if(mesh==null){
             GuiTools.errorMessage("No mesh to deform!");
         }
@@ -198,7 +201,7 @@ public class SegmentationModel {
         mesh.BETA=BETA;
         mesh.reshape();
         deformations = 0;
-        int count = Integer.MAX_VALUE;
+        int count = maxDeformations < 0 ? Integer.MAX_VALUE : maxDeformations;
 
         while(!stop&&deformations<count){
             mesh.update();
@@ -1009,6 +1012,12 @@ public class SegmentationModel {
 
     public int getNChannels() {
         return original_plus.getNChannels();
+    }
+
+    public void flipFurrow() {
+        Furrow3D furrow = ringController.getFurrow();
+
+        furrow.flip();
     }
 }
 

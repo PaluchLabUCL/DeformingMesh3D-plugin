@@ -214,9 +214,7 @@ public class MeshAnalysis {
      */
     public static void plotVolumesOverTime(List<Track> tracks, MeshImageStack mis){
         Graph volumePlot = new Graph();
-        volumePlot.setXRange(0, 135);
         volumePlot.setXTicCount(6);
-        volumePlot.setYRange(0, 1500);
         volumePlot.setYTicCount(6);
         volumePlot.setXLabel("Frame No.");
         String unit = mis.getUnits();

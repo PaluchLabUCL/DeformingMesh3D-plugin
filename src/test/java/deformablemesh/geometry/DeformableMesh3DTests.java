@@ -57,7 +57,6 @@ public class DeformableMesh3DTests {
         DeformableMesh3D zMesh = DeformableMesh3D.generateEdgeZ();
         zMesh.scale(0.5, DeformableMesh3D.ORIGIN);
         zMesh.translate(new double[]{0, 0, -1});
-        zMesh.create3DObject();
         zMesh.calculateCurvature();
 
     }

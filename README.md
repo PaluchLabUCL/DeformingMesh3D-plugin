@@ -33,9 +33,14 @@ which can be found in "plugins"->"PL_Mesh3D"->"Deforming Mesh 3D", and JFilament
 This includes guides for using the plugin, and javadoc for using the plugin via scripting.
 
 # Changes
+0.9.4
+- Improved autotracking accessiblity.
+- - `linkPossibleTrack()` to link the selected track.
+- - `autotrackAvailableTracks()` attempts to link all available in the first frame with the second frame.
+- Import from open image has been created, for loading meshes from different image geometries.
+- Connection remeshing calculates the expected number of connections differently/better.
 0.9.2
 - 3D viewer has been improved to handle viewing small sections of large images.
-- 
 0.9.1
 - BUG FIX track manager selects correct mesh.
 0.9.0
