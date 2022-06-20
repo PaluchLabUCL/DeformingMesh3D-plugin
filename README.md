@@ -39,6 +39,9 @@ This includes guides for using the plugin, and javadoc for using the plugin via 
 - - `autotrackAvailableTracks()` attempts to link all available in the first frame with the second frame.
 - Import from open image has been created, for loading meshes from different image geometries.
 - Connection remeshing calculates the expected number of connections differently/better.
+- Orient the furrow from the 3D canvas.
+- Flip the furrow.
+- BUG FIX: empty tracks get removed from the manager.
 0.9.2
 - 3D viewer has been improved to handle viewing small sections of large images.
 0.9.1
