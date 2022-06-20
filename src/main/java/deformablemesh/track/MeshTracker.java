@@ -53,6 +53,11 @@ public class MeshTracker {
 
     }
 
+    /**
+     * All of the current tracks.
+     *
+     * @return a new list containing of the current tracks.
+     */
     public List<Track> getAllMeshTracks(){
         return new ArrayList<>(tracks);
     }

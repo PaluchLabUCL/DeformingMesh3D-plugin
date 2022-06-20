@@ -492,6 +492,10 @@ public class MeshModifier {
         @Override
         public void updateMoved(PickResult[] results, MouseEvent evt) {
             double[] pt = getPlanePosition(results);
+            if(pt == null){
+                //this happens when: the furrow plane is missed.
+                return;
+            }
             MeshModifier.this.updateMoved(pt, evt);
         }
         @Override

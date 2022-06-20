@@ -377,8 +377,6 @@ public class RingController implements FrameListener, ListDataListener {
             ImageProcessor b = detector.createBinarySlice();
             sliceView.setBinary(b.getBufferedImage());
             refreshFurrow();
-            System.out.println("finishing update: " + Thread.currentThread().getName());
-            sliceView.panel.repaint();
         }
     }
     public void setThreshold(double v){

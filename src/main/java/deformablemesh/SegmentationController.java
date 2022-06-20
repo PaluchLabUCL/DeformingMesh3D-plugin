@@ -1603,8 +1603,11 @@ public class SegmentationController {
                     removed++;
                 }
             }
+            if(t.size() == 0){
+                removeTrack(t);
+            }
         }
-        System.out.println("removed: " + removed);
+        System.out.println("validating removed: " + removed);
     }
 
     public void splitMesh(){
@@ -2928,6 +2931,24 @@ public class SegmentationController {
         return model;
     }
 
+    public void startFurrowOrientationListener(){
+        DeformableMesh3D mesh = getSelectedMesh();
+        if(mesh == null) return;
+
+        if(meshFrame3D != null){
+            Furrow3D furrow = getRingController().getFurrow();
+            if(furrow == null){
+                double[] c = mesh.getBoundingBox().getCenter();
+                double[] n = Vector3DOps.zhat;
+                setFurrowForCurrentFrame(c, n);
+            }
+            meshFrame3D.addPickListener(new FurrowOrientationListener(this));
+        }
+    }
+    public void removeFurrowOrientationListener(FurrowOrientationListener l) {
+        meshFrame3D.removePickListener(l);
+    }
+
     /**
      * Tasks for the exception throwing service.
      */
@@ -3002,68 +3023,71 @@ public class SegmentationController {
      * area in the next frame and link the best possibility.
      */
     public void linkPossibleTrack(){
-
         if(getSelectedMesh()!=null && getCurrentFrame() < getNFrames() - 1 ){
-            Track destination = getSelectedMeshTrack();
-            nextFrame();
-            int frame = getCurrentFrame();
-            if(destination.containsKey(frame)){
-                //only a track that does not have a mesh on the next frame.
-               return;
-            }
-            DeformableMesh3D mesh = destination.getMesh(frame - 1 );
-            Box3D bb = mesh.getBoundingBox();
-            List<Track> possible = getAllTracks().stream().filter(
-                                        t -> t.getFirstFrame() == frame
-                                    ).collect(Collectors.toList());
-            double maxJi = 0;
-            int dex = -1;
-            for(int i = 0; i<possible.size(); i++){
-                DeformableMesh3D candidate = possible.get(i).getMesh(frame);
-                Box3D cb = candidate.getBoundingBox();
-                Box3D union = cb.getIntersectingBox(bb);
-                double uv = union.getVolume();
-                if(uv == 0){
-                    continue;
+            submit( ()->{
+                Track destination = getSelectedMeshTrack();
+                nextFrame();
+                int frame = getCurrentFrame();
+                if(destination.containsKey(frame)){
+                    //only a track that does not have a mesh on the next frame.
+                    return;
                 }
-                double ji = uv/(cb.getVolume() + bb.getVolume() - uv);
-                if(ji > maxJi){
-                    maxJi = ji;
-                    dex = i;
+
+                DeformableMesh3D mesh = destination.getMesh(frame - 1 );
+                Box3D bb = mesh.getBoundingBox();
+                List<Track> possible = getAllTracks().stream().filter(
+                        t -> t.getFirstFrame() == frame
+                ).collect(Collectors.toList());
+                double maxJi = 0;
+                int dex = -1;
+                System.out.println("possibles.size" + possible.size());
+                for(int i = 0; i<possible.size(); i++){
+                    DeformableMesh3D candidate = possible.get(i).getMesh(frame);
+                    Box3D cb = candidate.getBoundingBox();
+                    Box3D union = cb.getIntersectingBox(bb);
+                    double uv = union.getVolume();
+                    if(uv == 0){
+                        continue;
+                    }
+                    double ji = uv/(cb.getVolume() + bb.getVolume() - uv);
+                    if(ji > maxJi){
+                        maxJi = ji;
+                        dex = i;
+                    }
                 }
-            }
 
-            if (dex >= 0) {
-                Track consumed = possible.get(dex);
-                Map<Integer, DeformableMesh3D> data = destination.getTrack();
-                Map<Integer, DeformableMesh3D> moving = consumed.getTrack();
-                Map<Integer, DeformableMesh3D> combined = new TreeMap<>();
-                combined.putAll(data);
-                combined.putAll(moving);
+                if (dex >= 0) {
+                    Track consumed = possible.get(dex);
+                    Map<Integer, DeformableMesh3D> data = destination.getTrack();
+                    Map<Integer, DeformableMesh3D> moving = consumed.getTrack();
+                    Map<Integer, DeformableMesh3D> combined = new TreeMap<>();
+                    combined.putAll(data);
+                    combined.putAll(moving);
 
-                UndoableActions joinMeshes = new UndoableActions() {
-                    @Override
-                    public void perform() {
-                        destination.setData(combined);
-                        model.removeMeshTrack(consumed);
-                    }
+                    UndoableActions joinMeshes = new UndoableActions() {
+                        @Override
+                        public void perform() {
+                            destination.setData(combined);
+                            model.removeMeshTrack(consumed);
+                        }
 
-                    @Override
-                    public void undo() {
-                        destination.setData(data);
-                        model.addMeshTrack(consumed);
+                        @Override
+                        public void undo() {
+                            destination.setData(data);
+                            model.addMeshTrack(consumed);
 
-                    }
+                        }
 
-                    @Override
-                    public void redo() {
-                        destination.setData(combined);
-                        model.removeMeshTrack(consumed);
-                    }
-                };
+                        @Override
+                        public void redo() {
+                            destination.setData(combined);
+                            model.removeMeshTrack(consumed);
+                        }
+                    };
 
-                actionStack.postAction(joinMeshes);
-            }
+                    actionStack.postAction(joinMeshes);
+                }
+            });
         }
     }
     public void removeFrameListener(FrameListener listener){

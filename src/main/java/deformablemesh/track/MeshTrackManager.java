@@ -439,7 +439,9 @@ public class MeshTrackManager implements StateListener{
             }
 
             tracks.add(n);
-
+            if(t.size() == 0){
+                tracks.remove(t);
+            }
             controller.setMeshTracks(tracks);
         }
     }
@@ -511,6 +513,9 @@ public class MeshTrackManager implements StateListener{
                 DeformableMesh3D mesh = one.getMesh(index);
                 one.remove(mesh);
                 destination.addMesh(index, mesh);
+            }
+            if(one.size() == 0){
+                tracks.remove(one);
             }
             controller.setMeshTracks(tracks);
 

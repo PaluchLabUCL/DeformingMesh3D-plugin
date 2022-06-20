@@ -149,7 +149,7 @@ public class HotKeyDelegate {
         createActionMapKey(
                 KeyStroke.getKeyStroke(KeyEvent.VK_L, 0, true),
                 "LINK_POSSIBLE",
-                "If possible, links the current mesh to a mesh in next frame.",
+                "Link selected track to next frame track.",
                 ifEnabled(controller::linkPossibleTrack)
         );
         createActionMapKey(
@@ -271,11 +271,19 @@ public class HotKeyDelegate {
         );
 
         createActionMapKey(
+                KeyStroke.getKeyStroke(KeyEvent.VK_F, 0, true),
+                "ORIENT_FURROW",
+                "Clicking on selected mesh to orient furrow.",
+                controller::startFurrowOrientationListener
+        );
+
+        createActionMapKey(
                 KeyStroke.getKeyStroke(KeyEvent.VK_H, 0, true),
                 "SHOW_HELP_HUD",
                 "Show/Hide cheat sheet.",
                 this::toggleHud
         );
+
 
 
 
@@ -307,7 +315,7 @@ public class HotKeyDelegate {
         graphics.setColor(Color.BLACK);
         graphics.drawRect(ox, oy, width, contentHeight);
 
-        graphics.setColor(new Color(255, 255, 255, 75));
+        graphics.setColor(new Color(255, 255, 255, 200));
         graphics.fillRect(ox, oy, width, contentHeight);
         int x = margin;
         int y = margin + actionHeight;
