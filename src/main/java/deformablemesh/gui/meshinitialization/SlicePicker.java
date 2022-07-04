@@ -205,14 +205,18 @@ public class SlicePicker{
             evt.consume();
             double originalZoom = view.getZoom();
             Point p = evt.getPoint();
-
             double zoom;
-            if(evt.getWheelRotation()>0){
+            int rotation = evt.getWheelRotation();
+
+            if(rotation>0){
                 zoom = originalZoom - 0.125;
                 if(zoom==0) zoom = 0.125;
-            } else{
+            } else if(rotation < 0){
                 zoom = originalZoom + 0.125;
+            } else{
+                zoom = originalZoom;
             }
+
             if(zoom==originalZoom){
                 return;
             }
