@@ -142,8 +142,10 @@ public class SlicePicker{
     }
 
     public void removeProjectable(Projectable p){
+
         if(projectDrawingMapper.containsKey(p)){
             view.removeDrawable(projectDrawingMapper.get(p));
+            projectDrawingMapper.remove(p);
         }
     }
 
@@ -274,16 +276,27 @@ public class SlicePicker{
     }
 
     public void addProjectableMesh(ProjectableMesh pm, DeformableMesh3D mesh) {
-        Drawable d = g->{
+        Drawable d = new MeshProjection(pm, mesh);
+        projectDrawingMapper.put(pm, d);
+        view.addDrawable(d);
+    }
+
+    class MeshProjection implements Drawable{
+        DeformableMesh3D mesh;
+        Projectable p;
+        MeshProjection(Projectable p, DeformableMesh3D mesh){
+            this.p = p;
+            this.mesh = mesh;
+        }
+        @Override
+        public void draw(Graphics2D g) {
             if(mesh.isSelected()){
                 g.setColor(Color.WHITE);
             } else{
                 g.setColor(mesh.getColor());
             }
 
-            g.draw(pm.getProjection(transformer));
-        };
-        projectDrawingMapper.put(pm, d);
-        view.addDrawable(d);
+            g.draw(p.getProjection(transformer));
+        }
     }
 }

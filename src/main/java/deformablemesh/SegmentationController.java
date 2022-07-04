@@ -61,7 +61,7 @@ public class SegmentationController {
 
     AtomicLong lastSaved = new AtomicLong(-1);
     ExceptionThrowingService main = new ExceptionThrowingService();
-    private double minConnectionLength = 0.005;
+    private double minConnectionLength = 0.01;
     private double maxConnectionLength = 0.02;
 
     /**

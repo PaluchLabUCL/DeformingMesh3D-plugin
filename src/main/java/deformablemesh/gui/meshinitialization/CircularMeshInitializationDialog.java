@@ -6,6 +6,7 @@ import deformablemesh.SegmentationModel;
 import deformablemesh.externalenergies.PerpendicularGradientEnergy;
 import deformablemesh.externalenergies.PressureForce;
 import deformablemesh.geometry.*;
+import deformablemesh.gui.Drawable;
 import deformablemesh.gui.FrameListener;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.util.Vector3DOps;
@@ -623,16 +624,25 @@ public class CircularMeshInitializationDialog implements FrameListener {
         Map<DeformableMesh3D, ProjectableMesh> meshMap = new HashMap<>();
 
         public void addProjectableMesh(DeformableMesh3D mesh) {
+
+            if(meshMap.containsKey(mesh)){
+                //TODO
+                System.out.println("leaves a stale drawable");
+                for(SlicePicker pick: pickers.values()){
+                    pick.removeProjectable(meshMap.get(mesh));
+                }
+            }
+
             ProjectableMesh pm = new ProjectableMesh(mesh);
 
             for(SlicePicker pick: pickers.values()){
                 pick.addProjectableMesh(pm, mesh);
             }
-
             meshMap.put(mesh, pm);
         }
 
         public void clearProjectableMeshes() {
+
             for(DeformableMesh3D mesh: meshMap.keySet()){
                 for(SlicePicker pick: pickers.values()){
                     pick.removeProjectable(meshMap.get(mesh));

@@ -182,9 +182,9 @@ public class CreateCrossSectionMovies {
 
             FurrowTransformer t = stack.createFurrowTransform(center, direction);
             stack.setChannel(0);
-            BufferedImage c1 = process(stack.createSlice(t), 0xff0000, 120, 255);
+            BufferedImage c1 = process(stack.createSlice(t), 0xff0000, 50, 255);
             stack.setChannel(1);
-            BufferedImage c2 = process(stack.createSlice(t), 0xffffff, 100, 200);
+            BufferedImage c2 = process(stack.createSlice(t), 0xffffff, 100, 255);
 
 
             List<Drawable> solidDrawables = meshes.stream().map(mesh -> {

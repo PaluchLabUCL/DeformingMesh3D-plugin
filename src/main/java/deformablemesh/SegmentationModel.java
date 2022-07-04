@@ -1011,7 +1011,7 @@ public class SegmentationModel {
     }
 
     public int getNChannels() {
-        return original_plus.getNChannels();
+        return stack.getNChannels();
     }
 
     public void flipFurrow() {

@@ -615,6 +615,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
                     MeshImageStack stack = segmentationController.getMeshImageStack();
                     if(stack != null){
                         double scale = stack.SCALE;
+                        //TODO
                         String unit = stack.getUnits();
 
                         scaledMinUnits.setText(String.format(Locale.US, "%3.3f %s", scale*v, unit ));

@@ -21,8 +21,6 @@ import static deformablemesh.geometry.DeformableMesh3D.ORIGIN;
  *
  * User: msmith
  * Date: 7/3/13
- * Time: 1:55 PM
- * To change this template use File | Settings | File Templates.
  */
 public class MeshImageStack {
     public double[][][] data;
@@ -40,14 +38,20 @@ public class MeshImageStack {
     public double MIN_VALUE;
     public double MAX_VALUE;
     final private double PX;
+
+    /**
+     * Creates a null mesh image stack.
+     */
     public MeshImageStack(){
         SCALE=1;
+        CHANNELS = 1;
         scale_values=new double[]{1,1,1};
         offsets=new double[]{0,0,0};
         pixel_dimensions=new double[]{1,1,1};
         PX=1;
         data = new double[1][1][1];
         max_dex = new int[3];
+        FRAMES = 999;
     }
     public MeshImageStack(ImagePlus original, int frame, int channel){
         this.original=original;
@@ -143,7 +147,13 @@ public class MeshImageStack {
     }
 
     public String getUnits(){
-        return original.getFileInfo().unit;
+        String unit;
+        if(original == null){
+            unit = "NA";
+        } else{
+            unit = original.getFileInfo().unit;
+        }
+        return unit;
     }
 
     /**
@@ -216,6 +226,9 @@ public class MeshImageStack {
      *
      */
     public void copyValues(){
+        if(original == null){
+            return;
+        }
         int slices = original.getNSlices();
         int py = original.getHeight();
         int px = original.getWidth();
@@ -552,6 +565,10 @@ public class MeshImageStack {
 
     public ImagePlus getOriginalPlus() {
         return original;
+    }
+
+    public int getNChannels() {
+        return CHANNELS;
     }
 }
 
