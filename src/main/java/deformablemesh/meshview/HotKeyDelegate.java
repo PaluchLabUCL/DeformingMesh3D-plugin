@@ -146,6 +146,9 @@ public class HotKeyDelegate {
                 "Track selected mesh backwards.",
                 ifEnabled(accessControl::trackMeshBackwardsAction)
         );
+
+
+
         createActionMapKey(
                 KeyStroke.getKeyStroke(KeyEvent.VK_L, 0, true),
                 "LINK_POSSIBLE",
@@ -284,7 +287,12 @@ public class HotKeyDelegate {
                 this::toggleHud
         );
 
-
+        createActionMapKey(
+                KeyStroke.getKeyStroke(KeyEvent.VK_Q, 0, true),
+                "CENTER_VIEW_SELECT",
+                "Center view on selected mesh.",
+                controller::centerSelectedMesh
+        );
 
 
     }

@@ -1474,19 +1474,33 @@ public class DeformableMesh3DTools {
         for(int i = 0; i<sections.size(); i++){
             Intersection section = sections.get(i);
             if(section.dirty != 0){
+                int startI = i;
+                double min = Double.MAX_VALUE;
                 for(int j = 0; j<sections.size(); j++){
-                    if(j == i){
+                    if(j == startI){
                         continue;
                     }
-                    double m = Vector3DOps.mag(Vector3DOps.difference(sections.get(j).location, section.location));
+                    Intersection other = sections.get(j);
 
-                    if( m < Math.abs(section.dirty) ){
-
-                        System.out.println("removing: " + i + ", " + m + " < " + section.dirty);
-                        sections.remove(i);
-                        i--;
-                        break;
+                    double m = Vector3DOps.mag(Vector3DOps.difference(other.location, section.location));
+                    if(m < min){
+                        min = m;
                     }
+                    if( m < Math.abs(section.dirty) ){
+                        System.out.println("should take it: " + other.dirty);
+                        //System.out.println("removing: " + i + ", " + m + " < " + section.dirty);
+                        //System.out.println("\t by: " + j  + " , " + other.dirty);
+                        if(startI > i){
+                            continue;
+                        }
+                        sections.remove(i);
+                        i--;j--;
+                    }
+                }
+                if( startI > i){
+                    System.out.println("removed");
+                } else{
+                    System.out.println("left");
                 }
             }
         }
@@ -1703,11 +1717,24 @@ public class DeformableMesh3DTools {
                 center[1] = j;
 
                 List<Intersection> sections = picker.getIntersections(stack.getNormalizedCoordinate(center), xdirection);
+                scanDirty(sections);
+                if(sections.size() % 2 != 0) {
+                    for (int zeta = 0; zeta < 3; zeta+=2) {
+                        center[1] = j - 0.1 + zeta * 0.1;
+                        sections = picker.getIntersections(stack.getNormalizedCoordinate(center), xdirection);
+                        scanDirty(sections);
+                        if(sections.size() % 2 == 0){
+                            break;
+                        }
+                    }
+                }
+
                 if(sections.size()==0){
                     //No intersections. No points inside.
                     continue;
                 }
-                scanDirty(sections);
+
+
                 sections.sort((a,b)->Double.compare(a.location[0], b.location[0]));
 
                 boolean startInside = false;
@@ -1788,8 +1815,28 @@ public class DeformableMesh3DTools {
                         current++;
                         inside = !inside;
                     }
-                    if(inside){
+                    if(inside && p <= xhi){
                         pixels[p + offset] = rgb;
+                    }
+                    if( p > xhi && inside){
+                        /*
+                        //System.out.println("truncating scan, beyond bounding box.");
+
+                        double min = Double.MAX_VALUE;
+                        Node3D minNode = null;
+                        for(Node3D node: mesh.nodes){
+                            double[] pt = stack.getImageCoordinates(node.getCoordinates());
+                            double dy = pt[1] - j;
+                            double dz = pt[2] - slice;
+                            double d = Math.sqrt(dy*dy + dz*dz);
+                            if(d < min){
+                                min = d;
+                                minNode = node;
+                            }
+                        }
+                        //double[] mcn = stack.getImageCoordinates(minNode.getCoordinates());
+                        //System.out.println(min + " " + minNode.index);
+                         */
                     }
                 }
                 if(finishesOutsideImage && !inside){
@@ -1798,6 +1845,7 @@ public class DeformableMesh3DTools {
                 
                 if(!finishesOutsideImage && inside){
                     System.out.println("Inconsistent bounding box: End of image is out of bounds, but state is inside the shape");
+                    System.out.println( "slice: " + slice + ", y: " + j);
                     System.out.println(Arrays.toString(lowI) + " [~] " + Arrays.toString(highI));
                 }
 

@@ -35,7 +35,6 @@ public class GaussianKernels {
             kernel1[i] = f*factor;
             sum += Math.abs(kernel1[i]);
         }
-
         for(int i = 0; i<kernel1.length; i++){
             kernel1[i] = kernel1[i]/sum;
         }
