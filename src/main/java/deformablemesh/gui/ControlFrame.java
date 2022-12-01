@@ -66,6 +66,8 @@ public class ControlFrame implements ReadyObserver, FrameListener {
     RingController ringController;
 
     Color darkerBG = new Color(0, 0, 0, 25);
+    static String showPlane = "show plane";
+    static String hidePlane = "hide plane";
     public ControlFrame( SegmentationController model){
         this.segmentationController = model;
         segmentationController.addUndoStateListener(this::updateUndoRedo);
@@ -241,7 +243,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         JPanel components = new JPanel(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();
-        JButton showFurrowButton = new JButton("show");
+        JButton showFurrowButton = new JButton(showPlane);
         buttons.add(showFurrowButton);
 
         JCheckBox box = new JCheckBox("textured");
@@ -254,11 +256,11 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         });
 
         showFurrowButton.addActionListener(evt->{
-            if(showFurrowButton.getText().equals("show")){
-                showFurrowButton.setText("hide");
+            if(showFurrowButton.getText().equals(showPlane)){
+                showFurrowButton.setText(hidePlane);
                 ringController.showFurrow(box.isSelected());
             } else{
-                showFurrowButton.setText("show");
+                showFurrowButton.setText(showPlane);
                 ringController.hideFurrow();
             }
         });

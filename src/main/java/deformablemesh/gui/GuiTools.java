@@ -322,7 +322,7 @@ public class GuiTools {
                 e.printStackTrace();
             }
         });
-        log.setContentPane(svg);
+        log.setContentPane(new JScrollPane(svg));
         log.setSize(frame.getWidth(), frame.getHeight());
         log.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
         log.setVisible(true);

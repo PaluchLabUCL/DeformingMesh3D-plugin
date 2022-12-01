@@ -2,6 +2,18 @@
 <html>
   <head>
       <title>Introduction and Help</title>
+      <style type="text/css">
+        h4{
+          padding-left: 20px;
+          text-decoration: underline;
+        }
+        h3{
+          padding-left: 10px;
+        }
+        h2{
+          text-align:center;
+        }
+      </style>
   </head>
   <body>
     <div id="introduction">
@@ -34,16 +46,80 @@
     </div>
     <div id="buttons">
       <h2>Button Descriptions</h2>
-      
+      <h4>Previous</h4>previous frame.
+      <h4>Next</h4>next frame
+      <h4>Show volume</h4>Shows volume in 3D window
+      <h4>vol-contrast</h4>Adjust contrast
+      <h4>Initialize Mesh...</h4>open intialize mesh tab.
+      <h4>Deform</h4>Deform selected mesh until stop is pressed.
+      <h4>clear mesh</h4>removes the select mesh
+      <h4>connection remesh</h4>Remesh connections by splitting long connections and
+      removing short connections. Uses the values min length and max length.
+      <h4>raycast remesh</h4>remeshes using a raycast technique.
+      <h4>show forces</h4>shows the external forces on mesh
+      <h4>x</h4>removes force arrows.
+      <h4>show plane</h4>Shows a plane where the furrow plane is positioned.
+      <h4>split mesh</h4>splits the currently selected mesh into two meshes. neither mesh will be associated to a track.
+      <h4>center</h4>centers the furrow to either the center of the selected mesh, or the center of the image.
+      <h4>init</h4>opens a dialog for initializing the furrow location and direction.
+      <h4>select</h4>starts a modification session. nodes can be selected for sculpting *advanced*
+      <h4>sculpt</h4>for moving individual nodes by moving a cursor.
+      <h4>cancel</h4>cancel mesh modification
+      <h4>finish</h4>commit changes made by scuplting.
     </div>
     <div id="parameters">
       <h2>Parameters Descriptions</h2>
+      <h4>gamma</h4>Slows deformations, makes algorithm more stable. Default 1000
+      <h4>alpha</h4>Stretching stiffness. Default 1.0
+      <h4>pressure</h4> Pushes mesh out, (or in if negative.) Small values will cause mesh to shrink slower,
+      large values will cause meshes to grow. Default 0.
+      <h4>steric neighbors</h4> will cause meshes to repel each other. With a value of zero neighbors are
+      completely ignored. Any non-zero value causes all mesh interactions to be checked. This can be slow. Default 0.
+      <h4>divisions</h4>A new mesh starts with 20*4^N triangles. Default 2.
+      <h4>beta</h4> A curvature smoothing term. A small value is "nice" but not too necessary. A large value
+      can be non-intuitive. Default 0.1
     </div>
     <div id="menus">
       <h2>Menu Item Descriptions</h2>
-    </div>
-    <div id="terminal">
-      <h2>Using the javascript terminal</h2>
+      <h3>file</h3>
+      <h4>Open image</h4> Opens an image for segmenting
+      <h4>Select open image</h4> Switches to an openned image.
+      <h4>import virtual</h4> Opens an image virtually for segmenting. (Works with .h5 files)
+      <h4>save meshes as</h4> Saves the current meshes.
+      <h4>save</h4> Saves meshes to a previously used file
+      <h4>load meshes</h4> Load meshes
+      <h4>Save parameters</h4> Saves the deformation parameters.
+      <h4>Load parameters</h4> Loads parameters from a saved file.
+      <h4>Start new meshes</h4> Clears the current meshes. Starts over.
+      <h3>edit</h3>
+      <h4>undo</h4> undo a previous action
+      <h4>redo</h4> redo an undone action
+      <h3>mesh</h3>
+      <h4>export as stl</h4> save meshes to an stl file.
+      <h4>export as wireframe stl</h4> a transformed mesh.
+      <h4>export as ply</h4> saves meshes to a ply file.
+      <h4>trackmate->export as TmXml</h4> creates a trackmate compatible file with x,y,radius values derived from meshes.
+      <h4>trackmate->import From TmXml</h4> loads spherical meshes from trackmate file.
+      <h4>trackmate->track from TmXml</h4> updates the current tracking information to be consistent with TmXml file.
+      <h4>load furrows</h4> loads furrow plane positions from a file.
+      <h4>save furrows</h4> saves furrow plane positions to a file.
+      <h4>track forwards</h4> copies the current mesh to the next frame and links it in the same track.
+      <h4>track backwards</h4> copies the current mash to the previous frame and links it to the same track.
+      <h3>tools</h3>
+      <h4>Create binary</h4> creates a binary image of the current selected mesh
+      <h4>create mosaic</h4> creates a labelled image of all existing meshes.
+      <h4>measure all volumes</h4> measures all of the mesh volumes.
+      <h4>measure selected</h4> meshes properties of the currently selected mesh.
+      <h4>measure obscured</h4> looks at mesh surface and touching surfaces.
+      <h4>furrow values</h4> the normals and positions of the furrow.
+      <h4>import meshes</h4> loads meshes from a file.
+      <h4>import from open image</h4> loads meshes from a file, attempts to align geometry.
+      <h4>manage tracks</h4> starts the track-manager tab
+      <h4>Record snapshots</h4> records snapshots of the movie
+      <h4>javascript console</h4> starts the javascript console.
+      <h4>remote prediction</h4> experiments: sends the image to a tensorflow server for processing.
+      <h4>substitute data</h4> substitutes the current image data with other data. Can be used for processing
+      a single frame.
     </div>
   </body>
 </html>
