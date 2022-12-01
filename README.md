@@ -33,6 +33,17 @@ which can be found in "plugins"->"PL_Mesh3D"->"Deforming Mesh 3D", and JFilament
 This includes guides for using the plugin, and javadoc for using the plugin via scripting.
 
 # Changes
+0.9.6
+- updated scijava pom
+- added flatlaf to pom
+- created a way to substitute image data
+- added a way to remove all tracking information
+- added a remote prediction class (experimental)
+- removed cursor radius controls, added javascript portal
+- improved display for hidpi developing with flatlaf for consistency
+- Added run file to javascript console
+- Added faq to help menu.
+
 0.9.4
 - Improved autotracking accessiblity.
 - - `linkPossibleTrack()` to link the selected track.
