@@ -271,6 +271,7 @@ public class    MeshFrame3D {
     public Component asJPanel(Window parent){
         if(canvas == null) {
             GraphicsConfiguration gc = DataCanvas.getBestConfigurationOnSameDevice(parent);
+
             Color3f background = new Color3f(1.0f, 0.0f, 1.0f);
             canvas = new DataCanvas(gc, background) {
                 @Override
@@ -287,6 +288,7 @@ public class    MeshFrame3D {
                 }
 
             };
+
             canvas.addViewListener(this::syncDirectionalLight);
         }
 

@@ -53,6 +53,13 @@ public class MeshImageStack {
         max_dex = new int[3];
         FRAMES = 999;
     }
+
+    /**
+     * Creates a mesh image stack and sets the backing data to the corresponding time frame and channel.
+     * @param original
+     * @param frame 0-th index time frame eg 2 time points valid values are 0, 1.
+     * @param channel 0 index channel. eg 3 channels values 0, 1, 2 are valid.
+     */
     public MeshImageStack(ImagePlus original, int frame, int channel){
         this.original=original;
         SLICES = original.getNSlices();
@@ -258,23 +265,20 @@ public class MeshImageStack {
      *
      * @param other
      */
-    public void copyValues(ImagePlus other){
-
-        int slices = original.getNSlices();
-        int py = original.getHeight();
-        int px = original.getWidth();
-
-        //MIN_VALUE=Double.MAX_VALUE;
-        //MAX_VALUE=-MIN_VALUE;
-
-        for(int i = 0;i<slices; i++){
-            ImageProcessor proc = other.getStack().getProcessor(i+CURRENT*SLICES + 1);
-            for(int j = 0; j<py; j++){
-                for(int k = 0; k<px; k++){
-                    double v = proc.getPixelValue(k,j);
-                    if(v<MIN_VALUE) MIN_VALUE=v;
-                    else if(v>MAX_VALUE) MAX_VALUE=v;
-                    data[i][j][k] = proc.getPixelValue(k,j);
+    public void copyValues(MeshImageStack other){
+        if(other.data.length != data.length
+                || other.data[0].length != data[0].length
+                || other.data[0][0].length != data[0][0].length ){
+            return;
+        }
+        for(int i = 0; i<data.length; i++){
+            double[][] dest = data[i];
+            double[][] src = other.data[i];
+            for(int j = 0; j<dest.length; j++){
+                double[] line = dest[j];
+                double[] sline = src[j];
+                for(int k = 0; k<line.length; k++){
+                    line[k] = sline[k];
                 }
             }
         }

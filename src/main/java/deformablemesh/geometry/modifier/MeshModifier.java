@@ -69,6 +69,10 @@ public class MeshModifier {
         selector.setRadius(cursorRadius);
     }
 
+    public double getCursorRadius(){
+        return cursorRadius;
+    }
+
     public List<Node3D> getSelected() {
         return selected;
     }

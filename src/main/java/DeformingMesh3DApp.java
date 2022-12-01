@@ -1,3 +1,6 @@
+import com.formdev.flatlaf.FlatDarculaLaf;
+import com.formdev.flatlaf.FlatDarkLaf;
+import com.formdev.flatlaf.FlatLightLaf;
 import deformablemesh.SegmentationController;
 import deformablemesh.SegmentationModel;
 import deformablemesh.gui.ControlFrame;
@@ -8,8 +11,13 @@ import ij.ImageJ;
 import ij.ImagePlus;
 import jogamp.nativewindow.jawt.JAWTUtil;
 
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 import java.awt.EventQueue;
+import java.awt.GraphicsEnvironment;
 import java.io.File;
+import java.util.Arrays;
 
 /**
  *
@@ -22,8 +30,32 @@ import java.io.File;
 public class DeformingMesh3DApp{
     static File input;
 
-
+    public static void setFlatLAF(){
+        try {
+            FlatDarculaLaf.installLafInfo();
+            FlatDarkLaf.installLafInfo();
+            for(UIManager.LookAndFeelInfo lafi: UIManager.getInstalledLookAndFeels()){
+                System.out.println(lafi.getClassName());
+            }
+            UIManager.setLookAndFeel(FlatDarculaLaf.class.getName());
+            //UIManager.setLookAndFeel("com.formdev.flatlaf.FlatLightLaf");
+            //UIManager.setLookAndFeel("com.formdev.flatlaf.FlatDarkLaf");
+        }
+        catch (UnsupportedLookAndFeelException e) {
+            // handle exception
+        }
+        catch (ClassNotFoundException e) {
+            // handle exception
+        }
+        catch (InstantiationException e) {
+            // handle exception
+        }
+        catch (IllegalAccessException e) {
+            // handle exception
+        }
+    }
     public static SegmentationController createDeformingMeshApplication(){
+        setFlatLAF();
         JAWTUtil.getJAWT(true);
         MeshFrame3D mf3d = new MeshFrame3D();
         SegmentationModel model = new SegmentationModel();

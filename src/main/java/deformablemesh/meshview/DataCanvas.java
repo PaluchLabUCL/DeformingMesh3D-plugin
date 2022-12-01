@@ -12,8 +12,10 @@ import org.scijava.vecmath.*;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -83,7 +85,6 @@ public class DataCanvas extends Canvas3D {
         universe.getViewingPlatform().setNominalViewingTransform();
         universe.getViewer().getView().setTransparencySortingPolicy(View.TRANSPARENCY_SORT_GEOMETRY);
 
-        
         group = new BranchGroup();
         
         group.setCapability(Group.ALLOW_CHILDREN_EXTEND);
@@ -103,6 +104,8 @@ public class DataCanvas extends Canvas3D {
         pickCanvas = new PickCanvas(this, group);
         pickCanvas.setMode(PickTool.GEOMETRY_INTERSECT_INFO);
         setView(StationaryViews.THREEQUARTER);
+        Rectangle r = getBounds();
+        setBounds(0, 0, (int)r.getWidth()*2, (int)r.getHeight()*2);
     }
 
     public void setDefaultControllerEnabled(boolean enabled){

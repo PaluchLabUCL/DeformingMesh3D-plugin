@@ -100,11 +100,11 @@ public class GuiTools {
         JLabel label = new JLabel(name);
 
 
-        final JTextField field = new JTextField();
+        final JTextField field = new JTextField(10);
         field.setText(displayFormat(initial));
-        field.setMinimumSize(new Dimension(100, 20));
-        field.setPreferredSize(new Dimension(100, 20));
-        field.setMaximumSize(new Dimension(200, 20));
+        //field.setMinimumSize(new Dimension(100, 20));
+        //field.setPreferredSize(new Dimension(100, 20));
+        //field.setMaximumSize(new Dimension(200, 20));
         field.setEnabled(false);
         field.setHorizontalAlignment(JTextField.RIGHT);
 
@@ -217,6 +217,23 @@ public class GuiTools {
 
     }
 
+    private static String getFaqHTML(){
+        try {
+            BufferedReader r = new BufferedReader(new InputStreamReader(Thread.currentThread().getClass().getResourceAsStream("/help.html"), Charset.forName("UTF8")));
+            StringBuilder b = new StringBuilder();
+            String s;
+
+            while((s=r.readLine())!=null){
+                b.append(s);
+            }
+
+            return b.toString();
+
+        } catch (Exception e) {
+            return "<html><body style=\"background-color: black; color: green;\">FAQ not available!</bod></html>";
+        }
+    }
+
     public static String displayFormat(double value){
         return Double.toString(value);
     }
@@ -227,29 +244,27 @@ public class GuiTools {
 
     static public JPanel getClosableTabComponent(String title, ActionListener closeListener){
         JPanel closableTab = new JPanel();
-        closableTab.setLayout(new BoxLayout(closableTab, BoxLayout.LINE_AXIS));
-        closableTab.setAlignmentY(JPanel.CENTER_ALIGNMENT);
         closableTab.setOpaque(false);
         JLabel label = new JLabel(title);
+        int f = label.getFont().getSize();
         label.setOpaque(false);
-        label.setFont(label.getFont().deriveFont(12.f));
-        //label.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
-        JButton button = GuiTools.getXButton();
+        JButton button = GuiTools.getXButton(f);
         button.addActionListener(closeListener);
         closableTab.add(label);
         closableTab.add(button);
         return closableTab;
     }
-    public static JButton getXButton(){
+    public static JButton getXButton(int fontSize){
+        int size = fontSize;
+
         JButton b = new JButton();
         b.setBorderPainted(false);
         b.setContentAreaFilled(false);
-        b.setMargin(new Insets(0,2,0,0));
         b.setBorder(null);
-        b.setIcon( getXIcon( Color.BLACK ) );
-        b.setRolloverIcon( getXIcon(Color.GREEN.darker()) );
-        b.setPressedIcon( getXIcon(Color.RED));
-        b.setPreferredSize(new Dimension(12, 12));
+        b.setIcon( getXIcon( size, Color.BLACK ) );
+        b.setRolloverIcon( getXIcon(size, Color.GREEN.darker()) );
+        b.setPressedIcon( getXIcon(size, Color.RED));
+        b.setPreferredSize(new Dimension(size, size));
         return b;
     }
 
@@ -262,17 +277,16 @@ public class GuiTools {
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
     }
 
-    public static Icon getXIcon(Color c) {
-        int L = 10;
-        BufferedImage img = new BufferedImage(L+2, L+2, BufferedImage.TYPE_4BYTE_ABGR);
+    public static Icon getXIcon(int size, Color c) {
+        int L = size*2/3;
+        int b = (size - L)/2;
+        BufferedImage img = new BufferedImage(size, size, BufferedImage.TYPE_4BYTE_ABGR);
         Graphics2D g2d = img.createGraphics();
         applyRenderingHints(g2d);
-        g2d.setColor(c);
 
-        //g2d.drawOval(1, 1, L, L);
-        int w = (int)(L / Math.sqrt(2));
-        g2d.drawLine(2, 2, L, L);
-        g2d.drawLine(2, L, L, 2);
+        g2d.setColor(c);
+        g2d.drawLine(b, b, L + b, L+b);
+        g2d.drawLine(b, L+b, L+b, b);
         g2d.dispose();
         return new ImageIcon(img);
     }
@@ -290,6 +304,28 @@ public class GuiTools {
         g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
         g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
         g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+    }
+
+    public static void showFaqWindow(JFrame frame) {
+        JDialog log = new JDialog(frame, "DM3D: FAQ");
+        log.setModal(false);
+        JEditorPane svg = new JEditorPane("text/html", getFaqHTML());
+        svg.setEditable(false);
+        svg.addHyperlinkListener(hyperlinkEvent ->{
+            try {
+                if(hyperlinkEvent.getEventType()== HyperlinkEvent.EventType.ACTIVATED){
+                    Desktop.getDesktop().browse(hyperlinkEvent.getURL().toURI());
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
+            }
+        });
+        log.setContentPane(svg);
+        log.setSize(frame.getWidth(), frame.getHeight());
+        log.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        log.setVisible(true);
     }
 
     public static class LocaleNumericTextField{

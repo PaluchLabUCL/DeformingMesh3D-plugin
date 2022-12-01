@@ -626,8 +626,7 @@ public class CircularMeshInitializationDialog implements FrameListener {
         public void addProjectableMesh(DeformableMesh3D mesh) {
 
             if(meshMap.containsKey(mesh)){
-                //TODO
-                System.out.println("leaves a stale drawable");
+                //TODO why does this leave a drawable?
                 for(SlicePicker pick: pickers.values()){
                     pick.removeProjectable(meshMap.get(mesh));
                 }

@@ -1,5 +1,6 @@
 package deformablemesh.geometry;
 
+import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
 import deformablemesh.meshview.*;
 import deformablemesh.ringdetection.FurrowTransformer;
@@ -9,6 +10,7 @@ import org.scijava.java3d.Shape3D;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -175,7 +177,17 @@ public class Furrow3D implements Interceptable{
         }
         return intersections;
     }
+    public boolean intersects(DeformableMesh3D mesh){
 
+        return getIntersections(mesh.getConnections()).size() > 0;
+    }
+
+    public List<DeformableMesh3D> sliceMesh(DeformableMesh3D mesh){
+        List<List<Node3D>> frontBack = splitNodes(mesh.nodes);
+        return frontBack.stream().map(
+                                            mesh::createSubMesh
+                                        ).collect(Collectors.toList());
+    }
     public List<double[]> getIntersections(List<Connection3D> connections){
 
         ArrayList<double[]> intersections = new ArrayList<double[]>();

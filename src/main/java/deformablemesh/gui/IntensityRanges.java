@@ -146,7 +146,6 @@ public class IntensityRanges {
                 }
             }
 
-            System.out.println(binMax + " of bins, from " + minValue + " to " + maxValue);
             lowIntensity = 0.1*(maxValue - minValue) + minValue;
             highIntensity = 0.9*(maxValue - minValue) + minValue;
 

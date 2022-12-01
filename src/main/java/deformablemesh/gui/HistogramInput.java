@@ -16,7 +16,7 @@ import java.awt.image.BufferedImage;
  * Created by msmith on 2/12/16.
  */
 class HistogramInput {
-    final BufferedImage img = new BufferedImage(138, 50, BufferedImage.TYPE_INT_ARGB);
+    final BufferedImage img = new BufferedImage(276, 100, BufferedImage.TYPE_INT_ARGB);
     final JPanel panel;
     final int border = 5;
     Histogram gram;

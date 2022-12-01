@@ -2,6 +2,7 @@ package deformablemesh.gui;
 
 import deformablemesh.SegmentationController;
 import deformablemesh.SegmentationModel;
+import ij.IJ;
 import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
 
 import javax.script.Bindings;
@@ -22,10 +23,17 @@ import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.Writer;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -47,6 +55,8 @@ public class SwingJSTerm {
     String[] historyTemp = new String[1];
     JButton previous;
     JButton next;
+    JTextField scriptFile;
+    JButton runScriptFile;
 
     public SwingJSTerm(SegmentationController controls){
 
@@ -65,6 +75,62 @@ public class SwingJSTerm {
             e.printStackTrace();
         }
         this.controls = controls;
+    }
+
+    public void runFile(Path path){
+        try(BufferedReader reader  = Files.newBufferedReader(path)){
+            engine.eval(reader);
+        } catch (IOException e) {
+            echo("Error reading file!");
+            PrintWriter writer = new PrintWriter(new Writer() {
+                StringBuilder builder = new StringBuilder();
+                @Override
+                public void write(char[] cbuf, int off, int len) throws IOException {
+                    for(int i = off; i<off + len; i++){
+                        builder.append(cbuf[i]);
+                    }
+                }
+
+                @Override
+                public void flush() throws IOException {
+                    echo(builder);
+                    builder = new StringBuilder();
+                }
+
+                @Override
+                public void close() throws IOException {
+                    echo(builder);
+                }
+            });
+
+            e.printStackTrace(writer);
+            writer.close();
+        } catch (ScriptException e) {
+            echo("Error running script!");
+            PrintWriter writer = new PrintWriter(new Writer() {
+                StringBuilder builder = new StringBuilder();
+                @Override
+                public void write(char[] cbuf, int off, int len) throws IOException {
+                    for(int i = off; i<off + len; i++){
+                        builder.append(cbuf[i]);
+                    }
+                }
+
+                @Override
+                public void flush() throws IOException {
+                    echo(builder);
+                    builder = new StringBuilder();
+                }
+
+                @Override
+                public void close() throws IOException {
+                    echo(builder);
+                }
+            });
+
+            e.printStackTrace(writer);
+            writer.close();
+        }
     }
 
     public void appendToDisplay(String text){
@@ -90,7 +156,26 @@ public class SwingJSTerm {
     JPanel buildUI(){
         previous = new JButton("previous");
         next = new JButton("next");
+        scriptFile = new JTextField(65);
+        runScriptFile = new JButton("run file");
+        runScriptFile.addActionListener(evt->{
 
+            Path p = null;
+            if(scriptFile.getText().length() != 0) {
+                p = Paths.get(scriptFile.getText());
+                if( !Files.exists(p)){
+                    p = null;
+                }
+            }
+            if(p == null){
+                String s = IJ.getFilePath("select script to run");
+                p = Paths.get(s).toAbsolutePath();
+                scriptFile.setText(p.toString());
+            }
+            if(p != null){
+                runFile(p);
+            }
+        });
         JSplitPane root = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 
         display = new JTextArea("**shift+enter will execute command immediately.**\n");
@@ -121,13 +206,6 @@ public class SwingJSTerm {
         });
 
         JScrollPane house = new JScrollPane(input);
-
-
-
-
-
-
-
 
         previous.addActionListener((evt)->{
             commandIndex++;
@@ -179,6 +257,8 @@ public class SwingJSTerm {
         buttons.add(eval);
         buttons.add(previous);
         buttons.add(next);
+        buttons.add(scriptFile);
+        buttons.add(runScriptFile);
         root.add(house, JSplitPane.BOTTOM);
         Border b = BorderFactory.createCompoundBorder(
             BorderFactory.createBevelBorder(BevelBorder.RAISED),

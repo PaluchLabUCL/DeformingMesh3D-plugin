@@ -83,6 +83,11 @@ public class RingController implements FrameListener, ListDataListener {
         modifier.setCursorRadius(r);
     }
 
+    public double getCursorRadius(){
+        if(modifier == null) return -1;
+        return modifier.getCursorRadius();
+    }
+
     public void showFurrow(boolean textured){
         furrowShowing = true;
         showTexture = textured;

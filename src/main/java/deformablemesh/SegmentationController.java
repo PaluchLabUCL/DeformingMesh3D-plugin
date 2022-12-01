@@ -2948,6 +2948,16 @@ public class SegmentationController {
     public void removeFurrowOrientationListener(FurrowOrientationListener l) {
         meshFrame3D.removePickListener(l);
     }
+    public void setCursorSize(double value){
+        getRingController().setCursorRadius(value);
+    }
+    public double getCursorSize(){
+        return getRingController().getCursorRadius();
+    }
+    public void copyImageData(MeshImageStack stack) {
+        MeshImageStack current = getMeshImageStack();
+        current.copyValues(stack);
+    }
 
     /**
      * Tasks for the exception throwing service.
@@ -3100,6 +3110,58 @@ public class SegmentationController {
            actionStack.postAction(ftf.getPerform());
         });
     }
+
+    /**
+     * Creates only single mesh tracks.
+     */
+    public void removeTrackLinks(){
+        List<Track> originalTracks = getAllTracks();
+        final List<Track> newTracks = new ArrayList<>();
+
+        actionStack.postAction(new UndoableActions(){
+            @Override
+            public void perform() {
+                submit(() -> {
+                    for(Track track: originalTracks){
+                        if(track.size()==1){
+                            newTracks.add(track);
+                        } else {
+                            for (Integer key : track.getTrack().keySet()) {
+                                DeformableMesh3D mesh = track.getMesh(key);
+                                Track t = model.startEmptyTrack();
+                                t.addMesh(key, mesh);
+                                newTracks.add(t);
+                            }
+                        }
+                    }
+                    model.setMeshes(newTracks);
+
+
+                });
+            }
+
+            @Override
+            public void undo() {
+                submit(()->{
+                    model.setMeshes(originalTracks);
+                });
+            }
+
+            @Override
+            public void redo() {
+                submit(() -> {
+                    model.setMeshes(newTracks);
+                });
+            }
+
+            @Override
+            public String getName(){
+                return "de-linked tracks";
+            }
+        });
+
+    }
+
     public void shutdown(){
         main.submit(main::shutdown);
     }

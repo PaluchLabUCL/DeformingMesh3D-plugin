@@ -4,6 +4,7 @@ import deformablemesh.BoundingBoxTransformer;
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
 import deformablemesh.SegmentationController;
+import deformablemesh.experimental.RemotePrediction;
 import deformablemesh.externalenergies.ImageEnergyType;
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.gui.meshinitialization.CircularMeshInitializationDialog;
@@ -20,6 +21,7 @@ import ij.ImagePlus;
 import ij.io.OpenDialog;
 import ij.measure.Calibration;
 import ij.plugin.FileInfoVirtualStack;
+import ij.plugin.filter.PlugInFilter;
 import loci.plugins.BF;
 import loci.plugins.in.ImporterOptions;
 
@@ -63,7 +65,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
     HotKeyDelegate mf3DInterface;
     RingController ringController;
 
-    Color darkerBG = new Color(220, 220, 220);
+    Color darkerBG = new Color(0, 0, 0, 25);
     public ControlFrame( SegmentationController model){
         this.segmentationController = model;
         segmentationController.addUndoStateListener(this::updateUndoRedo);
@@ -137,7 +139,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         JPanel volumeDisplay = buildVolumeControls();
         JPanel energyDisplay = buildDeformControls();
         JPanel furrowDisplay = buildFurrowControls();
-        JPanel radiusSlider = buildRadiusValueSelector();
+        //JPanel radiusSlider = buildRadiusValueSelector();
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new GridBagLayout());
@@ -154,6 +156,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         buttonPanel.add(meshControls, bcon);
 
         JPanel subPanel = new JPanel(new GridBagLayout());
+        subPanel.setBorder(BorderFactory.createLineBorder(Color.YELLOW));
         GridBagConstraints sc = new GridBagConstraints();
         sc.fill = GridBagConstraints.HORIZONTAL;
         subPanel.add(energyDisplay, sc);
@@ -161,7 +164,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         sc.gridx = 1;
         sc.gridheight=2;
 
-        subPanel.add(radiusSlider, sc);
+        //subPanel.add(radiusSlider, sc);
         sc.gridx = 0;
         sc.gridy = 1;
         sc.gridheight = 1;
@@ -204,24 +207,16 @@ public class ControlFrame implements ReadyObserver, FrameListener {
     private JPanel buildMeshControls(){
         JPanel buttonPanel = new JPanel(new GridBagLayout());
         GridBagConstraints bcon = new GridBagConstraints();
-        buttonPanel.add(createButtonDeform(), bcon );
-        bcon.gridx = 1;
         buttonPanel.add( createButtonInitializeMesh2(), bcon );
+        bcon.gridx = 1;
+        buttonPanel.add(createButtonDeform(), bcon );
         bcon.gridx = 2;
         buttonPanel.add( createButtonClearMesh(), bcon );
         bcon.gridy = 1;
         bcon.gridx = 0;
-        buttonPanel.add( new JLabel("remesh: "), bcon);
-        bcon.gridx = 1;
-        bcon.gridheight = 3;
-        JPanel[] remButtonUnits = createConnectionRemesh();
-        buttonPanel.add( remButtonUnits[0], bcon);
-        bcon.gridx = 2;
-        bcon.gridheight = 1;
-        buttonPanel.add( createButtonRemesh(), bcon );
-        bcon.gridheight = 2;
-        bcon.gridy = 2;
-        buttonPanel.add(remButtonUnits[1], bcon);
+        bcon.gridwidth = 3;
+        JPanel remButtonUnits = createRemeshPanel();
+        buttonPanel.add( remButtonUnits, bcon);
         buttonPanel.setOpaque(true);
         buttonPanel.setBackground(darkerBG);
         return buttonPanel;
@@ -241,38 +236,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         buttonPanel.add( createButtonAdjustMaximum(), bcon);
         return buttonPanel;
     }
-    private JPanel buildRadiusValueSelector(){
-        double max = 0.2;
-        double min = 0.001;
-        JSlider slides = new JSlider(JSlider.VERTICAL, 0, 100, 10);
-        //slides.setMaximumSize(new Dimension(20, 200));
-        //slides.setMinimumSize(new Dimension(20, 200));
-        JTextField maxField = new JTextField(4);
-        maxField.setHorizontalAlignment(JTextField.RIGHT);
 
-        maxField.setText("" + max);
-
-        JTextField minField = new JTextField(4);
-        minField.setHorizontalAlignment(JTextField.RIGHT);
-
-        minField.setText("" + min);
-        slides.addChangeListener(evt ->{
-            double mx = Double.parseDouble(maxField.getText());
-            double mn = Double.parseDouble(minField.getText());
-
-            double r = (mx - mn)*slides.getValue()/100 + mn;
-
-            ringController.setCursorRadius( r );
-        });
-        JPanel panel = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        panel.add(maxField, gbc);
-        gbc.gridy = 1;
-        panel.add(slides, gbc);
-        gbc.gridy = 2;
-        panel.add(minField, gbc);
-        return panel;
-    }
     private JPanel buildFurrowControls(){
         JPanel components = new JPanel(new GridBagLayout());
 
@@ -600,12 +564,13 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         });
     }
 
-    public JPanel[] createConnectionRemesh(){
-        JButton action = new JButton("connection");
+    public JPanel createRemeshPanel(){
+        JButton raycast = createButtonRemesh();
+        JButton action = new JButton("connection remesh");
         buttons.add(action);
 
-        JLabel scaledMinUnits = new JLabel("");
-        JLabel scaledMaxUnits = new JLabel("");
+        JLabel scaledMinUnits = new JLabel("no units");
+        JLabel scaledMaxUnits = new JLabel("no units");
 
 
 
@@ -664,26 +629,38 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         });
 
 
+        JPanel host = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridwidth = 2;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        host.add(action, gbc);
+        gbc.gridx = 2;
+        gbc.gridwidth = 1;
+        host.add(raycast, gbc);
 
-        JPanel p = new JPanel();
-        p.setLayout(new BoxLayout(p, BoxLayout.PAGE_AXIS));
+        gbc.gridwidth = 2;
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        host.add(minValue, gbc);
+        gbc.gridwidth = 1;
+        gbc.gridx = 2;
+        host.add(scaledMinUnits, gbc);
 
-        p.add(action);
-        p.add(minValue);
-        p.add(maxValue);
-
-        JPanel p2 = new JPanel();
-        p2.setLayout(new BoxLayout(p2, BoxLayout.PAGE_AXIS));
-        p2.add(scaledMinUnits);
-        p2.add(scaledMaxUnits);
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.gridwidth = 2;
+        host.add(maxValue, gbc);
+        gbc.gridwidth = 1;
+        gbc.gridx = 2;
+        host.add(scaledMaxUnits, gbc);
 
         action.addActionListener(evt->{
             boolean reMeshAll = ( evt.getModifiers() & ActionEvent.CTRL_MASK ) > 0;
             connectionRemesh(reMeshAll);
         });
-        p.setOpaque(false);
-        p2.setOpaque(false);
-        return new JPanel[]{p, p2};
+        host.setOpaque(false);
+        return host;
 
     }
 
@@ -705,7 +682,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
     }
 
     public JButton createButtonRemesh(){
-        JButton button = new JButton("raycast");
+        JButton button = new JButton("raycast remesh");
         buttons.add(button);
         button.addActionListener((evt)->{
             setReady(false);
@@ -1315,6 +1292,40 @@ public class ControlFrame implements ReadyObserver, FrameListener {
 
             terminal.addReadyObserver(this);
         }
+
+        JMenuItem remotePrediction = new JMenuItem("remote prediction");
+        tools.add(remotePrediction);
+        remotePrediction.addActionListener(evt->{
+            ImagePlus plus = segmentationController.getMeshImageStack().getOriginalPlus();
+            RemotePrediction rep = new RemotePrediction();
+            int v = rep.setup("process", plus);
+            if(v == PlugInFilter.DOES_ALL){
+                new Thread(()->{
+                    rep.run(null);
+                }).start();
+            }
+        });
+        JMenuItem substituteImageData = new JMenuItem("substitute data");
+        substituteImageData.addActionListener(evt->{
+            ImagePlus plus = GuiTools.selectOpenImage(frame);
+            if(plus != null){
+                int index = plus.getCurrentSlice() - 1;
+                //index goes 0, 1, 2, 3, 4, ... N-1
+                //c0z0t0, c1z0t0, c0z1t0, ...
+                int c = plus.getNChannels();
+                int z = plus.getNSlices();
+                int slicesPerFrame = c*z;
+                int time = index / slicesPerFrame;
+                int zi = (index - slicesPerFrame*time)/c;
+                int ci = (index)%c;
+                MeshImageStack stack = new MeshImageStack(plus, time, ci);
+                segmentationController.submit(()->{
+                    segmentationController.copyImageData( stack );
+                });
+            }
+        });
+        tools.add(substituteImageData);
+
         JMenu help = new JMenu("help");
         menu.add(help);
         JMenuItem about = new JMenuItem("about");
@@ -1322,6 +1333,12 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         about.addActionListener(evt->{
             GuiTools.showAboutWindow(frame);
         });
+
+        JMenuItem faq = new JMenuItem("FAQ");
+        faq.addActionListener(evt->{
+            GuiTools.showFaqWindow(frame);
+        });
+        help.add(faq);
 
 
 
@@ -1775,17 +1792,17 @@ public class ControlFrame implements ReadyObserver, FrameListener {
     }
 
     class FrameIndicator{
-        JTextField field = new JTextField("-");
+        JTextField field = new JTextField(5);
         JLabel max = new JLabel("/-");
         JLabel imageName = new JLabel("xxx");
         JPanel channelLabel = new JPanel();
         ButtonGroup csg = new ButtonGroup();
         List<JRadioButton> channelSelectors = new ArrayList<>();
         FrameIndicator() {
-            Dimension size = new Dimension(60, 30);
-            field.setMinimumSize(size);
-            field.setMaximumSize(size);
-            field.setPreferredSize(size);
+            //Dimension size = new Dimension(60, 30);
+            //field.setMinimumSize(size);
+            //field.setMaximumSize(size);
+            //field.setPreferredSize(size);
             field.setEnabled(false);
             field.addMouseListener(new MouseAdapter() {
                 @Override
