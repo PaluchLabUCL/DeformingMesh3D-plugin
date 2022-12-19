@@ -32,6 +32,8 @@ public class ConnectionRemesher {
     List<Connection3D> connections = new ArrayList<>();
     double[] positions;
     boolean openSurface = false;
+    //defensive copy for connectivity features. ie nodes, connections and triangles.
+    DeformableMesh3D original;
     public void buildDisplay(){
         frame = new MeshFrame3D();
         frame.showFrame(true);
@@ -40,7 +42,13 @@ public class ConnectionRemesher {
     }
 
     AtomicBoolean cancelled = new AtomicBoolean(false);
-    public void prepareWorkSpace(DeformableMesh3D original){
+    public void prepareWorkSpace(DeformableMesh3D unmodified){
+        original = new DeformableMesh3D(
+                unmodified.positions,
+                unmodified.connection_index,
+                unmodified.triangle_index
+        );
+
         for(Node3D node: original.nodes){
             nodeToTriangle.put(node, new ArrayList<>());
             nodeToConnection.put(node, new ArrayList<>());
@@ -49,7 +57,6 @@ public class ConnectionRemesher {
 
         for(Triangle3D t: original.triangles){
             addTriangle(t);
-
         }
 
 
@@ -114,8 +121,9 @@ public class ConnectionRemesher {
         return s;
     }
 
-    public DeformableMesh3D remesh(DeformableMesh3D original){
-        prepareWorkSpace(original);
+    public DeformableMesh3D remesh(DeformableMesh3D unmodified){
+
+        prepareWorkSpace(unmodified);
         double ml = 0;
         double mn = 1;
         double ave = 0;
