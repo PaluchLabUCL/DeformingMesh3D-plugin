@@ -161,11 +161,15 @@ public class ContractileRingDetector implements Iterable<Integer>{
     }
 
     public Furrow3D getFurrow(int i){
-        return furrows.get(i);
+        Furrow3D f = furrows.get(i);
+        if(f == null){
+            f = furrow;
+        }
+        return f;
     }
 
     public Furrow3D getFurrow(){
-        return furrows.get(frame);
+        return getFurrow(frame);
     }
 
     public void setFrame(int frame){

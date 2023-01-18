@@ -5,6 +5,7 @@ import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Projectable;
 import deformablemesh.geometry.ProjectableMesh;
 import deformablemesh.gui.Drawable;
+import deformablemesh.gui.GuiTools;
 import deformablemesh.gui.Slice3DView;
 import deformablemesh.ringdetection.FurrowTransformer;
 
@@ -295,7 +296,7 @@ public class SlicePicker{
         @Override
         public void draw(Graphics2D g) {
             if(mesh.isSelected()){
-                g.setColor(Color.WHITE);
+                g.setColor(GuiTools.SELECTED_MESH_COLOR);
             } else{
                 g.setColor(mesh.getColor());
             }

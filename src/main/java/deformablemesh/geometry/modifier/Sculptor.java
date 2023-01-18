@@ -2,7 +2,9 @@ package deformablemesh.geometry.modifier;
 
 import deformablemesh.geometry.Furrow3D;
 import deformablemesh.geometry.Node3D;
+import deformablemesh.geometry.Projectable;
 import deformablemesh.geometry.Sphere;
+import deformablemesh.gui.Drawable;
 import deformablemesh.meshview.DataObject;
 import deformablemesh.meshview.MeshFrame3D;
 import deformablemesh.util.Vector3DOps;
@@ -170,6 +172,13 @@ class Sculptor implements ModificationState {
         moveContained();
 
     }
+
+    @Override
+    public Projectable getProjectable() {
+
+        return sphere;
+    }
+
     boolean contained(Node3D n){
         double[] pt;
         if(markers.containsKey(n)){

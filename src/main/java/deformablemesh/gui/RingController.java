@@ -122,34 +122,41 @@ public class RingController implements FrameListener, ListDataListener {
             modifier = new MeshModifier();
             modifier.setMeshFrame3D(model.getMeshFrame3D());
             modifier.setFurrow(getFurrow());
-
+            modifier.setMeshImageStack(model.getMeshImageStack());
             modifier.activate3DFramePicker();
 
+
+            sliceView.addDrawable( modifier );
             setSliceListener(new MouseAdapter(){
                 @Override
                 public void mousePressed(MouseEvent evt){
                     double[] pt = getNormalizedVolumeCoordiante(evt.getPoint());
                     modifier.updatePressed(pt, evt);
+                    sliceView.repaint();
                 }
                 @Override
                 public void mouseReleased(MouseEvent evt){
                     double[] pt = getNormalizedVolumeCoordiante(evt.getPoint());
                     modifier.updateReleased(pt, evt);
+                    sliceView.repaint();
                 }
                 @Override
                 public void mouseClicked(MouseEvent evt){
                     double[] pt = getNormalizedVolumeCoordiante(evt.getPoint());
                     modifier.updateClicked(pt, evt);
+                    sliceView.repaint();
                 }
                 @Override
                 public void mouseMoved(MouseEvent evt){
                     double[] pt = getNormalizedVolumeCoordiante(evt.getPoint());
                     modifier.updateMoved(pt, evt);
+                    sliceView.repaint();
                 }
                 @Override
                 public void mouseDragged(MouseEvent evt){
                     double[] pt = getNormalizedVolumeCoordiante(evt.getPoint());
                     modifier.updateDragged(pt, evt);
+                    sliceView.repaint();
                 }
             });
             modifier.setMesh( model.getSelectedMesh() );
@@ -176,19 +183,22 @@ public class RingController implements FrameListener, ListDataListener {
         DeformableMesh3D original = modifier.getOriginalMesh();
         Track host = model.getAllTracks().stream().filter(t->t.containsMesh(original)).findFirst().orElse(null);
         if(host != null){
-            System.out.println("found mesh updating track!");
             int frame = host.getFrame(original);
             model.setMesh(host, frame, modifier.getMesh());
         }
+        sliceView.removeDrawable(modifier);
         modifier = null;
+
         activateSelectMeshMode();
     }
     public void cancel(){
         if(modifier==null) return;
 
         modifier.deactivate();
+        sliceView.removeDrawable(modifier);
         modifier = null;
         activateSelectMeshMode();
+        sliceView.repaint();
     }
 
     public boolean isTextureShowing(){
@@ -365,7 +375,7 @@ public class RingController implements FrameListener, ListDataListener {
 
                             DeformableMesh3D selected = model.getSelectedMesh();
                             if(pm.getMesh() == selected){
-                                g2d.setColor(Color.WHITE);
+                                g2d.setColor(GuiTools.SELECTED_MESH_COLOR);
                                 g2d.draw(shape);
                             }else{
                                 g2d.setColor(pm.getColor());
@@ -381,7 +391,11 @@ public class RingController implements FrameListener, ListDataListener {
             detector.setThresh(thresh);
             ImageProcessor b = detector.createBinarySlice();
             sliceView.setBinary(b.getBufferedImage());
+            if(modifier != null){
+                sliceView.addDrawable(modifier);
+            }
             refreshFurrow();
+
         }
     }
     public void setThreshold(double v){

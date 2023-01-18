@@ -519,7 +519,7 @@ public class DataCanvas extends Canvas3D {
     /**
      * Sets the view based on the parameters.
      *
-     * @param view DX, DY, ZOOM, aa.x, aa.y, aa.z, aa.angle
+     * @param view ox, oy, oz, ZOOM, aa.x, aa.y, aa.z, aa.angle
      */
     public void setViewParameters(double[] view){
         camera.ox  = view[0];

@@ -2,6 +2,7 @@ package deformablemesh.geometry.modifier;
 
 import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Node3D;
+import deformablemesh.geometry.Projectable;
 import deformablemesh.geometry.Sphere;
 import deformablemesh.meshview.DataObject;
 import deformablemesh.meshview.MeshFrame3D;
@@ -107,6 +108,11 @@ public class Selector implements ModificationState{
             }
         }
         modifier.selectNodes(selectable);
+    }
+
+    @Override
+    public Projectable getProjectable() {
+        return sphere;
     }
 
     public void dragSelectedPoints(double[] point){

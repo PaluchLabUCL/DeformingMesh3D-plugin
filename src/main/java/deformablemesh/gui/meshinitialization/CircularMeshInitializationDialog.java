@@ -297,7 +297,7 @@ public class CircularMeshInitializationDialog implements FrameListener {
         int w = stack.getWidthPx();
         int h = stack.getHeightPx();
         int d = stack.getNSlices();
-        ImagePlus plus = new ImagePlus();
+        ImagePlus plus = stack.getOriginalPlus().createImagePlus();
         ImageStack imgStack = new ImageStack(w, h);
         double[] pt = new double[3];
         for(int i = 0; i < d; i++){

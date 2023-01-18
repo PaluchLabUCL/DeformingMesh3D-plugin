@@ -3,7 +3,9 @@ package deformablemesh.geometry.modifier;
 import deformablemesh.DeformableMesh3DTools;
 import deformablemesh.MeshImageStack;
 import deformablemesh.geometry.*;
+import deformablemesh.gui.Drawable;
 import deformablemesh.gui.FurrowInput;
+import deformablemesh.gui.Slice3DView;
 import deformablemesh.io.MeshReader;
 import deformablemesh.io.MeshWriter;
 import deformablemesh.meshview.CanvasView;
@@ -38,7 +40,7 @@ import java.util.concurrent.BlockingQueue;
  *
  * Created by msmith on 21.09.17.
  */
-public class MeshModifier {
+public class MeshModifier implements Drawable {
     BlockingQueue<Runnable> tasks = new ArrayBlockingQueue<>(50);
     DeformableMesh3D mesh, original;
     MeshFrame3D frame;
@@ -133,6 +135,23 @@ public class MeshModifier {
         return mesh;
     }
 
+    @Override
+    public void draw(Graphics2D g2d) {
+        ProjectableMesh pm = new ProjectableMesh(mesh);
+        Projectable p = state.getProjectable();
+        FurrowTransformer ft = getFurrowTransformer();
+        if(ft != null){
+            g2d.setColor(Color.YELLOW);
+            Shape s = p.getProjection(ft);
+            g2d.draw(s);
+            Shape s2 = pm.getProjection(ft);
+            g2d.draw(s2);
+        }
+    }
+
+    public void setMeshImageStack(MeshImageStack meshImageStack) {
+        mis = meshImageStack;
+    }
 
     private class StateManager implements MeshFrame3D.HudDisplay{
 

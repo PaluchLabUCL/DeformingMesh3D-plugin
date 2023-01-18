@@ -1,5 +1,8 @@
 package deformablemesh.geometry.modifier;
 
+import deformablemesh.geometry.Projectable;
+import deformablemesh.gui.Drawable;
+
 import java.awt.event.MouseEvent;
 
 public interface ModificationState {
@@ -12,5 +15,6 @@ public interface ModificationState {
     public void updateClicked(double[] point, MouseEvent evt);
     public void updateMoved(double[] point, MouseEvent evt);
     public void updateDragged(double[] point, MouseEvent evt);
+    Projectable getProjectable();
 
 }

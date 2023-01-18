@@ -81,7 +81,7 @@ public class CreateCrossSectionMovies {
         mf3d.hideAxis();
         mf3d.setBackgroundColor(Color.WHITE);
         double[] vp = mf3d.getViewParameters();
-        vp[3] = 250/mis.SCALE;
+        vp[3] = 62.5/mis.SCALE;
         mf3d.setViewParameters(vp);
         JFrame jframe = mf3d.getJFrame();
         Component canvas = mf3d.getCanvas();

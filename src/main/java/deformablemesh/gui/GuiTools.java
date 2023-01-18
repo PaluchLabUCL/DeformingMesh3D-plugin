@@ -26,6 +26,8 @@ import static deformablemesh.gui.ControlFrame.instance;
  * To change this template use File | Settings | File Templates.
  */
 public class GuiTools {
+    public static Color SELECTED_MESH_COLOR = Color.WHITE;
+
     final static String versionHTML = getVersionHTML();
     public static void createTextOuputPane(String s){
         final JFrame frame = new JFrame();

@@ -8,6 +8,7 @@ import deformablemesh.gui.FrameListener;
 import deformablemesh.gui.GuiTools;
 import deformablemesh.gui.PropertySaver;
 import deformablemesh.gui.RingController;
+import deformablemesh.gui.Slice3DView;
 import deformablemesh.gui.render2d.RenderFrame2D;
 import deformablemesh.io.ImportType;
 import deformablemesh.io.MeshReader;
@@ -43,6 +44,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -73,6 +75,12 @@ public class SegmentationController {
         this.model = model;
         try {
             model.setRingController(new RingController(this));
+            actionStack.addStateListener(s->{
+                RingController rc = getRingController();
+                if(rc != null){
+                    submit(()->rc.setFrame(getCurrentFrame()));
+                }
+            });
         } catch(java.awt.AWTError err){
             System.out.println("error initializing awt: " + err.getMessage());
             System.out.println("This can be due to DISPLAY env being set incorrectly.");
@@ -2061,6 +2069,11 @@ public class SegmentationController {
                     }
                     model.setOriginalPlus(plus, channel);
 
+                    Furrow3D f = getRingController().getFurrow();
+                    if(f == null){
+                        setFurrowForCurrentFrame(new double[]{0,0,0}, new double[]{0, 0, 1});
+                    }
+
                     if(volumeShowing) {
                         showVolume();
                     }
@@ -2382,15 +2395,6 @@ public class SegmentationController {
      */
     public void saveFurrows(File f) {
         submit(()->model.saveFurrows(f));
-    }
-
-    /**
-     * For the gui to check for errors.
-     *
-     * @return
-     */
-    public List<Exception> getExecutionErrors(){
-        return main.getExceptions();
     }
 
     /**
@@ -3175,11 +3179,12 @@ public class SegmentationController {
  * they're submitted to the main executor service, which puts them in the queue for execution.
  */
 class ExceptionThrowingService{
-    ExecutorService main;
+    ExecutorService main, monitor;
     Thread main_thread;
-    final List<Exception> exceptions = Collections.synchronizedList(new ArrayList<>());
+    Queue<Exception> exceptions = new LinkedBlockingDeque<>();
     ExceptionThrowingService(){
         main = Executors.newSingleThreadExecutor();
+        monitor = Executors.newSingleThreadExecutor();
         main.submit(() -> {
             main_thread = Thread.currentThread();
             main_thread.setName("My Main Thread");
@@ -3190,7 +3195,6 @@ class ExceptionThrowingService{
         try{
             e.execute();
         } catch (Exception exc) {
-            System.err.println("Exception enqueued");
             throw new RuntimeException(exc);
         }
     }
@@ -3205,23 +3209,14 @@ class ExceptionThrowingService{
 
         final Future<?> f = main.submit(()->execute(r));
 
-        main.submit(() -> {
+        monitor.submit(() -> {
             try {
                 f.get();
             } catch (InterruptedException | ExecutionException e) {
-                synchronized (exceptions){
-                    exceptions.add(e);
-                }
+                GuiTools.errorMessage(e.toString() + ": " + e.getMessage());
+                e.printStackTrace();
             }
         });
-    }
-
-    public List<Exception> getExceptions(){
-        synchronized(exceptions) {
-            List<Exception> excs = new ArrayList<>(exceptions);
-            exceptions.clear();
-            return excs;
-        }
     }
 
     public void shutdown(){

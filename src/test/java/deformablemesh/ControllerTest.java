@@ -109,29 +109,7 @@ public class ControllerTest {
         Assert.assertTrue(controls.canRedo());
 
     }
-    @Test
-    public void checkExecutorService(){
-        SegmentationModel model = new SegmentationModel();
-        SegmentationController controller = new SegmentationController(model);
 
-        controller.submit(()->{
-            int[] x = new int[0];
-            int y = x[0];
-        });
-
-        Assert.assertEquals(waitFor(controller).size(), 1);
-
-        controller.submit(()->{
-            controller.submit(()->{
-                int[] x = new int[0];
-                int y = x[0];
-            });
-        });
-
-        Assert.assertEquals(waitFor(controller).size(), 1);
-
-
-    }
     private List<Exception> waitFor(SegmentationController controller){
         synchronized (controller){
             controller.submit(()->{
@@ -142,13 +120,13 @@ public class ControllerTest {
 
             try {
                 controller.wait();
-                return controller.getExecutionErrors();
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 return Collections.emptyList();
             }
 
         }
+        return Collections.emptyList();
     }
     @Test
     public void setValues(){

@@ -65,7 +65,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
     HotKeyDelegate mf3DInterface;
     RingController ringController;
 
-    Color darkerBG = new Color(0, 0, 0, 25);
     static String showPlane = "show plane";
     static String hidePlane = "hide plane";
     public ControlFrame( SegmentationController model){
@@ -202,7 +201,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         bcon.gridx = 2;
         topBottom.add(frameIndicator.channelLabel, bcon);
         topBottom.setOpaque(true);
-        topBottom.setBackground(darkerBG);
+
         return topBottom;
     }
 
@@ -220,7 +219,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         JPanel remButtonUnits = createRemeshPanel();
         buttonPanel.add( remButtonUnits, bcon);
         buttonPanel.setOpaque(true);
-        buttonPanel.setBackground(darkerBG);
         return buttonPanel;
     }
 
@@ -362,7 +360,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
     private JPanel buildDeformControls(){
         JPanel buttonPanel = new JPanel(new GridBagLayout());
         buttonPanel.setOpaque(true);
-        buttonPanel.setBackground(darkerBG);
         GridBagConstraints bcon = new GridBagConstraints();
         bcon.fill = GridBagConstraints.HORIZONTAL;
         bcon.gridwidth = 3;
@@ -743,10 +740,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             segmentationController.showBinaryBlob();
             finished();
         });
-    }
-
-    public void imageStatus(){
-
     }
 
 
@@ -1496,11 +1489,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         return new double[]{0, 0, 0, 0};
 
     }
-    String getTitleFromTitle(String shortTitle){
-        return shortTitle.replaceAll("\\(([0-9.]+),([0-9.]+),([0-9.]+),([0-9.]+)\\)", "");
-
-
-    }
 
     File getSaveFile(String guess){
         FileDialog fd = new FileDialog(frame,"File to save mesh too");
@@ -1707,7 +1695,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
     public void finished(){
         segmentationController.submit(() -> {
             setReady(true);
-            EventQueue.invokeLater(this::displayErrors);
             setFrameModified(segmentationController.getMeshModified());
         });
     }
@@ -1730,14 +1717,6 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         EventQueue.invokeLater(()->{
             frame.setTitle(label);
         });
-    }
-
-    public void displayErrors(){
-        List<Exception> exceptions = segmentationController.getExecutionErrors();
-        for(Exception exc: exceptions){
-            GuiTools.errorMessage(exc.toString() + ": " + exc.getMessage());
-            exc.printStackTrace();
-        }
     }
 
 
@@ -1794,6 +1773,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
     }
 
     class FrameIndicator{
+        final static int MAX_LENGTH=45;
         JTextField field = new JTextField(5);
         JLabel max = new JLabel("/-");
         JLabel imageName = new JLabel("xxx");
@@ -1858,6 +1838,9 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             int total = segmentationController.getNFrames();
 
             String title = segmentationController.getShortImageName();
+            if(title.length() > MAX_LENGTH){
+                title = title.substring(0, MAX_LENGTH) + "...";
+            }
             imageName.setText(title);
 
             field.setEnabled(false);

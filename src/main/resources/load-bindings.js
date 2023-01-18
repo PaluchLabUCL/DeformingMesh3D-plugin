@@ -11,17 +11,25 @@ var ArrayList = Java.type("java.util.ArrayList");
 var Track = Java.type("deformablemesh.track.Track");
 var File = Java.type("java.io.File");
 var ImageEnergyType = Java.type("deformablemesh.externalenergies.ImageEnergyType");
-//var Graph = Java.type("lightgraph.Graph");
+    var Graph = Java.type("lightgraph.Graph");
 var ImageStack = Java.type("ij.ImageStack");
 var ColorProcessor = Java.type("ij.process.ColorProcessor");
 var ImageStack = Java.type("ij.ImageStack");
 var MeshAnalysis = Java.type("deformablemesh.util.MeshAnalysis");
 var GroupDynamics = Java.type("deformablemesh.util.GroupDynamics");
+GuiTools = Java.type("deformablemesh.gui.GuiTools");
 
 function echo(obj){
     terminal.echo(obj);
 }
 
+//Sets the color of the outline for drawing the selected mesh in 2D
+function setSelectedMeshColor(color){
+  if( color instanceof Color){
+      GuiTools.SELECTED_MESH_COLOR = color;
+  }
+
+}
 
 function snapshotsThreeSixty(steps){
     total = 1260
