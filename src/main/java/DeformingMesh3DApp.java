@@ -80,7 +80,7 @@ public class DeformingMesh3DApp{
 
 
     private static void start3DApplication(){
-        ImageJ.main(new String[]{});
+        new ImageJ();
 
         SegmentationController controls = createDeformingMeshApplication();
 
@@ -88,6 +88,7 @@ public class DeformingMesh3DApp{
             String o = input.getAbsolutePath();
             controls.setOriginalPlus(new ImagePlus(o));
         }
+
     }
     public static void main(String[] args){
         if(args.length>0){

@@ -107,24 +107,18 @@
 		<dependency>
 			<groupId>gov.nist.math</groupId>
 			<artifactId>jama</artifactId>
-			<version>1.0.3</version>
-			<scope>compile</scope>
 		</dependency>
         <dependency>
 			<groupId>org.scijava</groupId>
 			<artifactId>j3dcore</artifactId>
-			<version>1.6.0-scijava-2</version>
 		</dependency>
 		<dependency>
 			<groupId>org.scijava</groupId>
 			<artifactId>vecmath</artifactId>
-			<version>1.6.0-scijava-2</version>
 		</dependency>
         <dependency>
 			<groupId>org.scijava</groupId>
 			<artifactId>j3dutils</artifactId>
-			<version>1.6.0-scijava-2</version>
-			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.orangepalantir</groupId>
@@ -135,7 +129,6 @@
 		<dependency>
 			<groupId>ome</groupId>
 			<artifactId>bio-formats_plugins</artifactId>
-			<version>6.9.0</version>
 		</dependency>
 	</dependencies>
 
