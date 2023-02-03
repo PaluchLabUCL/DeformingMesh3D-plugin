@@ -674,7 +674,7 @@ public class SegmentationController {
         ImagePlus original = getMeshImageStack().original;
         List<Track> tracks = getAllTracks();
         Path baseFolder = Paths.get(IJ.getDirectory("Select root folder"));
-        Create3DTrainingDataFromMeshes creator = new Create3DTrainingDataFromMeshes(tracks, getMeshImageStack().original);
+        Create3DTrainingData creator = new Create3DTrainingDataFromMeshes(tracks, original);
         Path labelPath = baseFolder.resolve("labels");
         Path imagePath = baseFolder.resolve("images");
         try {
@@ -719,6 +719,46 @@ public class SegmentationController {
      * @param last
      */
     public void generateTrainingDataFromLabelledImage(int first, int last){
+        ImagePlus plus = GuiTools.selectOpenImage(IJ.getInstance());
+        ImagePlus original = getMeshImageStack().getOriginalPlus();
+        Path baseFolder = Paths.get(IJ.getDirectory("Select root folder"));
+
+        Path labelPath = baseFolder.resolve("labels");
+        Path imagePath = baseFolder.resolve("images");
+        try {
+            if(!Files.exists(imagePath)){
+                Files.createDirectory(imagePath);
+            }
+            if(!Files.exists(labelPath)){
+                Files.createDirectory(labelPath);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("unable to create directories for output", e);
+        }
+
+        File labelFolder = labelPath.toFile();
+        File imageFolder = imagePath.toFile();
+        String name = original.getTitle().replace(".tif", "");
+        Create3DTrainingData creator = new Create3DTrainingDataFromLabelledImage(original, plus);
+        for(int i = first; i<=last; i++){
+            String sliceName = String.format("%s-t%04d.tif", name, i);
+            creator.run(i);
+            ImagePlus maskPlus = original.createImagePlus();
+            maskPlus.setStack(creator.getLabeledStack());
+            IJ.save(maskPlus, new File(labelFolder, sliceName).getAbsolutePath());
+            System.out.println("finished frame: " + i);
+            //maskPlus.show();
+            try {
+                ImagePlus scaled = creator.getOriginalFrame(i);
+                //scaled.setOpenAsHyperStack(true);
+                scaled.setLut(LUT.createLutFromColor(Color.WHITE));
+                IJ.save(scaled, new File(imageFolder, sliceName).getAbsolutePath());
+
+            } catch(Exception e){
+                e.printStackTrace();
+            }
+        }
+
 
     }
 
