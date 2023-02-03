@@ -7,6 +7,7 @@ import deformablemesh.track.Track;
 import deformablemesh.util.Vector3DOps;
 import ij.IJ;
 import ij.ImageJ;
+import org.jfree.chart.plot.dial.DialPointer;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -92,6 +93,44 @@ public class RaycastRender implements Runnable {
         }
 
     }
+
+    interface Camera{
+        int[] getPixelCoordinates(double[] location, double[] angle);
+    }
+
+    class PinholeCamera implements Camera{
+        double[] center;
+        double focalLength;
+        double radius;
+        int[] offset = {width/2, height/2};
+        public PinholeCamera(double[] center, double focalLength, double radius){
+            this.center = center;
+            this.focalLength = focalLength;
+            this.radius = radius;
+        }
+        @Override
+        public int[] getPixelCoordinates(double[] location, double[] angle) {
+            double[] bounce = Vector3DOps.difference(location, center);
+            double out = Vector3DOps.mag(bounce);
+            if(out > radius){
+                return new int[]{-1, -1};
+            }
+            double factor = -focalLength/angle[1];
+
+            double[] chipLocation = Vector3DOps.add(bounce, angle, factor);
+
+            return new int[]{(int)chipLocation[0] + offset[0], (int)chipLocation[2] + offset[1]};
+        }
+    }
+
+    class MirrorLessCamera implements Camera{
+
+        @Override
+        public int[] getPixelCoordinates(double[] location, double[] angle) {
+            return new int[0];
+        }
+    }
+
     int[] getPxCoordinates(double[] normalized){
         int cx = width/2;
         int cy = height/2;
@@ -194,6 +233,7 @@ public class RaycastRender implements Runnable {
     public void run(){
         ExecutorService service = Executors.newFixedThreadPool(20);
         double hits = 0;
+        PinholeCamera pc = new PinholeCamera(new double[]{0, -1, 0}, 1500, 0.2);
         while(true){
             List<PointLight> lights = new ArrayList<>();
             lights.add(new PointLight(new double[]{2, -1, 3}, new double[]{0, 0, -0.37}));
@@ -262,23 +302,21 @@ public class RaycastRender implements Runnable {
 
                     if (closest == null) {
 
-                        //camera
+                        //cameras
                         for (Intersection is : chip.getIntersections(r.pt, r.dir)) {
                             if (Vector3DOps.dot(is.surfaceNormal, r.dir) >= 0) {
                                 continue;
                             }
-                            double d =  Vector3DOps.dot(r.dir, Vector3DOps.difference(is.location, r.pt));
-                            if (d < min && r.pt[1] > -0.99) {
-                                int[] loc = getPxCoordinates(r.pt);
 
-                                if(loc[0]>=0 && loc[1] >= 0){
-                                    closest = is;
-                                    min = d;
-                                    img.setRGB(loc[0], loc[1], accumulate(r, img.getRGB(loc[0], loc[1])));
-                                    hits++;
-                                    break;
-                                }
+
+
+                            int[] loc = pc.getPixelCoordinates(is.location, r.dir);
+                            if(loc[0]>=0 && loc[1] >= 0 && loc[0] < width && loc[1] < height){
+                                img.setRGB(loc[0], loc[1], accumulate(r, img.getRGB(loc[0], loc[1])));
+                                hits++;
+                                break;
                             }
+
                         }
                     } else{
                         Color sc;
@@ -299,7 +337,8 @@ public class RaycastRender implements Runnable {
 
                         double dot = Vector3DOps.dot(closest.surfaceNormal, delta);
                         if( dot > 0.0) {
-
+                            //sends a diffuse ray back to the observer.
+                            //pretty much dominates image and makes everything ambiant.
                             Ray diffuse = new Ray(closest.location, delta, r);
                             diffuse.r = r.r*comps[0]*dot;
                             diffuse.g = r.g*comps[1]*dot;
