@@ -5,13 +5,13 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>33.2.0</version>
+		<version>34.1.0</version>
 		<relativePath />
 	</parent>
 
 	<groupId>paluchlab</groupId>
 	<artifactId>Deformable_Mesh</artifactId>
-	<version>0.9.7</version>
+	<version>0.9.8-SNAPSHOT</version>
 
 	<name>Deforming Mesh</name>
 	<description>Triangulated surface for deforming in 3D.</description>
