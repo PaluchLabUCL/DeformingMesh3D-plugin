@@ -82,6 +82,9 @@
 		<license.copyrightOwners>University College London</license.copyrightOwners>
 
 		<light-weight-graphing.version>1.0</light-weight-graphing.version>
+
+		<!-- NB: Deploy releases to the SciJava Maven repository. -->
+		<releaseProfiles>sign,deploy-to-scijava</releaseProfiles>
 	</properties>
 
 	<dependencies>
