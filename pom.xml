@@ -86,13 +86,14 @@
 	<properties>
 		<license.licenseName>MIT</license.licenseName>
 		<license.copyrightOwners>University College London</license.copyrightOwners>
+
+		<light-weight-graphing.version>1.0</light-weight-graphing.version>
 	</properties>
 
 	<dependencies>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>TrackMate</artifactId>
-			<version>7.6.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.formdev</groupId>
@@ -101,7 +102,6 @@
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>4.13.1</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -123,8 +123,7 @@
 		<dependency>
 			<groupId>org.orangepalantir</groupId>
 			<artifactId>light-weight-graphing</artifactId>
-			<version>1.0</version>
-			<scope>compile</scope>
+			<version>${light-weight-graphing.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>ome</groupId>
@@ -138,50 +137,7 @@
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.5.1</version>
-				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
-					<showDeprecation>true</showDeprecation>
-					<showWarnings>true</showWarnings>
-				</configuration>
-			</plugin>
-			<!-- Generates a source code JAR during package -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-source-plugin</artifactId>
-				<version>3.0.0</version>
-				<executions>
-					<execution>
-						<id>attach-sources</id>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<!-- Generates JavaDocs during package -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>3.0.0-M1</version>
-				<executions>
-					<execution>
-						<id>attach-javadocs</id>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-						<configuration>
-							<additionalparam>-Xdoclint:none</additionalparam>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
-				<version>3.3.0</version>
 				<executions>
 					<execution>
 						<phase>package</phase>
