@@ -123,6 +123,14 @@
 			<groupId>ome</groupId>
 			<artifactId>bio-formats_plugins</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>ij</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.jogamp.jogl</groupId>
+			<artifactId>jogl-all</artifactId>
+		</dependency>
 	</dependencies>
 
 	<repositories>
