@@ -35,6 +35,10 @@ which can be found in "plugins"->"PL_Mesh3D"->"Deforming Mesh 3D", and JFilament
 This includes guides for using the plugin, and javadoc for using the plugin via scripting.
 
 # Changes
+0.9.8
+- Changed volume calculation technique.
+- Added a way to create training labels from a labelled image.
+
 0.9.7
 - improved slice view synchronization
 - added sculpt/select items to slice view
