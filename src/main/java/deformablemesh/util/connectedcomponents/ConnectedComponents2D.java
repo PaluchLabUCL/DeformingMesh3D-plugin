@@ -262,7 +262,7 @@ public class ConnectedComponents2D{
     }
 
     /**
-     * A map of label -> region for all of the connected components. If this cc2d has not been processed it will be
+     * A map of label -&gt; region for all of the connected components. If this cc2d has not been processed it will be
      * processed. Otherwise it will return the previous results.
      *
      * @return Labe to Region.

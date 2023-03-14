@@ -19,7 +19,7 @@ import java.util.stream.IntStream;
  */
 public class Deforming3DMesh_Plugin implements PlugInFilter {
     public static final String version = "0.9.7";
-    public static SegmentationModel createDeformingMeshApplication(){
+    public static SegmentationController createDeformingMeshApplication(){
 
         MeshFrame3D mf3d = new MeshFrame3D();
         SegmentationModel model = new SegmentationModel();
@@ -39,12 +39,12 @@ public class Deforming3DMesh_Plugin implements PlugInFilter {
         control.setMeshFrame3D(mf3d);
 
         PropertySaver.positionFrames(controller, mf3d);
-        return model;
+        return control;
     }
 
     @Override
     public int setup(String s, ImagePlus imagePlus) {
-        SegmentationModel model = createDeformingMeshApplication();
+        SegmentationController controller = createDeformingMeshApplication();
         if(imagePlus != null) {
 
             int channel = 0;
@@ -65,7 +65,7 @@ public class Deforming3DMesh_Plugin implements PlugInFilter {
 
 
 
-            model.setOriginalPlus(imagePlus, channel);
+            controller.setOriginalPlus(imagePlus, channel);
         }
 
         return DOES_ALL;

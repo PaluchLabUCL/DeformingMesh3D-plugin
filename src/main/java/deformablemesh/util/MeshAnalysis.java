@@ -38,7 +38,6 @@ public class MeshAnalysis {
     /**
      *
      * @param tracks
-     * @param meshImageStack
      */
     public static void plotElongationsVsTime(List<Track> tracks) {
         Graph elongationPlot = new Graph();
@@ -93,9 +92,9 @@ public class MeshAnalysis {
             List<Triangle3D> right = sides.get(1);
 
             double[] up = new double[]{0,0,1};
-            double v = DeformableMesh3DTools.calculateVolume(up, mes.positions, mes.triangles);
-            double lv = DeformableMesh3DTools.calculateVolume(up, mes.positions, left);
-            double rv = DeformableMesh3DTools.calculateVolume(up, mes.positions, right);
+            double v = DeformableMesh3DTools.calculateVolume(mes.triangles);
+            double lv = DeformableMesh3DTools.calculateVolume(left);
+            double rv = DeformableMesh3DTools.calculateVolume(right);
             double fr = fur.calculateRadius(mes.connections);
             stack.setFrame(i);
             double left_intensity = DeformableMesh3DTools.calculateAverageIntensity(stack, left, cortex_thickness );
@@ -164,15 +163,15 @@ public class MeshAnalysis {
                 List<List<Triangle3D>> sides = fur.splitMesh(mes.triangles);
                 List<Triangle3D> front = sides.get(0);
                 List<Triangle3D> back = sides.get(1);
-                fv = DeformableMesh3DTools.calculateVolume(up, mes.positions, front);
-                bv = DeformableMesh3DTools.calculateVolume(up, mes.positions, back);
+                fv = DeformableMesh3DTools.calculateVolume(front);
+                bv = DeformableMesh3DTools.calculateVolume(back);
                 fr = fur.calculateRadius(mes.connections);
-                v = DeformableMesh3DTools.calculateVolume(up, mes.positions, mes.triangles);
+                v = DeformableMesh3DTools.calculateVolume(mes.triangles);
             } else{
                 fv = -1;
                 bv = -1;
                 fr = -1;
-                v = DeformableMesh3DTools.calculateVolume(new double[]{0,0,1}, mes.positions, mes.triangles);
+                v = DeformableMesh3DTools.calculateVolume(mes.triangles);
             }
             fv = fv>0?fv*factor:fv;
             bv = bv>0?bv*factor:bv;

@@ -194,7 +194,7 @@ public class BinaryMomentsOfInertia {
         List<double[]> values = inertia.getEigenVectors();
         inertia.binary.show();
         System.out.println("area: " + DeformableMesh3DTools.calculateSurfaceArea(mesh)*Math.pow(mis.SCALE, 2));
-        System.out.println("volume: " + DeformableMesh3DTools.calculateVolume(new double[]{1, 0, 0}, mesh.positions, mesh.triangles)*Math.pow(mis.SCALE, 2));
+        System.out.println("volume: " + DeformableMesh3DTools.calculateVolume(mesh.triangles)*Math.pow(mis.SCALE, 2));
 
         System.out.println(Arrays.toString(inertia.getCenterOfMass()));
         System.out.println(Arrays.toString(inertia.getInertialMatrix()));
@@ -240,7 +240,7 @@ public class BinaryMomentsOfInertia {
         List<double[]> values = inertia.getEigenVectors();
         inertia.binary.show();
         System.out.println("area: " + DeformableMesh3DTools.calculateSurfaceArea(mesh)*Math.pow(mis.SCALE, 2));
-        System.out.println("volume: " + DeformableMesh3DTools.calculateVolume(new double[]{1, 0, 0}, mesh.positions, mesh.triangles)*Math.pow(mis.SCALE, 2));
+        System.out.println("volume: " + DeformableMesh3DTools.calculateVolume(mesh.triangles)*Math.pow(mis.SCALE, 2));
 
         System.out.println(Arrays.toString(inertia.getCenterOfMass()));
         System.out.println(Arrays.toString(inertia.getInertialMatrix()));

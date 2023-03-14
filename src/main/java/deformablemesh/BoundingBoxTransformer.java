@@ -31,8 +31,8 @@ public class BoundingBoxTransformer {
     /**
      * This will transform normalized coordinates of the source image to normalized coordinates of the destination image.
      *
-     * @param source
-     * @param destination
+     * @param source image that the mesh currently exists in.
+     * @param destination image that the mesh will represent
      */
     public BoundingBoxTransformer( MeshImageStack source, MeshImageStack destination){
         this.source = source;
@@ -80,7 +80,7 @@ public class BoundingBoxTransformer {
     /**
      * Applies "transform" to all of the points in the mesh.
      *
-     * @param mesh
+     * @param mesh that gets transformed.
      */
     public void transformMesh(DeformableMesh3D mesh){
         for(Node3D node: mesh.nodes){
@@ -91,7 +91,7 @@ public class BoundingBoxTransformer {
     /**
      * Applies transformMesh to all of the meshes in the track.
      *
-     * @param track
+     * @param track to be transformed.
      */
     public void transformTrack(Track track){
         for(Integer i: track.getTrack().keySet()){
@@ -102,8 +102,8 @@ public class BoundingBoxTransformer {
     public static void main(String[] args) throws IOException {
         System.out.println(Paths.get(".").toRealPath());
 
-        ImagePlus plus = FileInfoVirtualStack.openVirtual("/home/smithm3/Desktop/Plate18/full-res-sample/tile_31_t1-10.tif");
-        ImagePlus plus2 = FileInfoVirtualStack.openVirtual( "/home/smithm3/Desktop/Plate18/full-volume-binned/tile_31.tif");
+        ImagePlus plus = FileInfoVirtualStack.openVirtual("");
+        ImagePlus plus2 = FileInfoVirtualStack.openVirtual( "");
 
         MeshImageStack one = new MeshImageStack(plus);
         MeshImageStack two = new MeshImageStack(plus2);

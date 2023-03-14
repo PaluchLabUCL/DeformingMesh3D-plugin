@@ -355,7 +355,7 @@ public class GuiTools {
 
     }
 
-    static public ImagePlus selectOpenImage(JFrame parent){
+    static public ImagePlus selectOpenImage(Frame parent){
         String[] imageLabels = WindowManager.getImageTitles();
 
         if(imageLabels.length==0) return null;

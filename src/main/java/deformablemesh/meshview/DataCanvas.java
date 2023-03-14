@@ -619,9 +619,6 @@ public class DataCanvas extends Canvas3D {
     }
 
 }
-enum StationaryViews{
-    XY, XZ, YZ, THREEQUARTER;
-}
 
 
 class OffScreenCanvas3D extends Canvas3D {

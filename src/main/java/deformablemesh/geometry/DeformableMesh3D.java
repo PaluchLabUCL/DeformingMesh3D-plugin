@@ -389,11 +389,11 @@ public class DeformableMesh3D{
     }
 
     public double calculateVolume(){
-        return DeformableMesh3DTools.calculateVolume(new double[]{1,0,0}, positions, triangles);
+        return DeformableMesh3DTools.calculateVolume(triangles);
     }
 
     public double calculateVolume(double[] dir){
-        return DeformableMesh3DTools.calculateVolume(dir, positions, triangles);
+        return DeformableMesh3DTools.calculateVolumeLegacy(dir, positions, triangles);
     }
 
     /**

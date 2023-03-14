@@ -36,7 +36,6 @@ import java.util.stream.Collectors;
 /**
  * A utility class for using TrackMate files.
  *
- * @Author
  */
 public class TrackMateAdapter {
     /**

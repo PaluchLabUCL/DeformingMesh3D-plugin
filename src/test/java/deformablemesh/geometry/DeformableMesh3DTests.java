@@ -66,9 +66,9 @@ public class DeformableMesh3DTests {
         double[] xaxis = {1, 0, 0};
 
         DeformableMesh3D box = DeformableMesh3DTools.createRectangleMesh(2, 1, 1, 0.5);
-        double before = DeformableMesh3DTools.calculateVolume(xaxis, box.positions, box.triangles);
+        double before = DeformableMesh3DTools.calculateVolume(box.triangles);
         box.rotate(new double[]{0, Math.sqrt(2)/2, Math.sqrt(2)/2}, new double[]{0,0,0}, Math.PI*0.15);
-        double after = DeformableMesh3DTools.calculateVolume(xaxis, box.positions, box.triangles);
+        double after = DeformableMesh3DTools.calculateVolume(box.triangles);
         Assert.assertEquals(before, after, 1e-2);
     }
 
