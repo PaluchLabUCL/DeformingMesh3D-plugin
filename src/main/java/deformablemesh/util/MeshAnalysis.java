@@ -38,7 +38,6 @@ public class MeshAnalysis {
     /**
      *
      * @param tracks
-     * @param meshImageStack
      */
     public static void plotElongationsVsTime(List<Track> tracks) {
         Graph elongationPlot = new Graph();

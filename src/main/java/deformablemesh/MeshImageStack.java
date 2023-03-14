@@ -56,7 +56,7 @@ public class MeshImageStack {
 
     /**
      * Creates a mesh image stack and sets the backing data to the corresponding time frame and channel.
-     * @param original
+     * @param original image needs to be viewable as a hyperstack in image.
      * @param frame 0-th index time frame eg 2 time points valid values are 0, 1.
      * @param channel 0 index channel. eg 3 channels values 0, 1, 2 are valid.
      */
@@ -125,7 +125,7 @@ public class MeshImageStack {
 
     /**
      * Creates an ImagePlus from the provided path.
-     * @param path
+     * @param path a local of an image to load.
      */
     public MeshImageStack(Path path) {
         this( new ImagePlus( path.toAbsolutePath().toString()));
@@ -363,10 +363,10 @@ public class MeshImageStack {
     /**
      * Gets the value at the image coordintes x,y,z doesn't perform any sort of check.
      *
-     * @param x
-     * @param y
-     * @param z
-     * @return
+     * @param x pixel loc
+     * @param y pixel loc
+     * @param z slice
+     * @return the backing double
      */
     public double getValue(int x, int y, int z){
         return data[z][y][x];
@@ -406,7 +406,7 @@ public class MeshImageStack {
     /**
      * Normalized length of the image along the z-axis.
      *
-     * @return
+     * @return size of image along z axis
      */
     public double getNormalizedImageDepth(){
         return offsets[2]*2;
@@ -415,7 +415,7 @@ public class MeshImageStack {
     /**
      * Normalized length of the image along the x-axis.
      *
-     * @return
+     * @return width of image along x axis.
      */
     public double getNormalizedImageWidth(){
         return offsets[0]*2;
@@ -424,7 +424,7 @@ public class MeshImageStack {
     /**
      * Normalized length of the image along the y-axis.
      *
-     * @return
+     * @return height of image along y axis.
      */
     public double getNormalizedImageHeight(){
         return offsets[1]*2;
@@ -483,7 +483,7 @@ public class MeshImageStack {
     /**
      * Smallest pixel, in the x,y, or z direction from the input image.
      *
-     * @return
+     * @return shortest pixel dimension
      */
     public double getMinPx(){
         return PX;

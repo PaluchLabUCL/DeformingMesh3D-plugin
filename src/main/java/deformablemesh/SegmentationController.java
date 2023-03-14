@@ -302,7 +302,7 @@ public class SegmentationController {
     /**
      * Gets notified when the action stack updates the value.
      *
-     * @param listener
+     * @param listener to be notified
      */
     public void addUndoStateListener(StateListener listener){
         actionStack.addStateListener(listener);
@@ -362,7 +362,7 @@ public class SegmentationController {
     /**
      * Checks if there is an action to be undone. Primarily used for the menu.
      *
-     * @return
+     * @return true if there is an item on the action stack.
      */
     public boolean canUndo(){
         return actionStack.hasUndo();
@@ -371,7 +371,7 @@ public class SegmentationController {
     /**
      * Checks if there is an action to be undone. Primarily used for the menu.
      *
-     * @return
+     * @return true if there is an item that has been undone.
      */
     public boolean canRedo(){
         return actionStack.hasRedo();
@@ -388,7 +388,7 @@ public class SegmentationController {
      *   controller.submit(function(){ print("Made it through the queue");});
      *
      * Would not print until everything submitted before has finished.
-     * @param runnable
+     * @param runnable item the gets run on the main thread.
      */
     public void submit(Executable runnable) {
         main.submit(runnable);
@@ -515,7 +515,7 @@ public class SegmentationController {
     /**
      * Gets the currently selected MeshImageStack.
      *
-     * @return
+     * @return current image.
      */
     public MeshImageStack getMeshImageStack(){
         return model.stack;
@@ -552,9 +552,9 @@ public class SegmentationController {
      * Adds all of the provided meshes to the corresponding track. The tracks and meshes are associated by
      * order.
      *
-     * @param tracks
-     * @param frame
-     * @param meshes
+     * @param tracks that meshes will be added to
+     * @param frame the frame they're added at
+     * @param meshes the meshes to be added, needs to be the same length as tracks
      */
     public void setMeshes(List<Track> tracks, int frame, List<DeformableMesh3D> meshes){
         if(tracks.size() != meshes.size()){
@@ -715,8 +715,9 @@ public class SegmentationController {
     /**
      * Requests a labelled image that will be used with the currently opened image for generating a pair of image/labels
      * training data.
-     * @param first
-     * @param last
+     *
+     * @param first frame inclusive
+     * @param last frame inclusive
      */
     public void generateTrainingDataFromLabelledImage(int first, int last){
         ImagePlus plus = GuiTools.selectOpenImage(IJ.getInstance());
@@ -1497,30 +1498,6 @@ public class SegmentationController {
         }
     }
 
-    /**
-     * TODO remove
-     * @Deprecated
-     * @see deformablemesh.util.MeshAnalysis
-     */
-    public void calculateLineScans() {
-        model.calculateLineScans();
-    }
-
-    /**
-     * TODO remove
-     * @Deprecated
-     */
-    public void showStress() {
-        model.showStress();
-    }
-
-    /**
-     * TODO remove
-     * @Deprecated
-     */
-    public void showCurvature() {
-        model.showCurvature();
-    }
 
     /**
      * Shows the volume data in the meshframe. The program is much slower with the volume showing. It can be faster
@@ -1798,7 +1775,7 @@ public class SegmentationController {
 
     /**
      * Deforms all meshes in the current frame for steps number of iterations, sequentially.
-     * If steps is < 0 then it will deform for Integer.MAX_VALUE iterations...which will probably
+     * If steps is &lt; 0 then it will deform for Integer.MAX_VALUE iterations...which will probably
      * take forever.
      *
      * @param steps

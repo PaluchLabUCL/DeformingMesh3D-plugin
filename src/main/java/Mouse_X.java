@@ -20,10 +20,6 @@ import java.util.ArrayList;
   *     and rotating the region.  For RGB images bilinear interpolation
   *     is used, for Anything else, the default interpolation is used.
   *
-  *     @Author: Matthew B. Smith 
-  *     @Url: http://orangepalantir.org
-  *     @Version: 0.9
-  *     @Date: 5/9/2014
   *
   **/
 public class Mouse_X extends MouseAdapter implements PlugInFilter {

@@ -1026,10 +1026,10 @@ public class DeformableMesh3DTools {
      *                      7------------------6
      *                                          w/2,h/2, -d/2
      *
-     * @param w
-     * @param h
-     * @param depth
-     * @return
+     * @param w x axis size of the box
+     * @param h y axis size of the box
+     * @param depth z size of the box
+     * @return a block shaped mesh with the dimensions provided
      */
     public static DeformableMesh3D createTestBlock(double w, double h, double depth){
         ArrayList<double[]> pts = new ArrayList<double[]>();
@@ -1100,9 +1100,12 @@ public class DeformableMesh3DTools {
 
 
     /**
+     * Calculates the volume by calculating the signed volume of the tetrahedrons created by each
+     * triangle and the origin.
      *
-     * @param triangles
-     * @return
+     *
+     * @param triangles list of triangles representing a closed mesh.
+     * @return volume of the closed surface.
      */
     public static double calculateExactVolume(List<Triangle3D> triangles){
         double sum = 0;
@@ -1121,10 +1124,10 @@ public class DeformableMesh3DTools {
     /**
      * normal *dot* direction + |position|*direction
      *
-     * @param direction
-     * @param positions
-     * @param triangles
-     * @return
+     * @param direction an arbitrary direction used for calculating the volume.
+     * @param positions the backing data for the nodes/triangles.
+     * @param triangles triangles representing the closed surface
+     * @return volume of the mesh represented by the triangles.
      */
     static public double calculateVolume(double[] direction, double[] positions, List<Triangle3D> triangles ){
         double sum = 0;
@@ -1468,7 +1471,7 @@ public class DeformableMesh3DTools {
      * This puts topographical constraints on the intersections. When an intersection is 'dirty' it means it was
      * decided at a region of low confidence.
      *
-     * @param sections
+     * @param sections a list of intersections that will be scanned
      */
     public static void scanDirty(List<Intersection> sections){
         for(int i = 0; i<sections.size(); i++){
@@ -1528,9 +1531,9 @@ public class DeformableMesh3DTools {
      * Get pixels contained in the mesh. This has repeated code with "mosaicBinary" and should
      * be combined.
      *
-     * @param stack
-     * @param mesh
-     * @return
+     * @param stack the image that will have a binary representation
+     * @param mesh represents the surface that contains the pixels
+     * @return List of voxels within the mesh.
      */
     public static List<int[]> getContainedPixels(MeshImageStack stack, DeformableMesh3D mesh){
         Box3D box = mesh.getBoundingBox();
@@ -1864,8 +1867,8 @@ public class DeformableMesh3DTools {
     /**
      * Finds the closest and furthest away nodes from the centroid.
      *
-     * @param nodes
-     * @param centroid
+     * @param nodes nodes to be scanned
+     * @param centroid an arbitrary point, assumed to be at the center.
      * @return {min, max}
      */
     public static double[] findMinMax(List<Node3D> nodes, double[] centroid) {
@@ -1893,8 +1896,8 @@ public class DeformableMesh3DTools {
      *   trianges : int[] of length triangles.
      *   connection_index : int[] of length 2*connections
      *
-     * @param meshes
-     * @return
+     * @param meshes collection of meshes that will be merged.
+     * @return a single mesh with all of the points and triangles of the provided meshes.
      */
     public static DeformableMesh3D mergeMeshes(List<DeformableMesh3D> meshes){
         int posCount = 0;

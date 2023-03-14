@@ -36,7 +36,7 @@ public class FrameToFrameDisplacement {
     UndoableActions perform;
     /**
      * Creates a frame to frame displacement with the starting frame provided.
-     * @param frame
+     * @param frame starting frame
      */
     public FrameToFrameDisplacement(int frame){
         this.first = frame;
@@ -47,8 +47,7 @@ public class FrameToFrameDisplacement {
      * Takes the current set tracks, find tracks that are available in the current frame, and the set of tracks that
      * are available in the next frame, then attempts to link them.
      *
-     * @param tracks full collection of tracks that will be filtered and linked
-     * @param frame starting frame for tracking.
+     * @param controller that the tracking data is extracted from
      * @return A frame to frame displacement with tracking prepared.
      */
     public static FrameToFrameDisplacement trackAvailableFrameForward(SegmentationController controller){

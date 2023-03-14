@@ -37,7 +37,7 @@ import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 
 /**
- * GUI commands -> Delegate to segmentation controller. GUI based actions should be funneled through this class
+ * GUI commands -&gt; Delegate to segmentation controller. GUI based actions should be funneled through this class
  * for enabling/disabling the UI.
  *
  *

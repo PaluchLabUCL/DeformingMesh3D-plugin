@@ -50,7 +50,7 @@ abstract public class Create3DTrainingData {
         return mask;
     }
     /**
-     * Fills holes, by inverting the processor (1-> 0 and 0->1) then labels the connected components. All of the regions
+     * Fills holes, by inverting the processor (1-&gt; 0 and 0-&gt;1) then labels the connected components. All of the regions
      * that do not touch the edge are set to 255.
      *
      * @param p binary in put processor.
