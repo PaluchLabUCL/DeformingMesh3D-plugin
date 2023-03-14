@@ -7,3 +7,6 @@ build
 *.egg*
 dist
 .idea
+.classpath
+.project
+.settings

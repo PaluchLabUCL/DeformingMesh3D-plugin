@@ -1,3 +1,5 @@
+[![Build Status](https://github.com/PaluchLabUCL/DeformingMesh3D/actions/workflows/build.yml/badge.svg)](https://github.com/PaluchLabUCL/DeformingMesh3D/actions/workflows/build.yml)
+
 # DM3D
 ThreeD image segmentation algorithm, for roundish cells.
 
