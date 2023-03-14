@@ -1107,7 +1107,7 @@ public class DeformableMesh3DTools {
      * @param triangles list of triangles representing a closed mesh.
      * @return volume of the closed surface.
      */
-    public static double calculateExactVolume(List<Triangle3D> triangles){
+    public static double calculateVolume(List<Triangle3D> triangles){
         double sum = 0;
         for(Triangle3D triangle: triangles){
             double[] r1 = triangle.getCoordinates(0);
@@ -1129,7 +1129,7 @@ public class DeformableMesh3DTools {
      * @param triangles triangles representing the closed surface
      * @return volume of the mesh represented by the triangles.
      */
-    static public double calculateVolume(double[] direction, double[] positions, List<Triangle3D> triangles ){
+    static public double calculateVolumeLegacy(double[] direction, double[] positions, List<Triangle3D> triangles ){
         double sum = 0;
 
         for(Triangle3D triangle: triangles){
@@ -1970,7 +1970,7 @@ public class DeformableMesh3DTools {
                 for(Integer key : t.getTrack().keySet()) {
                     DeformableMesh3D mesh = t.getMesh(key);
                     long start = System.nanoTime();
-                    double v1 = calculateExactVolume(mesh.triangles);
+                    double v1 = calculateVolume(mesh.triangles);
                     long f1 = System.nanoTime();
                     double v2 = mesh.calculateVolume();
                     long f2 = System.nanoTime();

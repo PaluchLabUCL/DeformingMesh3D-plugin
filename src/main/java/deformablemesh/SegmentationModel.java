@@ -788,7 +788,7 @@ public class SegmentationModel {
             }
 
             DeformableMesh3D mesh = getSelectedMesh(j);
-            double volume = DeformableMesh3DTools.calculateVolume(new double[]{0, 0, 1}, mesh.positions, mesh.triangles);
+            double volume = DeformableMesh3DTools.calculateVolume(mesh.triangles);
             volume = volume*stack.SCALE * stack.SCALE*stack.SCALE;
             double are = DeformableMesh3DTools.calculateSurfaceArea(mesh);
             are = are * stack.SCALE*stack.SCALE;
@@ -893,7 +893,7 @@ public class SegmentationModel {
         for(Integer key: target.getTrack().keySet()){
             DeformableMesh3D m1 = target.getMesh(key);
             double s0 = DeformableMesh3DTools.calculateSurfaceArea(m1);
-            double v0 = DeformableMesh3DTools.calculateVolume(Vector3DOps.zhat, m1.positions, m1.triangles);
+            double v0 = DeformableMesh3DTools.calculateVolume(m1.triangles);
             double c0 = CurvatureCalculator.calculateAverageCurvature(m1);
 
             IntensitySurfacePlot isp = new IntensitySurfacePlot(m1, stack);
