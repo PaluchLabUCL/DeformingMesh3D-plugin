@@ -67,7 +67,7 @@
 		<connection>scm:git:git://github.com/PaluchLabUCL/DeformingMesh3D</connection>
 		<developerConnection>scm:git:git@github.com:PaluchLabUCL/DeformingMesh3D</developerConnection>
 		<tag>HEAD</tag>
-		<url>https://github.com/PaluchLabUCL/DeformingMesh3D</url>
+		<url>https://github.com/PaluchLabUCL/DeformingMesh3D-plugin</url>
 	</scm>
 	<issueManagement>
 		<system>GitHub Issues</system>
