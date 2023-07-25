@@ -1194,6 +1194,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         });
 
         JMenuItem label = new JMenuItem("Create Label Image");
+        label.setToolTipText("Creates a grayscale image with unique labels in each frame.");
         tools.add(label);
         label.addActionListener(evt ->{
             segmentationController.createLabelImage();
@@ -1201,6 +1202,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
 
         JMenuItem mosaic = new JMenuItem("Create Mosaic Image");
         tools.add(mosaic);
+        mosaic.setToolTipText("Creates a color image with labels based on the mesh color.");
         mosaic.addActionListener(evt ->{
             segmentationController.createMosaicImage();
         });
