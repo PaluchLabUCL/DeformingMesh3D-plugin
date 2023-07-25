@@ -1193,6 +1193,12 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             segmentationController.createBinaryImage();
         });
 
+        JMenuItem label = new JMenuItem("Create Label Image");
+        tools.add(label);
+        label.addActionListener(evt ->{
+            segmentationController.createLabelImage();
+        });
+
         JMenuItem mosaic = new JMenuItem("Create Mosaic Image");
         tools.add(mosaic);
         mosaic.addActionListener(evt ->{

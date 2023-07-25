@@ -2630,13 +2630,25 @@ public class SegmentationController {
     }
 
     /**
-     * Creates a mosaic image, which is like a binary image, execept each mesh is labelled with it's color instead of
+     * Creates a mosaic image, which is like a binary image, except each mesh is labeled with its color instead of
      * binary.
      */
     public void createMosaicImage() {
 
         submit(()->{
             model.createMosaicImage();
+        });
+
+    }
+
+    /**
+     * Creates a label image, which is like a binary image, except each mesh is labeled with its id instead of
+     * binary.
+     */
+    public void createLabelImage() {
+
+        submit(()->{
+            model.createLabelImage();
         });
 
     }
