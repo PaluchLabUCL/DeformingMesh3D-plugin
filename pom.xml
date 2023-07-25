@@ -11,7 +11,7 @@
 
 	<groupId>paluchlab</groupId>
 	<artifactId>Deformable_Mesh</artifactId>
-	<version>0.9.10-SNAPSHOT</version>
+	<version>0.9.10</version>
 
 	<name>Deforming Mesh</name>
 	<description>Triangulated surface for deforming in 3D.</description>
@@ -66,7 +66,7 @@
 	<scm>
 		<connection>scm:git:git://github.com/PaluchLabUCL/DeformingMesh3D-plugin</connection>
 		<developerConnection>scm:git:git@github.com:PaluchLabUCL/DeformingMesh3D-plugin</developerConnection>
-		<tag>HEAD</tag>
+		<tag>Deformable_Mesh-0.9.10</tag>
 		<url>https://github.com/PaluchLabUCL/DeformingMesh3D-plugin</url>
 	</scm>
 	<issueManagement>
