@@ -23,7 +23,7 @@
 	</organization>
 	<licenses>
 		<license>
-			<name>MIT License</name>
+			<name>mit License</name>
 			<url>https://opensource.org/licenses/mit</url>
 			<distribution>repo</distribution>
 		</license>
@@ -79,7 +79,7 @@
 	</ciManagement>
 
 	<properties>
-		<license.licenseName>MIT</license.licenseName>
+		<license.licenseName>mit</license.licenseName>
 		<license.copyrightOwners>University College London</license.copyrightOwners>
 
 		<light-weight-graphing.version>1.0</light-weight-graphing.version>
