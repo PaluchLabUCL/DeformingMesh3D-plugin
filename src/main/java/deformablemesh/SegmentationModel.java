@@ -702,9 +702,17 @@ public class SegmentationModel {
         plus.show();
 
     }
+
     public void createMosaicImage() {
         ImagePlus plus = DeformableMesh3DTools.createMosaicRepresentation(stack, original_plus, tracker.getAllMeshTracks());
         plus.setTitle(original_plus.getShortTitle() + "-mosaic.tif");
+        plus.setOpenAsHyperStack(true);
+        plus.show();
+    }
+
+    public void createLabelImage() {
+        ImagePlus plus = DeformableMesh3DTools.createUniqueLabelsRepresentation(stack, tracker.getAllMeshTracks());
+        plus.setTitle(original_plus.getShortTitle() + "-labels.tif");
         plus.setOpenAsHyperStack(true);
         plus.show();
     }
