@@ -23,8 +23,8 @@
 	</organization>
 	<licenses>
 		<license>
-			<name>mit License</name>
-			<url>https://opensource.org/licenses/MIT</url>
+			<name>MIT License</name>
+			<url>https://opensource.org/licenses/mit</url>
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
