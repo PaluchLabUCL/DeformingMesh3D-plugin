@@ -25,10 +25,7 @@
  */
 package deformablemesh.geometry.modifier;
 
-import deformablemesh.geometry.Furrow3D;
-import deformablemesh.geometry.Node3D;
-import deformablemesh.geometry.Projectable;
-import deformablemesh.geometry.Sphere;
+import deformablemesh.geometry.*;
 import deformablemesh.gui.Drawable;
 import deformablemesh.meshview.DataObject;
 import deformablemesh.meshview.MeshFrame3D;
@@ -145,6 +142,13 @@ class Sculptor implements ModificationState {
             return;
         }
         sphere.moveTo(shifted(pt));
+    }
+
+    void relaxedMoveContained(){
+        List<Node3D> contained = containedNodes();
+        DeformableMesh3D sub = modifier.mesh.createSubMesh(contained);
+
+
     }
     void moveContained(){
         List<Node3D> contained = containedNodes();
