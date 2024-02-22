@@ -132,8 +132,16 @@
 			<artifactId>ij</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>org.jogamp.gluegen</groupId>
+			<artifactId>gluegen-rt</artifactId>
+			<version>2.5.0</version>
+			<classifier>${scijava.natives.classifier.gluegen}</classifier>
+		</dependency>
+		<dependency>
 			<groupId>org.jogamp.jogl</groupId>
 			<artifactId>jogl-all</artifactId>
+			<version>2.5.0</version>
+			<classifier>${scijava.natives.classifier.jogl}</classifier>
 		</dependency>
 	</dependencies>
 
@@ -143,6 +151,11 @@
 			<id>imagej.public</id>
 			<url>https://maven.imagej.net/content/groups/public</url>
 		</repository>
+		<repository>
+			<id>jogamp.org</id>
+			<url>https://jogamp.org/deployment/maven</url>
+		</repository>
+
 	</repositories>
 
 	<build>
