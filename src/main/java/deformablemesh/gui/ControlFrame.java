@@ -1462,6 +1462,20 @@ public class ControlFrame implements ReadyObserver, FrameListener {
         }
     }
 
+    public void trackMeshForwardActionChoose(){
+        if(ready){
+            setReady(false);
+            segmentationController.chooseTrackForward();
+            finished();
+        }
+    }
+    public void trackMeshBackwardActionChoose(){
+        if(ready){
+            setReady(false);
+            segmentationController.chooseTrackBackward();
+            finished();
+        }
+    }
     public void trackMeshBackwardsAction(){
         if(ready) {
             setReady(false);

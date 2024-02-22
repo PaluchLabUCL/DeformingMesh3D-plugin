@@ -26,6 +26,7 @@
 package deformablemesh.meshview;
 
 import deformablemesh.geometry.Connection3D;
+import deformablemesh.geometry.DeformableMesh3D;
 import deformablemesh.geometry.Node3D;
 import deformablemesh.geometry.Triangle3D;
 import org.scijava.java3d.*;
@@ -84,6 +85,9 @@ public class DeformableMeshDataObject implements DataObject {
         branch_group.setCapability(BranchGroup.ALLOW_PICKABLE_WRITE);
         branch_group.addChild(mesh_object);
         branch_group.addChild(surface_object);
+    }
+    public DeformableMeshDataObject(DeformableMesh3D mesh){
+        this(mesh.nodes, mesh.connections, mesh.triangles, mesh.positions, mesh.connection_index, mesh.triangle_index);
     }
 
     private Appearance hiddenSurface() {

@@ -55,6 +55,7 @@ import ij.process.ImageProcessor;
 import ij.process.LUT;
 import lightgraph.DataSet;
 import lightgraph.Graph;
+import org.checkerframework.checker.units.qual.N;
 
 import java.awt.Color;
 import java.awt.Image;
@@ -258,6 +259,8 @@ public class SegmentationController {
             }
         }
     }
+
+
 
     /**
      * @see SegmentationController#clearMeshFromTrack(Track, int, DeformableMesh3D)
@@ -1457,6 +1460,33 @@ public class SegmentationController {
     public void flipFurrow(){
         model.flipFurrow();
     }
+
+    public void furrowForward(){
+        Furrow3D f = getRingController().getFurrow();
+        double velocity = 0.0125;
+        double[] ucm = Vector3DOps.add(f.cm, f.normal, velocity);
+        f.setGeometry(ucm, f.normal);
+    }
+
+    public void furrowBackward(){
+        Furrow3D f = getRingController().getFurrow();
+        double velocity = -0.0125;
+        double[] ucm = Vector3DOps.add(f.cm, f.normal, velocity);
+        f.setGeometry(ucm, f.normal);
+    }
+
+    public void centerFurrowOnSelectedMesh(){
+        DeformableMesh3D m = getSelectedMesh();
+        double[] center;
+        if(m != null) {
+            center = getSelectedMesh().getBoundingBox().getCenter();
+        } else {
+            center = new double[]{0, 0, 0};
+        }
+
+        Furrow3D f = getRingController().getFurrow();
+        f.setGeometry(center, f.normal);
+    }
     /**
      * Creates an image based on a furrow transformer built using the provided position and normal.
      *
@@ -2023,6 +2053,7 @@ public class SegmentationController {
 
         });
     }
+
     /**
      * Creates a copy of the current mesh, advances a frame and adds it to the current track.
      *
@@ -2086,6 +2117,150 @@ public class SegmentationController {
 
             });
             previousFrame();
+        }
+    }
+
+    /**
+     * Advances to the next frame, shows a copy of the mesh that needs
+     * to be linked. Clicking on a mesh in the current frame will like the track.
+     *
+     */
+    public void chooseTrackForward(){
+        Track track = getSelectedMeshTrack();
+        int start = getCurrentFrame();
+        int alpha = 100;
+        if(track != null && getCurrentFrame() < getNFrames() - 1){
+            nextFrame();
+            if( getSelectedMeshTrack().containsKey(start)) {
+                DeformableMesh3D mesh = track.getMesh(start);
+                DeformableMeshDataObject dobj = new DeformableMeshDataObject(mesh);
+                Color c = track.getColor();
+                int r = c.getRed();
+                int g = c.getGreen();
+                int b= c.getBlue();
+                dobj.setColor(new Color(r, g, b, alpha));
+                dobj.setWireColor( new Color(r, g, b, alpha));
+                addTransientObject(dobj);
+            }
+            submit(()->{
+                DeformableMesh3D m = waitFormClickNextMesh();
+                clearTransientObjects();
+                int frame = getCurrentFrame();
+                if(m == null) return;
+
+                Track old = getAllTracks().stream().filter(
+                        t->t.containsMesh(m)
+                ).findFirst().orElse(null);
+
+                DeformableMesh3D other = track.getMesh(frame);
+                actionStack.postAction(new UndoableActions(){
+                    @Override
+                    public void perform() {
+                        submit(() -> {
+                            model.removeMeshFromTrack(frame, m, old);
+                            model.addMeshToTrack(frame, m, track);
+                        });
+                    }
+
+                    @Override
+                    public void undo() {
+                        submit(()->{
+                            if(other != null){
+                                model.addMeshToTrack(frame, other, track);
+                            } else{
+                                model.removeMeshFromTrack(frame, m, track);
+                            }
+                            model.addMeshToTrack(frame, m, old);
+                        });
+                    }
+
+                    @Override
+                    public void redo() {
+                        submit(() -> {
+                            model.removeMeshFromTrack(frame, m, old);
+                            model.addMeshToTrack(frame, m, track);
+                        });
+                    }
+
+                    @Override
+                    public String getName(){
+                        return "Choose to track";
+                    }
+                });
+            });
+
+        }
+    }
+
+    /**
+     * Advances to the previous frame, shows a copy of the mesh that needs
+     * to be linked. Clicking on a mesh in the current frame will like the track.
+     *
+     */
+    public void chooseTrackBackward(){
+        Track track = getSelectedMeshTrack();
+        int start = getCurrentFrame();
+        int alpha = 100;
+        if(track != null && getCurrentFrame() > 0){
+            previousFrame();
+            if( getSelectedMeshTrack().containsKey(start)) {
+                DeformableMesh3D mesh = track.getMesh(start);
+                DeformableMeshDataObject dobj = new DeformableMeshDataObject(mesh);
+                Color c = track.getColor();
+                int r = c.getRed();
+                int g = c.getGreen();
+                int b= c.getBlue();
+                dobj.setColor(new Color(r, g, b, alpha));
+                dobj.setWireColor( new Color(r, g, b, alpha));
+                addTransientObject(dobj);
+            }
+            submit(()->{
+                DeformableMesh3D m = waitFormClickNextMesh();
+                clearTransientObjects();
+                int frame = getCurrentFrame();
+                if(m == null) return;
+
+                Track old = getAllTracks().stream().filter(
+                        t->t.containsMesh(m)
+                ).findFirst().orElse(null);
+
+                DeformableMesh3D other = track.getMesh(frame);
+                actionStack.postAction(new UndoableActions(){
+                    @Override
+                    public void perform() {
+                        submit(() -> {
+                            model.removeMeshFromTrack(frame, m, old);
+                            model.addMeshToTrack(frame, m, track);
+                        });
+                    }
+
+                    @Override
+                    public void undo() {
+                        submit(()->{
+                            if(other != null){
+                                model.addMeshToTrack(frame, other, track);
+                            } else{
+                                model.removeMeshFromTrack(frame, m, track);
+                            }
+                            model.addMeshToTrack(frame, m, old);
+                        });
+                    }
+
+                    @Override
+                    public void redo() {
+                        submit(() -> {
+                            model.removeMeshFromTrack(frame, m, old);
+                            model.addMeshToTrack(frame, m, track);
+                        });
+                    }
+
+                    @Override
+                    public String getName(){
+                        return "Choose to track";
+                    }
+                });
+            });
+
         }
     }
 
@@ -2997,6 +3172,23 @@ public class SegmentationController {
         return model;
     }
 
+    public DeformableMesh3D waitFormClickNextMesh(){
+        DeformableMesh3D mesh = null;
+        if(meshFrame3D != null) {
+            int f = getCurrentFrame();
+            List<DeformableMesh3D> meshes = getAllTracks().stream().filter(
+                    t->t.containsKey(f)
+                ).map(
+                        t->t.getMesh(f)
+            ).collect(Collectors.toList());
+            NextClickListener ncl = new NextClickListener(meshes);
+            meshFrame3D.addPickListener(ncl);
+
+            mesh = ncl.getMesh();
+            meshFrame3D.removePickListener(ncl);
+        }
+        return mesh;
+    }
     public void startFurrowOrientationListener(){
         DeformableMesh3D mesh = getSelectedMesh();
         if(mesh == null) return;

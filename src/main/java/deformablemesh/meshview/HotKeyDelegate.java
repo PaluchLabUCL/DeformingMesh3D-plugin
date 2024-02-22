@@ -156,30 +156,42 @@ public class HotKeyDelegate {
                 "Deform/Stop all meshes.",
                 ()->accessControl.deformAction(true)
         );
-
         createActionMapKey(
                 KeyStroke.getKeyStroke(KeyEvent.VK_T, 0, true),
-                "TRACK_FORWARD",
-                "Track selected mesh forward.",
-                ifEnabled(accessControl::trackMeshAction)
-        );
-
-
-        createActionMapKey(
-                KeyStroke.getKeyStroke(KeyEvent.VK_B, 0, true),
-                "TRACK_BACKWARD",
-                "Track selected mesh backwards.",
-                ifEnabled(accessControl::trackMeshBackwardsAction)
-        );
-
-
-
-        createActionMapKey(
-                KeyStroke.getKeyStroke(KeyEvent.VK_L, 0, true),
                 "LINK_POSSIBLE",
                 "Link selected track to next frame track.",
                 ifEnabled(controller::linkPossibleTrack)
         );
+
+        createActionMapKey(
+                KeyStroke.getKeyStroke(KeyEvent.VK_T, KeyEvent.CTRL_DOWN_MASK, true),
+                "TRACK_FORWARD",
+                "Track forward by copying current.",
+                ifEnabled(accessControl::trackMeshAction)
+        );
+
+        createActionMapKey(
+                KeyStroke.getKeyStroke(KeyEvent.VK_T, KeyEvent.SHIFT_DOWN_MASK, true),
+                "TRACK_FORWARD_SELECT",
+                "Choose track to link in next frame.",
+                ifEnabled(accessControl::trackMeshForwardActionChoose)
+        );
+
+        createActionMapKey(
+                KeyStroke.getKeyStroke(KeyEvent.VK_B, KeyEvent.CTRL_DOWN_MASK, true),
+                "TRACK_BACKWARD",
+                "Track selected mesh backwards by copying.",
+                ifEnabled(accessControl::trackMeshBackwardsAction)
+        );
+
+        createActionMapKey(
+                KeyStroke.getKeyStroke(KeyEvent.VK_B,  KeyEvent.SHIFT_DOWN_MASK, true),
+                "TRACK_BACKWARD_SELECT",
+                "Choose track to link backwards.",
+                ifEnabled(accessControl::trackMeshBackwardActionChoose)
+        );
+
+
         createActionMapKey(
                 KeyStroke.getKeyStroke(KeyEvent.VK_I, 0, true),
                 "INITIALIZE_MESHES",
@@ -266,20 +278,6 @@ public class HotKeyDelegate {
         );
 
         createActionMapKey(
-                KeyStroke.getKeyStroke(KeyEvent.VK_V, 0, true),
-                "SHOW_VOLUME",
-                "Show image as 3D volume.",
-                accessControl::showVolumeAction
-        );
-
-        createActionMapKey(
-                KeyStroke.getKeyStroke(KeyEvent.VK_V, KeyEvent.SHIFT_MASK, true),
-                "HIDE_VOLUME",
-                "Hide 3D volume representation.",
-                accessControl::hideVolumeAction
-        );
-
-        createActionMapKey(
                 KeyStroke.getKeyStroke(KeyEvent.VK_C, 0, true),
                 "ADD_VOLUME",
                 "add volume channel",
@@ -300,9 +298,43 @@ public class HotKeyDelegate {
 
         createActionMapKey(
                 KeyStroke.getKeyStroke(KeyEvent.VK_F, 0, true),
+                "CENTER_FURROW",
+                "Centers Furrow to Screen or Selected Mesh.",
+                controller::centerFurrowOnSelectedMesh
+        );
+
+        createActionMapKey(
+                KeyStroke.getKeyStroke(KeyEvent.VK_F, KeyEvent.SHIFT_DOWN_MASK, true),
                 "ORIENT_FURROW",
                 "Clicking on selected mesh to orient furrow.",
                 controller::startFurrowOrientationListener
+        );
+
+        createActionMapKey(
+                KeyStroke.getKeyStroke(KeyEvent.VK_F, KeyEvent.CTRL_DOWN_MASK, true),
+                "FLIP_FURROW",
+                "Flip furrow direction.",
+                controller::flipFurrow
+        );
+
+        createActionMapKey(
+                KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0, true),
+                "FURROW_FORWARD",
+                "Moves the furrow plane forward.",
+                controller::furrowForward
+        );
+
+        createActionMapKey(
+                KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0, true),
+                "FURROW_BACKWARDS",
+                "Moves the furrow plane backwards.",
+                controller::furrowBackward
+        );
+        createActionMapKey(
+                KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.SHIFT_DOWN_MASK, true),
+                "CLEAVE_FURROW",
+                "Split the selected mesh with furrow plane.",
+                controller::splitMesh
         );
 
         createActionMapKey(
