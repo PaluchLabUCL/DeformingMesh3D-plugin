@@ -461,6 +461,15 @@ public class MeshImageStack {
 
     }
 
+    /**
+     * Calculates the volume in normalized coordinates based on the number of
+     * voxels. Converts to real world units then divides by the scale.
+     * @param nVoxels the number of voxels to be converted
+     * @return nVoxels*dx*dy*dz/scale^3
+     */
+    public double getNormalizedVolume(double nVoxels){
+        return nVoxels*pixel_dimensions[0]*pixel_dimensions[1]*pixel_dimensions[2]/(SCALE*SCALE*SCALE);
+    }
     public double[] getCenterOfMass(){
         double sum = 0;
         double sumx = 0;

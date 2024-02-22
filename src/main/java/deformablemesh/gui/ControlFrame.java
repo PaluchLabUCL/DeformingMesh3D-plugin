@@ -99,6 +99,7 @@ public class ControlFrame implements ReadyObserver, FrameListener {
             terminal = new SwingJSTerm(model);
         } catch (Throwable e){
             System.out.println("Javascript not configured properly");
+            e.printStackTrace();
             //can be a couple errors.
         }
 

@@ -1001,11 +1001,22 @@ public class SegmentationController {
      * existing meshes and doesn't place meshes if there is too much overlap.
      *
      * @param level The value used for thresholding the image. Expected to work on integer images.
-     * @return an ImagePlus with the thresholded image.
      */
-    public ImagePlus guessMeshes(int level) {
-        MeshDetector detector = new MeshDetector(getMeshImageStack());
+    public void guessMeshes(int level) {
+        guessMeshes(level, true, 0.6);
+    }
 
+    /**
+     * Thresholds the current image and initailizes meshes in the labelled regions.
+     * @param level the level to threshold.
+     * @param spheres when true, spheres are used instead of attempting to fill the binary
+     *                blobs. Much faster.
+     * @param max_overlap overlap is calculated with axis aligned bounding boxes.
+     */
+    public void guessMeshes(int level, boolean spheres, double max_overlap){
+        MeshDetector detector = new MeshDetector(getMeshImageStack());
+        detector.spheres = spheres;
+        detector.max_overlap = max_overlap;
         int frame = getCurrentFrame();
         List<Box3D> current = getAllTracks().stream().filter(
                 t->t.containsKey(frame)
@@ -1018,9 +1029,6 @@ public class SegmentationController {
         List<DeformableMesh3D> guessed = detector.guessMeshes(level);
 
         startNewMeshTracks(guessed);
-
-        //add all of the guessed meshes to new tracks in this frame.
-        return new ImagePlus("threshold", detector.getThreshedStack());
     }
 
     /**

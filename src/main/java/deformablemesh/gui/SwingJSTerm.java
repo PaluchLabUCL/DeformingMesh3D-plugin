@@ -28,12 +28,8 @@ package deformablemesh.gui;
 import deformablemesh.SegmentationController;
 import deformablemesh.SegmentationModel;
 import ij.IJ;
-import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
 
-import javax.script.Bindings;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
+import javax.script.*;
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
@@ -84,10 +80,11 @@ public class SwingJSTerm {
     JButton runScriptFile;
 
     public SwingJSTerm(SegmentationController controls){
+        ScriptEngineManager manager = new ScriptEngineManager();
 
-        NashornScriptEngineFactory factory = new NashornScriptEngineFactory();
-        engine = factory.getScriptEngine();
-
+        //NashornScriptEngineFactory factory = new NashornScriptEngineFactory();
+        //engine = factory.getScriptEngine();
+        engine = manager.getEngineByName("nashorn");
         Bindings bindings = engine.createBindings();
 
         engine.setBindings(bindings, ScriptContext.ENGINE_SCOPE);

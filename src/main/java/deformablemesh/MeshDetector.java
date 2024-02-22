@@ -27,6 +27,7 @@ package deformablemesh;
 
 import deformablemesh.geometry.Box3D;
 import deformablemesh.geometry.DeformableMesh3D;
+import deformablemesh.geometry.RayCastMesh;
 import deformablemesh.simulations.FillingBinaryImage;
 import deformablemesh.util.connectedcomponents.ConnectedComponents3D;
 import deformablemesh.util.connectedcomponents.Region;
@@ -44,6 +45,8 @@ public class MeshDetector {
     MeshImageStack mis;
     ImageStack threshed;
     int minSize = 50;
+    public boolean spheres = false;
+    public double max_overlap = 0.3;
     public MeshDetector(MeshImageStack mis){
         this.mis = mis;
     }
@@ -107,7 +110,7 @@ public class MeshDetector {
                     Box3D intersection = box.getIntersectingBox(candidate);
                     double bv = box.getVolume();
                     double iv = intersection.getVolume();
-                    if((iv/cv > 0.7) || (iv/bv > 0.7)){
+                    if((iv/cv > max_overlap) || (iv/bv > max_overlap)){
                         toRemove.add(region);
                         for (int[] pt : points) {
                             pixels[pt[2] - 1][pt[0] + pt[1]*width] = 0;
@@ -148,10 +151,39 @@ public class MeshDetector {
             rg.step();
         }
         end = System.currentTimeMillis();
-        System.out.println("regions grown: " + (start - end)/1000);
+        System.out.println("regions grown: " + (end - start)/1000 + "s");
+        start = System.currentTimeMillis();
+        List<DeformableMesh3D> guessed;
+        if(spheres){
+            guessed = spheres(regions);
+        } else{
+            guessed = fillBinaryBlobs(regions);
+        }
+        end = System.currentTimeMillis();
+        System.out.println("regions meshes in " + (end - start)/1000 + "s");
+
+        return guessed;
+    }
+
+    List<DeformableMesh3D> spheres(List<Region> regions){
+        List<DeformableMesh3D> meshes = new ArrayList<>(regions.size());
+
+        for(Region region : regions){
+            double[] center = mis.getNormalizedCoordinate(region.getCenter());
+
+            double volume = mis.getNormalizedVolume(region.calculateVolume());
+            double r = Math.cbrt(volume*3/Math.PI/4);
+            DeformableMesh3D m = RayCastMesh.sphereRayCastMesh(2);
+            m.translate(center);
+            m.scale(r, center);
+            meshes.add(m);
+        }
+        return meshes;
+    }
+
+    List<DeformableMesh3D> fillBinaryBlobs(List<Region> regions){
         List<DeformableMesh3D> guessed = new ArrayList<>();
 
-        start = System.currentTimeMillis();
         for (Region region : regions) {
             int label = region.getLabel();
             List<int[]> rs = region.getPoints();
@@ -178,9 +210,6 @@ public class MeshDetector {
             mesh.clearEnergies();
             guessed.add(mesh);
         }
-        end = System.currentTimeMillis();
-        System.out.println("regions meshes in " + (start - end)/1000);
-
         return guessed;
     }
 

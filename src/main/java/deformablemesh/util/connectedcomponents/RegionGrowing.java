@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class RegionGrowing{
     final List<short[]> labelPixels;
@@ -169,6 +170,10 @@ public class RegionGrowing{
             }
 
         }
+    }
+
+    public int getFrontierSize(){
+        return frontiers.values().stream().mapToInt(List::size).sum();
     }
     public void setLabel(int[] xyz, int label){
         labelPixels.get(xyz[2]-1)[xyz[0] + width*xyz[1]] = (short)label;

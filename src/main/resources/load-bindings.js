@@ -96,8 +96,34 @@ function restartOffscreenCanvas(){
 
 function normalizeColors(){
   tracks = controls.getAllTracks();
+
   for(i = 0; i<tracks.size(); i++){
       track = tracks.get(i);
       track.setColor( new Color(i+1));
   }
+}
+
+function showPreviousMeshes(){
+    var DeformableMeshDataObject = Java.type("deformablemesh.meshview.DeformableMeshDataObject");
+    controls.clearTransientObjects();
+    alpha = 100;
+    mesh = controls.getSelectedMesh();
+    tracks = controls.getAllTracks();
+    frame = controls.getCurrentFrame();
+    for( key in tracks){
+        track = tracks[key];
+        if(track.containsKey(frame - 1)){
+            track.setShowSurface(true);
+            mesh = track.getMesh(frame - 1);
+            dobj =  new DeformableMeshDataObject( mesh.nodes, mesh.connections, mesh.triangles, mesh.positions, mesh.connection_index, mesh.triangle_index );
+            c = track.getColor();
+            r = c.getRed();
+            g = c.getGreen();
+            b= c.getBlue();
+            dobj.setColor(new Color(r, g, b, alpha));
+            dobj.setWireColor( new Color(r, g, b, alpha));
+            controls.addTransientObject( dobj );
+        }
+    }
+
 }
