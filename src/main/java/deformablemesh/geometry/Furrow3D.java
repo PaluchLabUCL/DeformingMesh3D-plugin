@@ -492,8 +492,10 @@ public class Furrow3D implements Interceptable{
         double toPlane = Vector3DOps.dot(r, normal);
 
         double dot = Vector3DOps.dot(direction, normal);
-        double t = dot<0 ? 1 + dot : 1 - dot;
-        if(t < 1e-6 ){
+        //Line has to be going towards the plan and against the normal.
+
+        final double tolerance = 1e-6;
+        if(dot < 0 ? dot > - tolerance : dot < tolerance ){
             //parallel to normal.
             return new ArrayList<>();
         }

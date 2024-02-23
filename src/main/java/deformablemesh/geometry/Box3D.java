@@ -28,6 +28,7 @@ package deformablemesh.geometry;
 import deformablemesh.util.Vector3DOps;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -185,6 +186,11 @@ public class Box3D implements Interceptable{
     public double[] getCenter() {
         return Vector3DOps.average(high, low);
     }
+
+    @Override
+    public String toString(){
+        return "Box3D: " + Arrays.toString(low) + " :: " + Arrays.toString(high);
+    }
 }
 
 class AxisPlane implements Interceptable{
@@ -220,4 +226,5 @@ class AxisPlane implements Interceptable{
 
         return Collections.unmodifiableList(sections);
     }
+
 }

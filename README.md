@@ -1,6 +1,15 @@
 [![Build Status](https://github.com/PaluchLabUCL/DeformingMesh3D/actions/workflows/build.yml/badge.svg)](https://github.com/PaluchLabUCL/DeformingMesh3D/actions/workflows/build.yml)
 
 # DM3D
+
+##
+**This is being moved. This is the original version that was published. I've moved it to 
+a version 1.0.x to signify feature complete release. Development will continue at 
+[Living Technologies](https://github.com/Living-Technologies)**
+
+This one will remain at the update site and might receive bug fixes. Future features
+will be found at a new update site.
+
 ThreeD image segmentation algorithm, for roundish cells.
 
 The latest documentation can be found at:
@@ -35,6 +44,13 @@ which can be found in "plugins"->"PL_Mesh3D"->"Deforming Mesh 3D", and JFilament
 This includes guides for using the plugin, and javadoc for using the plugin via scripting.
 
 # Changes
+
+1.0.0
+- Furrow controls in the 3D Canvas window.
+- Tracking controls in 3D canvas window
+- guessMesh api has more options
+- BUG FIX: there was a condition error in the spit mesh algorithm
+
 0.9.8
 - Changed volume calculation technique.
 - Added a way to create training labels from a labelled image.
